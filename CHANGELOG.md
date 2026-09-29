@@ -6,6 +6,31 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 
 ## [Unreleased]
 
+### [FEATURE] - 2026-09-29
+- **Descrição:** Adição de Dark Mode à aplicação utilizando `next-themes` e `ThemeProvider`. Implementado o seletor dinâmico de tema (claro/escuro) diretamente no novo componente `Header`. O tema principal do design system foi redesenhado sob a regra 60/30/10, adotando um azul vibrante (`#2563EB`) como Primary.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/components/Header.tsx`, `web/src/components/ThemeProvider.tsx`, `web/src/app/globals.css`, `web/src/app/layout.tsx`
+
+### [BUGFIX] - 2026-09-29
+- **Descrição:** Correção do problema de renderização (corte) da lista do autocomplete de localização no componente `HeroSearch`. O comportamento foi corrigido realocando a propriedade `overflow-hidden` do container principal para o container absoluto de background, permitindo que o dropdown da lista sobreponha livremente os cards do feed de vagas, preservando a estética de bordas arredondadas da caixa de pesquisa.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/components/HeroSearch.tsx`
+
+### [FEATURE] - 2026-09-29
+- **Descrição:** Implementação do Autocomplete de Localização (Cidades) utilizando a API do IBGE no `HeroSearch`. A aplicação agora carrega ativamente as cidades de **São Paulo (SP)** e renderiza sugestões flutuantes em tempo real conforme a digitação do usuário, sem a utilização de datalist nativo.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/components/HeroSearch.tsx`
+
+### [MODIFY] - 2026-09-29
+- **Descrição:** Correção do validador de parâmetros de buscas da API (Express + Zod). Os filtros baseados em arrays (`workplaceType`, `level`, `contractType`) agora aceitam nativamente múltiplos valores vindos da query da URL, possibilitando pesquisas compostas precisas (ex: `Júnior` e `Pleno` ao mesmo tempo).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/schemas/job.schema.ts`
+
+### [MODIFY] - 2026-09-29
+- **Descrição:** Atualização da lógica de apresentação salarial nos cards e modal. A interface agora infere a exibição dos salários baseado na presença do `salaryMin` e/ou `salaryMax` gerando textos dinâmicos (ex: "R$ 5.000 - R$ 10.000", "A partir de R$ 5.000" ou "Até R$ 10.000"). Testes ajustados para cobrir essa modificação.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/components/JobCard.tsx`, `web/src/components/JobDetailsModal.tsx`, `web/src/types/job.ts`, `web/src/components/__tests__/JobCard.test.tsx`, `web/src/components/__tests__/JobDetailsModal.test.tsx`
+
 ### [MODIFY] - 2026-09-29
 - **Descrição:** Atualização da engine Node.js do ambiente local (de `v18.20.4` para `v24.19.0 LTS`) utilizando o gerenciador nativo `winget`. A atualização foi necessária para suportar as engines do Next.js 15+ e do Tailwind CSS v4, que exigem Node.js `>= 20.9.0`. Com isso, a base de código do `/web` foi mantida no estado da arte (Next 16, React 19) e o script de inicialização voltou a funcionar.
 - **Escopo:** `/web`, `ambiente`

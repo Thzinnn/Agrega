@@ -17,23 +17,18 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
   useEffect(() => {
     const fetchLocations = async () => {
       try {
-        const [munRes, estRes] = await Promise.all([
-          fetch('https://servicodados.ibge.gov.br/api/v1/localidades/municipios'),
-          fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados')
-        ]);
-        const municipalities = await munRes.json();
-        const states = await estRes.json();
+        const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios');
+        const municipalities = await response.json();
         
         const formatted = [
           'Remoto',
           'Híbrido',
-          ...states.map((s: any) => s.nome),
-          ...municipalities.map((m: any) => `${m.nome}, ${m.microrregiao.mesorregiao.UF.sigla}`)
+          ...municipalities.map((m: any) => `${m.nome}, SP`)
         ];
         // Deduplicate
         setAllLocations(Array.from(new Set(formatted)));
       } catch (e) {
-        setAllLocations(['Remoto', 'Híbrido', 'São Paulo, SP', 'Rio de Janeiro, RJ']);
+        setAllLocations(['Remoto', 'Híbrido', 'São Paulo, SP', 'Campinas, SP', 'Ribeirão Preto, SP']);
       }
     };
     fetchLocations();
@@ -75,9 +70,9 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
   };
 
   return (
-    <div className="w-full bg-brand-10 rounded-3xl p-10 text-white flex flex-col gap-6 items-center justify-center text-center shadow-lg relative overflow-hidden">
+    <div className="w-full bg-brand-10 rounded-3xl p-10 text-white flex flex-col gap-6 items-center justify-center text-center shadow-lg relative">
       {/* Decorative background elements */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-3xl pointer-events-none">
         <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-brand-10-hover/50 rounded-full blur-3xl"></div>
       </div>
