@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { api } from '@/lib/api';
 import { Job } from '@/types/job';
 import { HeroSearch } from '@/components/HeroSearch';
@@ -18,6 +19,10 @@ function JobsContent() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
+  
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
   const initialFilters: FilterState = {
     workplaceType: searchParams.getAll('workplaceType'),
@@ -58,6 +63,7 @@ function JobsContent() {
       contractType: filters.contractTypes,
       minSalary: filters.minSalary,
       maxSalary: filters.maxSalary,
+      page: '1', // Reset to first page when filtering
     });
   };
 
@@ -65,7 +71,15 @@ function JobsContent() {
     updateUrl({
       q: term,
       location: location,
+      page: '1', // Reset to first page when searching
     });
+  };
+
+  const handlePageChange = (newPage: number) => {
+    updateUrl({
+      page: newPage.toString(),
+    });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -76,8 +90,12 @@ function JobsContent() {
         const response = await api.get(`/jobs?${queryString}`);
         if (response.data && response.data.data) {
           setJobs(response.data.data);
+          setTotalPages(response.data.meta.totalPages);
+          setTotalJobs(response.data.meta.total);
         } else {
           setJobs([]);
+          setTotalPages(1);
+          setTotalJobs(0);
         }
       } catch (error) {
         console.error('Failed to fetch jobs', error);
@@ -108,7 +126,7 @@ function JobsContent() {
           <main className="flex-1 flex flex-col gap-6 w-full">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-brand-text">
-                {loading ? 'Buscando vagas...' : `${jobs.length} vaga${jobs.length !== 1 ? 's' : ''} encontrada${jobs.length !== 1 ? 's' : ''}`}
+                {loading ? 'Buscando vagas...' : `${totalJobs} vaga${totalJobs !== 1 ? 's' : ''} encontrada${totalJobs !== 1 ? 's' : ''}`}
               </h2>
             </div>
 
@@ -136,6 +154,43 @@ function JobsContent() {
                 </div>
               )}
             </div>
+
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+              <div className="flex items-center justify-center gap-2 mt-8">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-xl border border-brand-60 text-brand-text hover:bg-brand-60 hover:text-brand-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+                
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`w-10 h-10 rounded-xl font-bold transition-colors ${
+                        currentPage === page
+                          ? 'bg-brand-10 text-white shadow-md'
+                          : 'border border-brand-60 text-brand-text hover:bg-brand-60 hover:text-brand-10'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-xl border border-brand-60 text-brand-text hover:bg-brand-60 hover:text-brand-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+            )}
           </main>
         </div>
       </div>
