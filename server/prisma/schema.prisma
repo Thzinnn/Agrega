@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum WorkplaceType {
+  REMOTE
+  HYBRID
+  ON_SITE
+}
+
+enum JobLevel {
+  INTERN
+  JUNIOR
+  MID
+  SENIOR
+  LEAD
+}
+
+enum ContractType {
+  CLT
+  PJ
+  OTHER
+}
+
+model Job {
+  id             String        @id @default(uuid())
+  title          String
+  company        String
+  description    String        @db.Text
+  location       String
+  workplaceType  WorkplaceType
+  level          JobLevel
+  contractType   ContractType  @default(CLT)
+  benefits       String?       // Benefício ou destaque salarial exibido na box verde
+  salaryMin      Float?
+  salaryMax      Float?
+  applicationUrl String
+  source         String        @default("MANUAL")
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  @@index([workplaceType])
+  @@index([level])
+  @@index([contractType])
+  @@index([createdAt(sort: Desc)])
+}
