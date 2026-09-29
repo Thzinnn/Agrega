@@ -9,47 +9,64 @@ interface JobCardProps {
 }
 
 export function JobCard({ job, onClick }: JobCardProps) {
-  const formattedDate = new Date(job.postedAt).toLocaleDateString('pt-BR');
+  const formattedDate = new Date(job.createdAt).toLocaleDateString('pt-BR');
+
+  const renderSalary = () => {
+    if (job.salaryMin && job.salaryMax) {
+      return `R$ ${job.salaryMin.toLocaleString('pt-BR')} - R$ ${job.salaryMax.toLocaleString('pt-BR')}`;
+    }
+    if (job.salaryMin) {
+      return `A partir de R$ ${job.salaryMin.toLocaleString('pt-BR')}`;
+    }
+    if (job.salaryMax) {
+      return `Até R$ ${job.salaryMax.toLocaleString('pt-BR')}`;
+    }
+    return null;
+  };
+
+  const salaryText = renderSalary();
 
   return (
     <motion.div
       layoutId={`job-card-${job.id}`}
       onClick={onClick}
-      className="group flex flex-col gap-3 rounded-lg border bg-card p-5 text-card-foreground shadow-sm transition-all hover:shadow-md cursor-pointer hover:border-primary/50 bg-white"
+      className="group flex flex-col justify-between gap-3 rounded-2xl border border-brand-30/50 bg-brand-30 p-6 text-brand-text shadow-sm transition-all hover:shadow-lg cursor-pointer hover:border-brand-10/50 min-h-[160px] relative overflow-hidden"
     >
-      <div className="flex flex-col gap-1.5">
-        <h3 className="font-semibold text-lg leading-none tracking-tight group-hover:text-primary transition-colors">
+      <div className="absolute top-0 left-0 w-1 h-full bg-transparent group-hover:bg-brand-10 transition-colors"></div>
+
+      <div className="flex flex-col gap-2">
+        <h3 className="font-bold text-xl leading-tight tracking-tight group-hover:text-brand-10 transition-colors">
           {job.title}
         </h3>
         
-        <div className="flex items-center text-sm text-muted-foreground gap-3 text-gray-500">
-          <div className="flex items-center gap-1">
-            <Building2 className="w-4 h-4" />
+        <div className="flex flex-wrap items-center text-sm text-brand-muted gap-4">
+          <div className="flex items-center gap-1.5 font-medium">
+            <Building2 className="w-4 h-4 text-brand-muted/70" />
             <span>{job.company}</span>
           </div>
-          <div className="flex items-center gap-1">
-            <MapPin className="w-4 h-4" />
+          <div className="flex items-center gap-1.5">
+            <MapPin className="w-4 h-4 text-brand-muted/70" />
             <span>{job.location}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center justify-between mt-4">
         <div className="flex flex-wrap gap-2">
-          {job.salary && (
-            <Badge variant="success">
-              R$ {job.salary.toLocaleString('pt-BR')}
+          {salaryText && (
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
+              {salaryText}
             </Badge>
           )}
           {job.benefits && (
-            <Badge variant="success">
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
               Benefícios
             </Badge>
           )}
         </div>
         
-        <div className="flex items-center text-xs text-muted-foreground text-gray-400 gap-1">
-          <Calendar className="w-3 h-3" />
+        <div className="flex items-center text-xs text-brand-muted gap-1.5 font-medium bg-brand-60 px-2 py-1 rounded-md">
+          <Calendar className="w-3.5 h-3.5" />
           <span>{formattedDate}</span>
         </div>
       </div>

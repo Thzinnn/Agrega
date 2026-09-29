@@ -52,19 +52,31 @@ export const jobQuerySchema = z.object({
   q: z.string().trim().optional(),
   location: z.string().trim().optional(),
   workplaceType: z
-    .string()
+    .union([z.string(), z.array(z.string())])
     .optional()
-    .transform((val) => (val ? val.split(',').map((item) => item.trim()) : undefined))
+    .transform((val) => {
+      if (!val) return undefined;
+      const arr = Array.isArray(val) ? val : val.split(',');
+      return arr.map((item) => item.trim());
+    })
     .pipe(z.array(workplaceTypeEnum).optional()),
   level: z
-    .string()
+    .union([z.string(), z.array(z.string())])
     .optional()
-    .transform((val) => (val ? val.split(',').map((item) => item.trim()) : undefined))
+    .transform((val) => {
+      if (!val) return undefined;
+      const arr = Array.isArray(val) ? val : val.split(',');
+      return arr.map((item) => item.trim());
+    })
     .pipe(z.array(jobLevelEnum).optional()),
   contractType: z
-    .string()
+    .union([z.string(), z.array(z.string())])
     .optional()
-    .transform((val) => (val ? val.split(',').map((item) => item.trim()) : undefined))
+    .transform((val) => {
+      if (!val) return undefined;
+      const arr = Array.isArray(val) ? val : val.split(',');
+      return arr.map((item) => item.trim());
+    })
     .pipe(z.array(contractTypeEnum).optional()),
   minSalary: z.coerce.number().nonnegative().optional(),
   maxSalary: z.coerce.number().nonnegative().optional(),

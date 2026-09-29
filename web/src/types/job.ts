@@ -4,9 +4,15 @@ export interface Job {
   company: string;
   location: string;
   description: string;
-  salary: number | null;
+  workplaceType: string;
+  level: string;
+  contractType: string;
   benefits: string | null;
-  postedAt: string;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  applicationUrl: string;
+  source: string;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

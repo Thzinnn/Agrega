@@ -6,6 +6,26 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 
 ## [Unreleased]
 
+### [MODIFY] - 2026-09-29
+- **Descrição:** Atualização da engine Node.js do ambiente local (de `v18.20.4` para `v24.19.0 LTS`) utilizando o gerenciador nativo `winget`. A atualização foi necessária para suportar as engines do Next.js 15+ e do Tailwind CSS v4, que exigem Node.js `>= 20.9.0`. Com isso, a base de código do `/web` foi mantida no estado da arte (Next 16, React 19) e o script de inicialização voltou a funcionar.
+- **Escopo:** `/web`, `ambiente`
+- **Arquivos Afetados:** `web/package.json`
+
+### [FEATURE] - 2026-09-29
+- **Descrição:** Implementação da Home Page (Fase 3) com feed de vagas, campo de busca duplo (`HeroSearch`) e barra lateral de filtros colapsável (`SidebarFilters`). Navegação e filtros integrados via URL (`useSearchParams` e `useRouter` do Next.js) e consumindo a rota GET da API backend (`/api/v1/jobs`). Abertura animada do `JobDetailsModal` integrada aos cards.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/app/page.tsx`, `web/src/components/SidebarFilters.tsx`, `web/src/components/HeroSearch.tsx`, `web/src/components/__tests__/SidebarFilters.test.tsx`
+
+### [TEST] - 2026-09-29
+- **Descrição:** Configuração do ecossistema de testes unitários no frontend com Vitest, React Testing Library e happy-dom. Implementação de 11 suítes de testes cobrindo os componentes atômicos (`Badge`, `JobCard`, `JobCardSkeleton`, `JobDetailsModal`). Todos os testes estão passando (Verde).
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/vitest.config.ts`, `web/vitest.setup.ts`, `web/package.json`, `web/src/components/ui/__tests__/Badge.test.tsx`, `web/src/components/__tests__/JobCard.test.tsx`, `web/src/components/__tests__/JobCardSkeleton.test.tsx`, `web/src/components/__tests__/JobDetailsModal.test.tsx`
+
+### [BUGFIX] - 2026-09-29
+- **Descrição:** Correção da tipagem de props no `RootLayout` (`web/src/app/layout.tsx`), substituindo a referência inexistente `LayoutProps<"/">` por `Readonly<{ children: React.ReactNode }>`.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/app/layout.tsx`
+
 ### [FACT] - 2026-09-29
 - **Descrição:** Inicialização do frontend com Next.js App Router, Tailwind CSS, TypeScript e configuração base de componentes (Badge, JobCard, JobCardSkeleton, JobDetailsModal), além da criação da tipagem `Job` espelhando o backend e a configuração do axios no `api.ts`.
 - **Escopo:** `/web`
