@@ -17,6 +17,25 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 - **Escopo:** `/server` e `/web`
 - **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/prisma/seed.ts`, `server/src/schemas/job.schema.ts`, `server/src/services/job.service.ts`, `web/src/types/job.ts`, `web/src/components/JobCard.tsx`, `web/src/components/JobDetailsModal.tsx`, `web/src/components/SidebarFilters.tsx`, `web/src/app/page.tsx`, `web/src/app/jobs/new/page.tsx`
 
+### [BUGFIX] - 2026-09-29
+- **Descrição:** Correções estritas de tipagem e persistência na aplicação após as mudanças do modelo de Vagas.
+  1. Corrigida a omissão dos campos `contactEmail` e `contactPhone` na gravação do banco pelo `job.service.ts`.
+  2. Resolvida incompatibilidade de tipagem entre `react-hook-form` e `@hookform/resolvers/zod` alterando o tratamento de inputs de salário para `z.coerce.number()`, e garantindo que o tipo base da form (JobFormValues) respeite `z.infer`.
+  3. Removidos avisos e usos arbitrários de tipos `any` nos requests à API do IBGE nos componentes `HeroSearch` e no formulário de criação.
+  4. Extensão da interface `BadgeProps` em `Badge.tsx` para suporte dinâmico a `className` customizados (HTMLAttributes).
+  5. Atualização da importação de tipos `ThemeProviderProps` em `ThemeProvider.tsx` para adequação às versões modernas do `next-themes`.
+- **Escopo:** `/server` e `/web`
+- **Arquivos Afetados:** `server/src/services/job.service.ts`, `server/src/schemas/job.schema.ts`, `web/src/app/jobs/new/page.tsx`, `web/src/components/HeroSearch.tsx`, `web/src/components/ui/Badge.tsx`, `web/src/components/ThemeProvider.tsx`
+
+### [TEST] - 2026-09-29
+- **Descrição:** Refatoração nas suítes de testes Vitest (Front-end) e verificação E2E para refletirem o novo contrato da API de vagas (`EducationLevel`, individualização de benefícios e dados opcionais), totalizando 14 testes vitoriosos (100% Passing).
+- **Escopo:** `/web/src/components/__tests__`
+- **Arquivos Afetados:** `JobCard.test.tsx`, `JobDetailsModal.test.tsx`, `SidebarFilters.test.tsx`
+
+### [DOCS] - 2026-09-29
+- **Descrição:** Atualização da documentação base do monorepo, incluindo `README.md` com menções a `concurrently` e uso rigoroso do Zod, e alinhamento tático nas `Instructions.md`.
+
+
 ### [FEATURE] - 2026-09-29
 - **Descrição:** Adição de Dark Mode à aplicação utilizando `next-themes` e `ThemeProvider`. Implementado o seletor dinâmico de tema (claro/escuro) diretamente no novo componente `Header`. O tema principal do design system foi redesenhado sob a regra 60/30/10, adotando um azul vibrante (`#2563EB`) como Primary.
 - **Escopo:** `/web`
