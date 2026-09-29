@@ -1,11 +1,11 @@
 import React from 'react';
 
-interface BadgeProps {
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   variant?: 'default' | 'success';
 }
 
-export function Badge({ children, variant = 'default' }: BadgeProps) {
+export function Badge({ children, variant = 'default', className = '', ...props }: BadgeProps) {
   const baseClasses = "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2";
   
   const variants = {
@@ -14,7 +14,7 @@ export function Badge({ children, variant = 'default' }: BadgeProps) {
   };
 
   return (
-    <div className={`${baseClasses} ${variants[variant]}`}>
+    <div className={`${baseClasses} ${variants[variant]} ${className}`.trim()} {...props}>
       {children}
     </div>
   );

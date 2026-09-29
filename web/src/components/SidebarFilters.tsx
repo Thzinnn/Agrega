@@ -3,7 +3,7 @@ import React from 'react';
 export interface FilterState {
   workplaceType: string[];
   hasSalary: boolean;
-  levels: string[];
+  education: string[];
   contractTypes: string[];
   minSalary: string;
   maxSalary: string;
@@ -19,7 +19,7 @@ export function SidebarFilters({ filters, onChange }: SidebarFiltersProps) {
     onChange({ ...filters, [key]: !filters[key] });
   };
 
-  const handleArrayToggle = (key: 'levels' | 'contractTypes' | 'workplaceType', value: string) => {
+  const handleArrayToggle = (key: 'education' | 'contractTypes' | 'workplaceType', value: string) => {
     const current = filters[key];
     const updated = current.includes(value)
       ? current.filter((item) => item !== value)
@@ -56,21 +56,29 @@ export function SidebarFilters({ filters, onChange }: SidebarFiltersProps) {
       <div className="w-full h-px bg-brand-60"></div>
 
       <div className="flex flex-col gap-3">
-        <h3 className="font-bold text-sm text-brand-text">Nível</h3>
-        <div className="flex flex-col gap-2.5">
+        <h3 className="font-bold text-sm text-brand-text">Escolaridade</h3>
+        <div className="flex flex-col gap-2.5 max-h-60 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-brand-60 scrollbar-track-transparent">
           {[
-            { label: 'Júnior', value: 'JUNIOR' },
-            { label: 'Pleno', value: 'MID' },
-            { label: 'Sênior', value: 'SENIOR' }
-          ].map((level) => (
-            <label key={level.value} className="flex items-center gap-3 cursor-pointer group p-1 -ml-1 rounded transition-colors hover:bg-brand-60/50">
+            { label: 'Ens. Fundamental 1 - Incompleto', value: 'FUNDAMENTAL_1_INCOMPLETE' },
+            { label: 'Ens. Fundamental 1 - Completo', value: 'FUNDAMENTAL_1_COMPLETE' },
+            { label: 'Ens. Fundamental 2 - Incompleto', value: 'FUNDAMENTAL_2_INCOMPLETE' },
+            { label: 'Ens. Fundamental 2 - Completo', value: 'FUNDAMENTAL_2_COMPLETE' },
+            { label: 'Ensino Médio - Incompleto', value: 'MEDIO_INCOMPLETE' },
+            { label: 'Ensino Médio - Completo', value: 'MEDIO_COMPLETE' },
+            { label: 'Graduação - Incompleta', value: 'SUPERIOR_INCOMPLETE' },
+            { label: 'Graduação - Completa', value: 'SUPERIOR_COMPLETE' },
+            { label: 'Pós-graduação', value: 'POS_GRADUACAO' },
+            { label: 'Mestrado', value: 'MESTRADO' },
+            { label: 'Doutorado', value: 'DOUTORADO' }
+          ].map((edu) => (
+            <label key={edu.value} className="flex items-center gap-3 cursor-pointer group p-1 -ml-1 rounded transition-colors hover:bg-brand-60/50">
               <input
                 type="checkbox"
-                checked={filters.levels.includes(level.value)}
-                onChange={() => handleArrayToggle('levels', level.value)}
+                checked={filters.education.includes(edu.value)}
+                onChange={() => handleArrayToggle('education', edu.value)}
                 className="w-4 h-4 text-brand-10 rounded border-brand-muted/30 focus:ring-brand-10"
               />
-              <span className="text-sm text-brand-muted font-medium group-hover:text-brand-text transition-colors">{level.label}</span>
+              <span className="text-sm text-brand-muted font-medium group-hover:text-brand-text transition-colors leading-tight">{edu.label}</span>
             </label>
           ))}
         </div>

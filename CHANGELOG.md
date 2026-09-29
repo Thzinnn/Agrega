@@ -7,6 +7,17 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 ## [Unreleased]
 
 ### [FEATURE] - 2026-09-29
+- **Descrição:** Refatoração substancial do modelo de Vagas. 
+  1. O Nível de Senioridade (Júnior, Pleno, Sênior) foi removido e substituído por **Escolaridade**, abrangendo 11 níveis (desde Ensino Fundamental 1 Incompleto até Doutorado).
+  2. Implementação de salário exato (`salary`) isolado da faixa salarial (`salaryMin`/`salaryMax`), com validação que impede o preenchimento simultâneo.
+  3. Desmembramento do campo de texto `benefits` em chaves booleanas independentes no banco de dados para os benefícios padrão: Vale Alimentação (VA), Vale Refeição (VR), Vale Transporte (VT), Seguro de Vida, Assistência Médica e Assistência Odontológica.
+  4. O Autocomplete de Cidades (IBGE - São Paulo) foi implementado também no formulário de Criação de Vagas, garantindo padronização na entrada de dados de localidade.
+  5. Os benefícios (VA, VR, VT, etc) agora são listados individualmente como tags (badges) nos cards das vagas, ao invés de um badge genérico "Benefícios".
+  6. Múltiplos meios de contato: Foram adicionados campos de E-mail (`contactEmail`) e Telefone/WhatsApp (`contactPhone`) no banco de dados e formulário. O link de candidatura (`applicationUrl`) agora é opcional, porém a vaga exige pelo menos uma das três opções de contato para ser publicada. Esses meios são exibidos interativamente na seção "Entre em Contato" no final do Modal da Vaga.
+- **Escopo:** `/server` e `/web`
+- **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/prisma/seed.ts`, `server/src/schemas/job.schema.ts`, `server/src/services/job.service.ts`, `web/src/types/job.ts`, `web/src/components/JobCard.tsx`, `web/src/components/JobDetailsModal.tsx`, `web/src/components/SidebarFilters.tsx`, `web/src/app/page.tsx`, `web/src/app/jobs/new/page.tsx`
+
+### [FEATURE] - 2026-09-29
 - **Descrição:** Adição de Dark Mode à aplicação utilizando `next-themes` e `ThemeProvider`. Implementado o seletor dinâmico de tema (claro/escuro) diretamente no novo componente `Header`. O tema principal do design system foi redesenhado sob a regra 60/30/10, adotando um azul vibrante (`#2563EB`) como Primary.
 - **Escopo:** `/web`
 - **Arquivos Afetados:** `web/src/components/Header.tsx`, `web/src/components/ThemeProvider.tsx`, `web/src/app/globals.css`, `web/src/app/layout.tsx`

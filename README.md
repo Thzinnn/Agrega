@@ -68,21 +68,18 @@ npm run seed
 ```
 
 ### 5. Execução do Projeto
-Por se tratar de um monorepo, você pode subir ambos (backend e frontend) em terminais distintos, ou a partir da raiz caso haja scripts unificados.
+O projeto utiliza a biblioteca `concurrently` configurada na raiz do monorepo para iniciar os dois pacotes em um único comando sem conflitos de portas.
 
-Para subir o **backend** (porta `3333`):
+Suba o backend e o frontend simultaneamente:
 ```bash
-cd server
+# Na raiz do repositório (d:\Nova pasta\Agrega)
 npm run dev
 ```
 
-Para subir o **frontend** (porta padrão do Next.js `3000`):
-```bash
-cd web
-npm run dev
-```
+- O **Frontend** iniciará na porta `3000`: [http://localhost:3000](http://localhost:3000)
+- O **Backend** iniciará na porta `3333`: [http://localhost:3333](http://localhost:3333)
 
-Acesse o portal em: [http://localhost:3000](http://localhost:3000)
+> **Nota:** Certifique-se de não possuir outros processos ativos nestas portas para evitar o erro `EADDRINUSE`.
 
 ---
 
@@ -95,17 +92,17 @@ Acesse o portal em: [http://localhost:3000](http://localhost:3000)
 │   ├── src/
 │   │   ├── controllers/      # Roteamento lógico
 │   │   ├── services/         # Regras de negócio principais
-│   │   ├── schemas/          # Validações Zod (Ex: Vagas e Salários opcionais)
+│   │   ├── schemas/          # Validações Zod estritas (Ex: Regras de contato e faixas salariais)
 │   │   ├── middlewares/      # Tratamento de Erros (Ex: 503 db disconnect)
-│   │   └── __tests__/        # Suítes de validações
+│   │   └── __tests__/        # Suítes de validações de regras de negócio
 │   └── package.json
 │
 ├── web/                      # Frontend Next.js
 │   ├── src/
-│   │   ├── app/              # Estrutura do App Router (Páginas principais)
-│   │   ├── components/       # Componentes React (Badge, JobCard, JobDetailsModal, etc)
-│   │   ├── lib/              # Utilitários globais (Configuração do Axios)
-│   │   └── types/            # Interfaces exportadas/espelhadas do Backend
+│   │   ├── app/              # Estrutura do App Router (Home, Jobs/New)
+│   │   ├── components/       # Componentes React
+│   │   ├── lib/              # Utilitários globais (Axios, API IBGE)
+│   │   └── types/            # Interfaces (Totalmente sincronizadas com o backend)
 │   └── package.json
 │
 ├── Constitution.md           # Regras do projeto
@@ -115,10 +112,11 @@ Acesse o portal em: [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## 🧩 Componentes do Sistema (Fase 2+)
+## 🧩 Componentes e Funcionalidades Core
 
-No frontend, a aplicação segue a arquitetura de **Atomic Design**, contendo componentes primários já configurados para performance:
-- **`Badge`**: Etiqueta visual para indicar de forma amigável categorias salariais e benefícios.
-- **`JobCard`**: Elemento base e interativo da vitrine.
-- **`JobCardSkeleton`**: Feedback de loading durante chamadas de API (Pulse Animation).
-- **`JobDetailsModal`**: Componente isolado e animado para os detalhes das vagas (Framer Motion `layoutId`).
+A aplicação possui validação fim-a-fim, formulários dinâmicos e UI reativa:
+- **Dark Mode**: Suporte nativo a temas Claro/Escuro usando `next-themes` na regra de proporção visual 60/30/10 com o Primary Azul (`#2563EB`).
+- **Formulários Estritos**: Implementados usando `react-hook-form` + `@hookform/resolvers/zod` para inferência exata e validações visuais antes de acionar a API (como o Regex de telefone, validação condicional de salários exatos vs. piso/teto).
+- **Autocomplete IBGE**: Os formulários buscam cidades do estado de São Paulo de forma dinâmica da API pública de localidades do IBGE.
+- **Microinterações**: O projeto utiliza **Framer Motion** (`layoutId`) para transição de Cards para Modais animados de Vagas, gerando fluidez nas interações.
+- **Benefícios e Contato Condicional**: As listagens das vagas apresentam sub-emblemas para cada benefício habilitado (VA, VR, VT) e geram automações no "Entre em Contato" (como `mailto:` no e-mail e `wa.me/` no telefone).

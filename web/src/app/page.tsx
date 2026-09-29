@@ -22,7 +22,7 @@ function JobsContent() {
   const initialFilters: FilterState = {
     workplaceType: searchParams.getAll('workplaceType'),
     hasSalary: searchParams.get('hasSalary') === 'true',
-    levels: searchParams.getAll('level'),
+    education: searchParams.getAll('education'),
     contractTypes: searchParams.getAll('contractType'),
     minSalary: searchParams.get('minSalary') || '',
     maxSalary: searchParams.get('maxSalary') || '',
@@ -54,7 +54,7 @@ function JobsContent() {
     updateUrl({
       workplaceType: filters.workplaceType,
       hasSalary: filters.hasSalary || undefined,
-      level: filters.levels,
+      education: filters.education,
       contractType: filters.contractTypes,
       minSalary: filters.minSalary,
       maxSalary: filters.maxSalary,

@@ -19,7 +19,7 @@ export class JobService {
       q,
       location,
       workplaceType,
-      level,
+      education,
       contractType,
       minSalary,
       maxSalary,
@@ -61,10 +61,10 @@ export class JobService {
       });
     }
 
-    // Experience level (e.g. JUNIOR, MID, SENIOR)
-    if (level && level.length > 0) {
+    // Education level
+    if (education && education.length > 0) {
       andConditions.push({
-        level: { in: level },
+        education: { in: education },
       });
     }
 
@@ -79,8 +79,9 @@ export class JobService {
     if (minSalary !== undefined) {
       andConditions.push({
         OR: [
+          { salary: { gte: minSalary } },
           { salaryMax: { gte: minSalary } },
-          { AND: [{ salaryMax: null }, { salaryMin: { gte: minSalary } }] },
+          { AND: [{ salaryMax: null, salary: null }, { salaryMin: { gte: minSalary } }] },
         ],
       });
     }
@@ -88,22 +89,25 @@ export class JobService {
     if (maxSalary !== undefined) {
       andConditions.push({
         OR: [
+          { salary: { lte: maxSalary } },
           { salaryMin: { lte: maxSalary } },
-          { AND: [{ salaryMin: null }, { salaryMax: { lte: maxSalary } }] },
+          { AND: [{ salaryMin: null, salary: null }, { salaryMax: { lte: maxSalary } }] },
         ],
       });
     }
 
-    // Salary filter - Existence (hasSalary: true -> com salário informado; false -> a combinar / sem salário)
+    // Salary filter - Existence
     if (hasSalary === true) {
       andConditions.push({
         OR: [
+          { salary: { not: null } },
           { salaryMin: { not: null } },
           { salaryMax: { not: null } },
         ],
       });
     } else if (hasSalary === false) {
       andConditions.push({
+        salary: null,
         salaryMin: null,
         salaryMax: null,
       });
@@ -160,12 +164,21 @@ export class JobService {
         description: data.description,
         location: data.location,
         workplaceType: data.workplaceType,
-        level: data.level,
+        education: data.education,
         contractType: data.contractType,
         benefits: data.benefits ?? null,
+        hasVA: data.hasVA ?? false,
+        hasVR: data.hasVR ?? false,
+        hasVT: data.hasVT ?? false,
+        hasLifeInsurance: data.hasLifeInsurance ?? false,
+        hasMedicalInsurance: data.hasMedicalInsurance ?? false,
+        hasDentalInsurance: data.hasDentalInsurance ?? false,
+        salary: data.salary ?? null,
         salaryMin: data.salaryMin ?? null,
         salaryMax: data.salaryMax ?? null,
-        applicationUrl: data.applicationUrl,
+        applicationUrl: data.applicationUrl ?? null,
+        contactEmail: data.contactEmail ?? null,
+        contactPhone: data.contactPhone ?? null,
         source: data.source ?? 'MANUAL',
         isActive: data.isActive ?? true,
       },

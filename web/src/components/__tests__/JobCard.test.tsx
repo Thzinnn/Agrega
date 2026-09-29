@@ -11,14 +11,23 @@ const mockJob: Job = {
   location: 'São Paulo, SP',
   description: 'Descrição completa da vaga',
   workplaceType: 'REMOTE',
-  level: 'MID',
+  education: 'SUPERIOR_COMPLETE',
   contractType: 'CLT',
+  salary: null,
   salaryMin: 10000,
   salaryMax: 10000,
   applicationUrl: 'https://example.com',
+  contactEmail: null,
+  contactPhone: null,
   source: 'MANUAL',
   isActive: true,
-  benefits: 'VR, VT, Plano de Saúde',
+  benefits: 'Plano de Saúde',
+  hasVA: true,
+  hasVR: true,
+  hasVT: false,
+  hasLifeInsurance: false,
+  hasMedicalInsurance: false,
+  hasDentalInsurance: false,
   createdAt: '2023-10-01T00:00:00.000Z',
   updatedAt: '2023-10-01T00:00:00.000Z',
 };
@@ -36,15 +45,17 @@ describe('JobCard Component', () => {
     render(<JobCard job={mockJob} />);
     
     expect(screen.getByText('R$ 10.000 - R$ 10.000')).toBeInTheDocument();
-    expect(screen.getByText('Benefícios')).toBeInTheDocument();
+    expect(screen.getByText('VA')).toBeInTheDocument();
+    expect(screen.getByText('VR')).toBeInTheDocument();
   });
 
   it('does not render salary and benefits badges if null', () => {
-    const jobWithoutOptionals: Job = { ...mockJob, salaryMin: null, salaryMax: null, benefits: null };
+    const jobWithoutOptionals: Job = { ...mockJob, salaryMin: null, salaryMax: null, benefits: null, hasVA: false, hasVR: false };
     render(<JobCard job={jobWithoutOptionals} />);
     
     expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
     expect(screen.queryByText('Benefícios')).not.toBeInTheDocument();
+    expect(screen.queryByText('VA')).not.toBeInTheDocument();
   });
 
   it('calls onClick handler when clicked', async () => {

@@ -11,14 +11,23 @@ const mockJob: Job = {
   location: 'São Paulo, SP',
   description: 'Descrição completa da vaga',
   workplaceType: 'REMOTE',
-  level: 'MID',
+  education: 'SUPERIOR_COMPLETE',
   contractType: 'CLT',
+  salary: null,
   salaryMin: 10000,
   salaryMax: 10000,
   applicationUrl: 'https://example.com',
+  contactEmail: null,
+  contactPhone: null,
   source: 'MANUAL',
   isActive: true,
-  benefits: 'VR, VT, Plano de Saúde',
+  benefits: 'Plano de Saúde',
+  hasVA: true,
+  hasVR: true,
+  hasVT: false,
+  hasLifeInsurance: false,
+  hasMedicalInsurance: false,
+  hasDentalInsurance: false,
   createdAt: '2023-10-01T00:00:00.000Z',
   updatedAt: '2023-10-01T00:00:00.000Z',
 };
@@ -35,7 +44,7 @@ describe('JobDetailsModal Component', () => {
     expect(screen.getByText('Tech Corp')).toBeInTheDocument();
     expect(screen.getByText('Descrição completa da vaga')).toBeInTheDocument();
     expect(screen.getByText('R$ 10.000 - R$ 10.000')).toBeInTheDocument();
-    expect(screen.getByText('VR, VT, Plano de Saúde')).toBeInTheDocument();
+    expect(screen.getByText('Plano de Saúde')).toBeInTheDocument();
   });
 
   it('calls onClose when close button is clicked', async () => {

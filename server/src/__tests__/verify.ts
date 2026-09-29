@@ -9,12 +9,12 @@ const validJob = {
   description: 'Desenvolvimento de sistemas escaláveis com Node.js e React.',
   location: 'São Paulo, SP',
   workplaceType: 'REMOTE',
-  level: 'SENIOR',
+  education: 'SUPERIOR_COMPLETE',
   contractType: 'CLT',
   benefits: 'R$ 15.000 + Benefícios',
   salaryMin: 12000,
   salaryMax: 15000,
-  applicationUrl: 'https://techsolutions.example.com/apply',
+  contactEmail: 'rh@techsolutions.com',
 };
 
 const parseValidResult = createJobSchema.safeParse(validJob);
@@ -31,7 +31,7 @@ const jobWithoutSalary = {
   description: 'Criação de fluxos de usuário e design system.',
   location: 'Remoto',
   workplaceType: 'REMOTE',
-  level: 'MID',
+  education: 'MEDIO_COMPLETE',
   contractType: 'PJ',
   applicationUrl: 'https://studiodesign.example.com/jobs/designer',
   benefits: '', // string vazia vinda de formulário
@@ -68,6 +68,7 @@ console.log('✅ Teste 3: Rejeição de salário máximo menor que mínimo passo
 // Test 4: Invalid URL
 const invalidUrlJob = {
   ...validJob,
+  contactEmail: undefined,
   applicationUrl: 'not-a-valid-url',
 };
 
@@ -78,11 +79,41 @@ if (parseUrlResult.success) {
 }
 console.log('✅ Teste 4: Rejeição de URL inválida passou com sucesso.');
 
+// Test 4b: No Contact Method Given
+const noContactJob = {
+  ...validJob,
+  contactEmail: undefined,
+  contactPhone: '',
+  applicationUrl: '',
+};
+
+const parseNoContactResult = createJobSchema.safeParse(noContactJob);
+if (parseNoContactResult.success) {
+  console.error('❌ Falha no Teste 4b: Deveria rejeitar vaga sem nenhum contato');
+  process.exit(1);
+}
+console.log('✅ Teste 4b: Rejeição de vaga sem meios de contato passou com sucesso.');
+
+// Test 4c: Exact salary WITH salaryMin
+const invalidExactSalaryJob = {
+  ...validJob,
+  salary: 13000,
+  salaryMin: 12000,
+  salaryMax: null,
+};
+
+const parseInvalidExactSalaryResult = createJobSchema.safeParse(invalidExactSalaryJob);
+if (parseInvalidExactSalaryResult.success) {
+  console.error('❌ Falha no Teste 4c: Deveria rejeitar salary junto com salaryMin/Max');
+  process.exit(1);
+}
+console.log('✅ Teste 4c: Rejeição de salário fixo com piso/teto passou com sucesso.');
+
 // Test 5: Query Parsing with comma-separated enums & hasSalary: "true"
 const rawQueryParams1 = {
   q: '  Engenheiro  ',
   workplaceType: 'REMOTE,HYBRID',
-  level: 'MID,SENIOR',
+  education: 'MEDIO_COMPLETE,SUPERIOR_INCOMPLETE',
   contractType: 'CLT,PJ',
   minSalary: '5000',
   maxSalary: '12000',

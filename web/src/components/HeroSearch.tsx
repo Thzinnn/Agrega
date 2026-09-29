@@ -23,7 +23,7 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
         const formatted = [
           'Remoto',
           'Híbrido',
-          ...municipalities.map((m: any) => `${m.nome}, SP`)
+          ...municipalities.map((m: { nome: string }) => `${m.nome}, SP`)
         ];
         // Deduplicate
         setAllLocations(Array.from(new Set(formatted)));

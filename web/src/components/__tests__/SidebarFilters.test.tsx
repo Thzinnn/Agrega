@@ -6,7 +6,7 @@ import { SidebarFilters } from '../SidebarFilters';
 const defaultFilters = {
   workplaceType: [],
   hasSalary: false,
-  levels: [],
+  education: [],
   contractTypes: [],
   minSalary: '',
   maxSalary: '',
@@ -32,15 +32,17 @@ describe('SidebarFilters Component', () => {
     }));
   });
 
-  it('calls onChange when a level is checked', async () => {
+  it('calls onChange when education is checked', async () => {
     const handleChange = vi.fn();
     render(<SidebarFilters filters={defaultFilters} onChange={handleChange} />);
     
-    const juniorCheck = screen.getByLabelText(/Júnior/i);
-    await userEvent.click(juniorCheck);
+    // Procura por um checkbox de escolaridade que exista no SidebarFilters, ex: "Graduação Completa" ou similar
+    // O texto exato renderizado no SidebarFilters é "Graduação - Completa", mas o regex acha parte.
+    const educationCheck = screen.getByLabelText(/Graduação - Completa/i);
+    await userEvent.click(educationCheck);
     
     expect(handleChange).toHaveBeenCalledWith(expect.objectContaining({
-      levels: ['JUNIOR']
+      education: ['SUPERIOR_COMPLETE']
     }));
   });
 });

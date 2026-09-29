@@ -12,6 +12,9 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const formattedDate = new Date(job.createdAt).toLocaleDateString('pt-BR');
 
   const renderSalary = () => {
+    if (job.salary) {
+      return `R$ ${job.salary.toLocaleString('pt-BR')}`;
+    }
     if (job.salaryMin && job.salaryMax) {
       return `R$ ${job.salaryMin.toLocaleString('pt-BR')} - R$ ${job.salaryMax.toLocaleString('pt-BR')}`;
     }
@@ -58,7 +61,37 @@ export function JobCard({ job, onClick }: JobCardProps) {
               {salaryText}
             </Badge>
           )}
-          {job.benefits && (
+          {job.hasVA && (
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
+              VA
+            </Badge>
+          )}
+          {job.hasVR && (
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
+              VR
+            </Badge>
+          )}
+          {job.hasVT && (
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
+              VT
+            </Badge>
+          )}
+          {job.hasLifeInsurance && (
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
+              Seguro de Vida
+            </Badge>
+          )}
+          {job.hasMedicalInsurance && (
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
+              Assist. Médica
+            </Badge>
+          )}
+          {job.hasDentalInsurance && (
+            <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
+              Assist. Odonto
+            </Badge>
+          )}
+          {job.benefits && !job.hasVA && !job.hasVR && !job.hasVT && !job.hasLifeInsurance && !job.hasMedicalInsurance && !job.hasDentalInsurance && (
             <Badge variant="success" className="bg-brand-accent/10 text-brand-accent border-brand-accent/20">
               Benefícios
             </Badge>

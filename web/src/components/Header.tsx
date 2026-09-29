@@ -25,15 +25,24 @@ export function Header() {
           </span>
         </Link>
         
-        {mounted && (
-          <button
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-            className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-60 text-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-10"
-            aria-label="Alternar tema"
+        <div className="flex items-center gap-4">
+          <Link
+            href="/jobs/new"
+            className="hidden sm:flex items-center gap-2 bg-brand-10 hover:bg-brand-10-hover text-white px-4 py-2 rounded-xl font-bold transition-all shadow-sm active:scale-95 text-sm"
           >
-            {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-          </button>
-        )}
+            Publicar Vaga
+          </Link>
+
+          {mounted && (
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-60 text-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-10"
+              aria-label="Alternar tema"
+            >
+              {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );

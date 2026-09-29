@@ -13,12 +13,18 @@ enum WorkplaceType {
   ON_SITE
 }
 
-enum JobLevel {
-  INTERN
-  JUNIOR
-  MID
-  SENIOR
-  LEAD
+enum EducationLevel {
+  FUNDAMENTAL_1_INCOMPLETE
+  FUNDAMENTAL_1_COMPLETE
+  FUNDAMENTAL_2_INCOMPLETE
+  FUNDAMENTAL_2_COMPLETE
+  MEDIO_INCOMPLETE
+  MEDIO_COMPLETE
+  SUPERIOR_INCOMPLETE
+  SUPERIOR_COMPLETE
+  POS_GRADUACAO
+  MESTRADO
+  DOUTORADO
 }
 
 enum ContractType {
@@ -28,25 +34,34 @@ enum ContractType {
 }
 
 model Job {
-  id             String        @id @default(uuid())
-  title          String
-  company        String
-  description    String        @db.Text
-  location       String
-  workplaceType  WorkplaceType
-  level          JobLevel
-  contractType   ContractType  @default(CLT)
-  benefits       String?       // Benefício ou destaque salarial exibido na box verde
-  salaryMin      Float?
-  salaryMax      Float?
-  applicationUrl String
-  source         String        @default("MANUAL")
-  isActive       Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                  String        @id @default(uuid())
+  title               String
+  company             String
+  description         String        @db.Text
+  location            String
+  workplaceType       WorkplaceType
+  education           EducationLevel
+  contractType        ContractType  @default(CLT)
+  benefits            String?
+  hasVA               Boolean       @default(false)
+  hasVR               Boolean       @default(false)
+  hasVT               Boolean       @default(false)
+  hasLifeInsurance    Boolean       @default(false)
+  hasMedicalInsurance Boolean       @default(false)
+  hasDentalInsurance  Boolean       @default(false)
+  salary              Float?
+  salaryMin           Float?
+  salaryMax           Float?
+  applicationUrl      String?
+  contactEmail        String?
+  contactPhone        String?
+  source              String        @default("MANUAL")
+  isActive            Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   @@index([workplaceType])
-  @@index([level])
+  @@index([education])
   @@index([contractType])
   @@index([createdAt(sort: Desc)])
 }

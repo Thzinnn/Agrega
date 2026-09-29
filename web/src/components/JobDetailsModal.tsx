@@ -1,7 +1,7 @@
 import { Job } from '@/types/job';
 import { Badge } from '@/components/ui/Badge';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, MapPin, Building2, Calendar, DollarSign, Gift } from 'lucide-react';
+import { X, MapPin, Building2, Calendar, DollarSign, Gift, Phone, Mail, ExternalLink } from 'lucide-react';
 
 interface JobDetailsModalProps {
   job: Job | null;
@@ -55,11 +55,13 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                 </div>
 
                 <div className="flex flex-wrap gap-3">
-                  {(job.salaryMin || job.salaryMax) && (
+                  {(job.salary || job.salaryMin || job.salaryMax) && (
                     <div className="flex items-center gap-2 rounded-xl border border-brand-accent/20 bg-brand-accent/10 px-4 py-2 text-brand-accent">
                       <DollarSign className="w-4 h-4" />
                       <span className="font-bold">
-                        {job.salaryMin && job.salaryMax
+                        {job.salary 
+                          ? `R$ ${job.salary.toLocaleString('pt-BR')}`
+                          : job.salaryMin && job.salaryMax
                           ? `R$ ${job.salaryMin.toLocaleString('pt-BR')} - R$ ${job.salaryMax.toLocaleString('pt-BR')}`
                           : job.salaryMin
                           ? `A partir de R$ ${job.salaryMin.toLocaleString('pt-BR')}`
@@ -67,7 +69,7 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                       </span>
                     </div>
                   )}
-                  {job.benefits && (
+                  {(job.benefits || job.hasVA || job.hasVR || job.hasVT || job.hasLifeInsurance || job.hasMedicalInsurance || job.hasDentalInsurance) && (
                     <div className="flex items-center gap-2 rounded-xl border border-brand-accent/20 bg-brand-accent/10 px-4 py-2 text-brand-accent">
                       <Gift className="w-4 h-4" />
                       <span className="font-bold">Benefícios Inclusos</span>
@@ -82,14 +84,48 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                   </div>
                 </div>
                 
-                {job.benefits && (
+                {(job.benefits || job.hasVA || job.hasVR || job.hasVT || job.hasLifeInsurance || job.hasMedicalInsurance || job.hasDentalInsurance) && (
                   <div className="space-y-4 bg-brand-60/50 p-5 rounded-2xl">
                     <h3 className="font-bold text-lg text-brand-text">Benefícios Detalhados</h3>
-                    <div className="text-brand-muted whitespace-pre-wrap leading-relaxed text-sm font-medium">
-                      {job.benefits}
-                    </div>
+                    <ul className="list-disc pl-5 text-brand-muted text-sm font-medium mb-3">
+                      {job.hasVA && <li>Vale Alimentação (VA)</li>}
+                      {job.hasVR && <li>Vale Refeição (VR)</li>}
+                      {job.hasVT && <li>Vale Transporte (VT)</li>}
+                      {job.hasLifeInsurance && <li>Seguro de Vida</li>}
+                      {job.hasMedicalInsurance && <li>Assistência Médica</li>}
+                      {job.hasDentalInsurance && <li>Assistência Odontológica</li>}
+                    </ul>
+                    {job.benefits && (
+                      <div className="text-brand-muted whitespace-pre-wrap leading-relaxed text-sm font-medium">
+                        {job.benefits}
+                      </div>
+                    )}
                   </div>
                 )}
+
+                <div className="space-y-4 bg-brand-10/10 p-5 rounded-2xl border border-brand-10/20">
+                  <h3 className="font-bold text-lg text-brand-text">Entre em Contato</h3>
+                  <div className="flex flex-col gap-3">
+                    {job.applicationUrl && (
+                      <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-brand-10 hover:underline font-medium break-all">
+                        <ExternalLink className="w-5 h-5 shrink-0" />
+                        Acessar Link da Vaga
+                      </a>
+                    )}
+                    {job.contactEmail && (
+                      <a href={`mailto:${job.contactEmail}`} className="flex items-center gap-2 text-brand-10 hover:underline font-medium break-all">
+                        <Mail className="w-5 h-5 shrink-0" />
+                        {job.contactEmail}
+                      </a>
+                    )}
+                    {job.contactPhone && (
+                      <a href={`https://wa.me/${job.contactPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-brand-10 hover:underline font-medium">
+                        <Phone className="w-5 h-5 shrink-0" />
+                        {job.contactPhone}
+                      </a>
+                    )}
+                  </div>
+                </div>
               </div>
             </motion.div>
           </div>

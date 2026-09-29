@@ -107,7 +107,7 @@ Ação de Clique (Expansão para Modal):
 
 O clique em qualquer parte do card dispara a abertura de um modal animado usando Framer Motion (layoutId), criando o efeito de expansão contínua do próprio card.
 
-Conteúdo do Modal: Detalhes completos da vaga, descrição integral, requisitos, informações da empresa, data exata de postagem e botão fixo/destacado "Candidatar-se à vaga" com link externo seguro (target="_blank" rel="noopener noreferrer").
+Conteúdo do Modal: Detalhes completos da vaga, descrição integral, requisitos, informações da empresa, data exata de postagem. No rodapé, uma seção "Entre em Contato" exibindo de forma interativa todos os métodos informados pela empresa: Link externo seguro (target="_blank"), E-mail (mailto:) e Telefone/WhatsApp (wa.me/).
 
 5. Passo a Passo de Execução para a IA
 Fase 0: Setup da Raiz e Monorepo
@@ -148,12 +148,18 @@ enum WorkplaceType {
   ON_SITE
 }
 
-enum JobLevel {
-  INTERN
-  JUNIOR
-  MID
-  SENIOR
-  LEAD
+enum EducationLevel {
+  FUNDAMENTAL_1_INCOMPLETE
+  FUNDAMENTAL_1_COMPLETE
+  FUNDAMENTAL_2_INCOMPLETE
+  FUNDAMENTAL_2_COMPLETE
+  MEDIO_INCOMPLETE
+  MEDIO_COMPLETE
+  SUPERIOR_INCOMPLETE
+  SUPERIOR_COMPLETE
+  POS_GRADUACAO
+  MESTRADO
+  DOUTORADO
 }
 
 enum ContractType {
@@ -163,25 +169,34 @@ enum ContractType {
 }
 
 model Job {
-  id             String        @id @default(uuid())
-  title          String
-  company        String
-  description    String        @db.Text
-  location       String
-  workplaceType  WorkplaceType
-  level          JobLevel
-  contractType   ContractType  @default(CLT)
-  benefits       String?       // Benefício ou destaque salarial exibido na box verde
-  salaryMin      Float?
-  salaryMax      Float?
-  applicationUrl String
-  source         String        @default("MANUAL")
-  isActive       Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                  String        @id @default(uuid())
+  title               String
+  company             String
+  description         String        @db.Text
+  location            String
+  workplaceType       WorkplaceType
+  education           EducationLevel
+  contractType        ContractType  @default(CLT)
+  benefits            String?
+  hasVA               Boolean       @default(false)
+  hasVR               Boolean       @default(false)
+  hasVT               Boolean       @default(false)
+  hasLifeInsurance    Boolean       @default(false)
+  hasMedicalInsurance Boolean       @default(false)
+  hasDentalInsurance  Boolean       @default(false)
+  salary              Float?
+  salaryMin           Float?
+  salaryMax           Float?
+  applicationUrl      String?
+  contactEmail        String?
+  contactPhone        String?
+  source              String        @default("MANUAL")
+  isActive            Boolean       @default(true)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   @@index([workplaceType])
-  @@index([level])
+  @@index([education])
   @@index([contractType])
   @@index([createdAt(sort: Desc)])
 }
@@ -228,7 +243,7 @@ Página de Cadastro (src/app/jobs/new/page.tsx):
 
 Formulário completo usando React Hook Form e Zod.
 
-Campos: Título, Empresa, Local, Modalidade, Nível, Tipo de Contrato, Benefício/Destaque, Salário Mínimo/Máximo, Link de Candidatura e Descrição.
+Campos: Título, Empresa, Local (Autocomplete IBGE), Modalidade, Escolaridade (11 níveis), Tipo de Contrato, Benefícios Padrão (VA, VR, VT, Seguro, Saúde, Odonto), Salário Exato vs Piso/Teto (com validação condicional), Meios de Contato (Link, E-mail, Telefone) e Descrição.
 
 Validações em tempo real e redirecionamento para a Home após publicação bem-sucedida.
 
