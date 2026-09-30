@@ -6,6 +6,16 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 
 ## [Unreleased]
 
+### [MODIFY] - 2026-09-30
+- **Descrição:** Auditoria e preparação do frontend `/web` para deploy no Cloudflare Pages. Foram instaladas as dependências `@cloudflare/next-on-pages` e `wrangler` no modo dev, e adicionado o script de build `"pages:build": "npx @cloudflare/next-on-pages"` ao `package.json`. Adicionalmente, foram inseridas as dependências nativas opcionais de compilação para Linux (`@next/swc-linux-x64-gnu`, `@rollup/rollup-linux-x64-gnu`) com a flag `--save-optional` para evitar erros no `npm ci` durante o build no ambiente Ubuntu da Cloudflare (compatibilidade cross-platform).
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/package.json`, `web/package-lock.json`
+
+### [MODIFY] - 2026-09-30
+- **Descrição:** Adaptação da infraestrutura do backend (Express) para suporte ao Cloudflare Workers/Pages. O app foi encapsulado usando `@codegenie/serverless-express` exportando o formato nativo da Fetch API em um novo entry point (`worker.ts`). O cliente do Prisma foi adaptado para instanciar dinamicamente usando `@prisma/adapter-pg` e a connection string do Hyperdrive provida via object `env` do Worker, preservando fallback para `DATABASE_URL` local e a compatibilidade completa com serviços e controllers.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/package.json`, `server/src/worker.ts`, `server/src/lib/prisma.ts`
+
 ### [MODIFY] - 2026-09-29
 - **Descrição:** Atualização visual da aplicação no Frontend.
   1. Cor primária (predominante) alterada para `#1C15A3`.

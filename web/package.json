@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "pages:build": "npx @cloudflare/next-on-pages",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -27,6 +28,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@cloudflare/next-on-pages": "^1.13.16",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/jest-dom": "^7.0.1",
@@ -43,7 +45,12 @@
     "tailwindcss": "^4",
     "typescript": "^5",
     "vite": "^5.4.21",
-    "vitest": "^2.1.9"
+    "vitest": "^2.1.9",
+    "wrangler": "^4.144.0"
   },
-  "type": "module"
+  "type": "module",
+  "optionalDependencies": {
+    "@next/swc-linux-x64-gnu": "^16.3.7",
+    "@rollup/rollup-linux-x64-gnu": "^4.63.5"
+  }
 }
