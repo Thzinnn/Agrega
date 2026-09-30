@@ -5,8 +5,8 @@
 :root {
   --color-brand-60: #F8FAFC; /* slate-50 */
   --color-brand-30: #FFFFFF; /* white */
-  --color-brand-10: #2563EB; /* blue-600 - Primary accent */
-  --color-brand-10-hover: #1D4ED8; /* blue-700 */
+  --color-brand-10: #1C15A3; /* Primary accent */
+  --color-brand-10-hover: #140E8A; /* Darker accent */
   --color-brand-accent: #10B981; /* emerald-500 */
   --color-brand-text: #0F172A; /* slate-900 */
   --color-brand-muted: #64748B; /* slate-500 */
@@ -18,8 +18,8 @@
 .dark {
   --color-brand-60: #020617; /* slate-950 */
   --color-brand-30: #0F172A; /* slate-900 */
-  --color-brand-10: #3B82F6; /* blue-500 */
-  --color-brand-10-hover: #2563EB; /* blue-600 */
+  --color-brand-10: #1C15A3; /* Primary accent */
+  --color-brand-10-hover: #140E8A; /* Darker accent */
   --color-brand-text: #F8FAFC; /* slate-50 */
   --color-brand-muted: #94A3B8; /* slate-400 */
   

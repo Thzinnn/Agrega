@@ -6,6 +6,14 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 
 ## [Unreleased]
 
+### [MODIFY] - 2026-09-29
+- **Descrição:** Atualização visual da aplicação no Frontend.
+  1. Cor primária (predominante) alterada para `#1C15A3`.
+  2. Ícone (Briefcase) ao lado do título da aplicação removido da `Header`.
+  3. Fonte global alterada de Geist para `Poppins` (pesos 100-900) via `next/font/google`.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/app/globals.css`, `web/src/components/Header.tsx`, `web/src/app/layout.tsx`
+
 ### [FEATURE] - 2026-09-29
 - **Descrição:** Refatoração substancial do modelo de Vagas. 
   1. O Nível de Senioridade (Júnior, Pleno, Sênior) foi removido e substituído por **Escolaridade**, abrangendo 11 níveis (desde Ensino Fundamental 1 Incompleto até Doutorado).
