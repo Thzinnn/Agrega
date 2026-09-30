@@ -23,10 +23,11 @@ jobs:
           cache: 'npm'
           cache-dependency-path: 'server/package-lock.json'
 
-      - name: Instalar Dependências
+      - name: Instalar Dependências e Gerar Prisma
         run: |
           cd server
           npm ci
+          npx prisma generate
 
       - name: Deploy Worker (Produção)
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
