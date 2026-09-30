@@ -75,8 +75,8 @@ export default function NewJobPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm<JobFormValues>({
-    resolver: zodResolver(jobSchema) as any,
+  const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
+    resolver: zodResolver(jobSchema),
     defaultValues: {
       hasVA: false,
       hasVR: false,
@@ -104,7 +104,7 @@ export default function NewJobPage() {
           ...municipalities.map((m: { nome: string }) => `${m.nome}, SP`)
         ];
         setAllLocations(Array.from(new Set(formatted)));
-      } catch (e) {
+      } catch {
         setAllLocations(['Remoto', 'Híbrido', 'São Paulo, SP', 'Campinas, SP', 'Ribeirão Preto, SP']);
       }
     };
@@ -191,7 +191,7 @@ export default function NewJobPage() {
       </div>
 
       <div className="bg-brand-30 border border-brand-60 rounded-3xl p-6 md:p-10 shadow-xl">
-        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
           
           {/* Informações Básicas */}
           <div className="space-y-6">

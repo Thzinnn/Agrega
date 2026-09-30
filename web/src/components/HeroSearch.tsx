@@ -27,7 +27,7 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
         ];
         // Deduplicate
         setAllLocations(Array.from(new Set(formatted)));
-      } catch (e) {
+      } catch {
         setAllLocations(['Remoto', 'Híbrido', 'São Paulo, SP', 'Campinas, SP', 'Ribeirão Preto, SP']);
       }
     };

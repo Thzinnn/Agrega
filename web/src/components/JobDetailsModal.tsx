@@ -1,5 +1,4 @@
 import { Job } from '@/types/job';
-import { Badge } from '@/components/ui/Badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, MapPin, Building2, Calendar, DollarSign, Gift, Phone, Mail, ExternalLink } from 'lucide-react';
 

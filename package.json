@@ -5,24 +5,9 @@
     "dev:server": "npm --prefix server run dev",
     "dev:web": "npm --prefix web run dev",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:web\"",
-    "seed": "npm --prefix server run seed",
-    "dev:vinext": "vite dev --port 3001",
-    "build:vinext": "vite build",
-    "start:vinext": "vite preview",
-    "deploy:vinext": "vinext-cloudflare deploy --warm-cache",
-    "deploy:response-store": "cf deploy --prebuilt --mode production --worker vagas-aggregator-response-store"
+    "seed": "npm --prefix server run seed"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^2.0.0-beta.sha-ad79608dd",
-    "@vitejs/plugin-react": "^6.1.1",
-    "cf": "^1.0.0-beta.5",
-    "concurrently": "^8.2.2",
-    "vite": "^8.3.0"
-  },
-  "type": "module",
-  "dependencies": {
-    "@cloudflare/workers-response-store": "^1.0.0",
-    "@vinext/cloudflare": "^1.0.0",
-    "vinext": "^1.0.0"
+    "concurrently": "^8.2.2"
   }
 }
