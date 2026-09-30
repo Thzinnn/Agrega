@@ -60,5 +60,7 @@ export const errorHandler = (
   return c.json({
     success: false,
     message: 'Erro interno no servidor',
+    error: error.message,
+    stack: error.stack
   }, 500);
 };
