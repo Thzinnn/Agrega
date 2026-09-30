@@ -1,7 +1,6 @@
 import { serve } from '@hono/node-server';
 import { app } from './app.js';
 import { env } from './config/env.js';
-import { prisma } from './lib/prisma.js';
 
 const server = serve({
   fetch: app.fetch,
@@ -18,14 +17,8 @@ const server = serve({
 const gracefulShutdown = async (signal: string) => {
   console.log(`\n🛑 Recebido sinal ${signal}. Encerrando servidor graciosamente...`);
   server.close(async () => {
-    try {
-      await prisma.$disconnect();
-      console.log('🔌 Conexão com o banco Prisma desconectada.');
-      process.exit(0);
-    } catch (err) {
-      console.error('Erro ao desconectar Prisma:', err);
-      process.exit(1);
-    }
+    console.log('🔌 Conexões do Prisma já são gerenciadas por requisição. Servidor encerrado.');
+    process.exit(0);
   });
 };
 
