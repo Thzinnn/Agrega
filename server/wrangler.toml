@@ -1,8 +1,8 @@
 name = "jobs-api"
 main = "src/worker.ts"
-compatibility_date = "2024-03-20"
+compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
 [[hyperdrive]]
 binding = "HYPERDRIVE"
-id = "SEU_HYPERDRIVE_ID"
+id = "860ba89398204814910a35015bc6c7de"

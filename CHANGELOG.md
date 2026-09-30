@@ -6,6 +6,11 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 
 ## [Unreleased]
 
+### [BUGFIX] - 2026-09-30
+- **Descrição:** Atualizada a `compatibility_date` no `/server/wrangler.toml` para `2024-09-23` a fim de corrigir a falha de resolução de módulos nativos do Node (ex: `events`, `util`, `net`, `stream`) sem o prefixo `node:` durante o build e deploy para Cloudflare Workers. As tipagens globais do `@types/node` foram conferidas nas devDependencies e a integridade do empacotamento com a flag `nodejs_compat` ativa foi mantida para garantir a correta compilação do `pg` e do `@codegenie/serverless-express`.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/wrangler.toml`
+
 ### [MODIFY] - 2026-09-30
 - **Descrição:** Configuração final do backend `/server` para o Cloudflare Workers. Criado o arquivo `wrangler.toml` com bindings de compatibilidade NodeJS (`nodejs_compat`) e banco de dados via Hyperdrive. O validador da variável `DATABASE_URL` no `env.ts` tornou-se opcional para evitar instabilidades na importação pelo Worker. As diretivas de CORS no Express (`app.ts`) foram otimizadas via Regex para aceitar integralmente a origem de desenvolvimento (`localhost:3000`) e domínios de produção/preview nativos da Cloudflare (`*.pages.dev`). Foi adicionado o script `"deploy": "wrangler deploy"` no `package.json`.
 - **Escopo:** `/server`
