@@ -7,7 +7,7 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 ## [Unreleased]
 
 ### [BUGFIX] - 2026-09-30
-- **Descrição:** Correção do erro de compilação na Cloudflare Pages relacionado às dependências nativas opcionais do Tailwind CSS v4 (`lightningcss.linux-x64-gnu.node` e `@tailwindcss/oxide`). Contornado o bug crônico do `npm ci` (issue #4828 do NPM) e erros de `ERESOLVE` (conflito de versão de peer dependencies com pacotes do cloudflare). O script `pages:build` foi atualizado para injetar um `npm install --no-save --force @tailwindcss/oxide-linux-x64-gnu lightningcss-linux-x64-gnu` instantes antes da build do Next.js. Isso força o download cirúrgico dos executáveis do servidor Linux diretamente na pasta `node_modules`, ignorando verificações estritas do NPM.
+- **Descrição:** Correção do erro de compilação na Cloudflare Pages relacionado às dependências nativas opcionais do Tailwind CSS v4 (`lightningcss.linux-x64-gnu.node` e `@tailwindcss/oxide`). Contornado o bug crônico do `npm ci` (issue #4828 do NPM) e erros de incompatibilidade de versão na engine nativa. O script `pages:build` foi atualizado para efetuar a "solução nuclear" sugerida pelos próprios desenvolvedores do Tailwind: `rm -rf node_modules package-lock.json && npm install --legacy-peer-deps` antes do Next.js. Isso apaga o cache poluído pela etapa anterior da Cloudflare e força uma instalação perfeitamente mapeada para o sistema Linux alvo, ignorando conflitos de pacotes legados do próprio Cloudflare workers.
 - **Escopo:** `/web`
 - **Arquivos Afetados:** `web/package.json`
 
