@@ -85,7 +85,7 @@ Toda alteração de código, arquitetura ou documentação deve ser registrada s
 
 ## Restrições da Stack
 
-* **Backend:** Node.js, Express.js, TypeScript (Strict), Prisma ORM, PostgreSQL.
+* **Backend:** Hono, TypeScript (Strict), Prisma ORM, PostgreSQL.
 * **Frontend:** Next.js (App Router, React 19/Server Components), TypeScript (Strict), Tailwind CSS.
 * **Mecanismo de Validação:** Zod (obrigatório em todos os payloads HTTP, parâmetros de busca de URL e submissões de formulário).
 * **Formulários e Estado do Cliente:** React Hook Form com `@hookform/resolvers/zod`.

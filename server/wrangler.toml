@@ -1,6 +1,6 @@
 name = "jobs-api"
-main = "src/worker.ts"
-compatibility_date = "2024-09-23"
+main = "src/app.ts"
+compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [[hyperdrive]]

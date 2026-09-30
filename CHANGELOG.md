@@ -6,6 +6,52 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 
 ## [Unreleased]
 
+### [MODIFY] - 2026-09-30
+- **Descrição:** Migração estrutural e definitiva do backend Web Framework. Substituímos o Express pelo **Hono** (`hono.dev`), um framework otimizado primariamente para ambientes Edge (Cloudflare Workers, Deno, Bun) mas com excelente suporte ao ecossistema Node.js (via `@hono/node-server`). Essa mudança elimina completamente as anomalias de empacotamento com o `body-parser` e o Node core (`stream`), trazendo máxima performance nativa sem sacrificar o modelo de roteamento que já usávamos (os controladores foram mantidos intactos, portando apenas a assinatura `(req, res)` para o contexto `c` nativo do Hono). O entrypoint Cloudflare agora é nativo (`export default app`), sem necessitar de nenhum adapter como `serverless-express`. O ambiente de desenvolvimento local continua acessível via porta 3333 no `src/server.ts`. 
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/package.json`, `server/wrangler.toml`, `server/src/app.ts`, `server/src/server.ts`, `server/src/routes/index.ts`, `server/src/routes/job.routes.ts`, `server/src/controllers/job.controller.ts`, `server/src/middlewares/validateRequest.ts`, `server/src/middlewares/errorHandler.ts`
+
+### [REMOVE] - 2026-09-30
+- **Descrição:** Expurgo total e absoluto de pacotes do ecossistema Express (`express`, `cors`, `helmet`, `body-parser`) e pacotes relacionados a adapters serverless (`@codegenie/serverless-express`, `patch-package`, `iconv-lite`). Entrypoints temporários criados em tentativas passadas (como `src/worker.ts` e pastas de `patches/`) foram localizados e obliterados da base de código. O backend agora é uma entidade puramente serverless-native.
+- **Descrição:** Resolvido o erro subjacente de compatibilidade entre o framework `@codegenie/serverless-express` e o motor V8 do Cloudflare Workers (`TypeError: this._addHeaderLines is not a function`). A falha ocorria pois o pacote AWS depende de métodos privados profundos da implementação do Node.js original (ex: `http.IncomingMessage.prototype._addHeaderLines`), que logicamente não existem no "Polyfill" leve fornecido pelo Cloudflare (`nodejs_compat`). Foi injetado um **polyfill artesanal suplementar** no topo do arquivo `src/worker.ts`, re-implementando a assinatura nativa do `_addHeaderLines` para que o construtor da requisição serverless seja preenchido com sucesso e os cabeçalhos transitem perfeitamente da Cloudflare para o pipeline do Express.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/worker.ts`
+
+### [BUGFIX] - 2026-09-30
+- **Descrição:** Resolvido o erro `Unable to determine event source based on event` gerado pelo `@codegenie/serverless-express` na nuvem. Como a biblioteca foi arquitetada primariamente para a AWS, ela esperava um objeto de evento proprietário (ex: API Gateway), mas o Cloudflare enviava um objeto `Request` da Fetch API padrão. Foi construído e injetado um Adapter completo no arquivo `src/worker.ts` que intercepta a requisição, formata seus parâmetros e cabeçalhos emulando um evento AWS "API Gateway HTTP API (V2)" e delega para o Express. O retorno também é capturado e recodificado apropriadamente (lidando até mesmo com decodificação `base64` transparente, caso necessite retornar arquivos ou buffers) de volta para o formato de `Response` exigido pelos Workers. Express totalmente habilitado em produção!
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/worker.ts`
+
+### [BUGFIX] - 2026-09-30
+- **Descrição:** Resolvido definitivamente a colisão do bundler do Cloudflare Workers com as chamadas de streams do Node através da biblioteca `iconv-lite`. Como a opção de `"browser": { "stream": false }` levava ao erro cego `require_streams is not a function` devido a anomalias de "dead-code" no esbuild (pois a dependência omitida continuava sendo invocada), foi implementada uma resolução via `patch-package`. O código-fonte do `iconv-lite` foi cirurgicamente modificado dentro do `node_modules` para utilizar salvaguardas com verificações condicionais em tempo de execução (`typeof streams === 'function'`) ao invés de invocações diretas no carregamento (`require('./streams')(iconv)`). A integração ao Worker agora não falha ao importar o pacote Express subjacente, o empacotador da Cloudflare estabiliza o script perfeitamente sem crash runtime, e o desenvolvimento local via Node.js continua 100% nativo (a configuração persiste mesmo que reinstalemos via script `postinstall`).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/package.json`, `server/patches/iconv-lite+0.4.24.patch`
+
+### [BUGFIX] - 2026-09-30
+- **Descrição:** Resolvido de forma definitiva o erro crônico `TypeError: require_streams(...) is not a function` isolando completamente a dependência de streams do Node.js (`body-parser`) da compilação do Cloudflare Worker. O uso das funções `express.json()` e `express.urlencoded()` foi banido do `src/app.ts` e de qualquer rota atrelada a ele. Para preservar a funcionalidade no ambiente de desenvolvimento local, a invocação do `express.json()` foi realocada exclusivamente para `src/server.ts` mediante a criação de um wrapper de aplicação (`localApp`) que consome o `app` base. O entrypoint de produção (`src/worker.ts`) mantém-se enxuto delegando a requisição para o `@codegenie/serverless-express`, que opera apenas com o middleware leve de parsing injetado de forma segura no próprio `app.ts`.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/app.ts`, `server/src/server.ts`
+
+### [BUGFIX] - 2026-09-30
+- **Descrição:** Resolvido o erro fatal `TypeError: Cannot read properties of undefined (reading 'bind')` que impedia o instanciamento do Prisma tanto local quanto no Worker. A falha era originada por um severo mismatch de versão: o pacote `@prisma/adapter-pg` havia sido instalado na sua última _major_ (`v7.x`), enquanto o `@prisma/client` do projeto é da base `v5.x` (`5.22.0`). O adaptador sofreu downgrade cirúrgico para a versão explícita `5.22.0` no `package.json`, espelhando a versão exata do core do Prisma e garantindo compatibilidade da interface abstrata de conexão da biblioteca `pg`.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/package.json`
+
+### [BUGFIX] - 2026-09-30
+- **Descrição:** Correção do erro fatal de inicialização do Prisma Client (`PrismaClientConstructorValidationError`) que bloqueava o servidor ao tentar instanciar o adapter `@prisma/adapter-pg`. A _preview feature_ `"driverAdapters"` foi habilitada explicitamente no `schema.prisma` e o cliente de banco de dados foi regenerado (`prisma generate`), permitindo que a aplicação faça uso seguro do Client Adapter Pattern requerido pelo Edge Runtime da Cloudflare e pelo funcionamento nativo de banco serverless com Hyperdrive.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/prisma/schema.prisma`
+
+### [MODIFY] - 2026-09-30
+- **Descrição:** Refatoração estrutural da inicialização do Express (`src/app.ts`) para operar em **modo dual** autônomo (Node.js vs Cloudflare Workers). Inserida heurística de runtime detectando ambiente de borda (via `globalThis.WebSocketPair`). No Cloudflare, o middleware legado `express.json()` é suprimido na raiz para evitar a importação de top-level e falhas de runtime (`require_streams is not a function`). Em seu lugar, foi inserido um parser leve baseado em `JSON.parse` direto na string bruta provida pelo `@codegenie/serverless-express`. Adicionadas as rotas base de health check na raiz (`GET /`) para indicar o runtime (node ou cloudflare-workers), bem como bypass (`204 No Content`) explícito para `GET /favicon.ico`.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/app.ts`
+
+### [BUGFIX] - 2026-09-30
+- **Descrição:** Correção de falha crítica de validação do Worker (code: 10021 - `require_streams is not a function`) causada pela inicialização síncrona de dependências nativas legadas (`iconv-lite` e `raw-body` em `body-parser`). A `compatibility_date` do `wrangler.toml` foi atualizada para `"2024-11-01"` para suporte avançado via `nodejs_compat`. O entrypoint do worker (`src/worker.ts`) foi refatorado adotando **dynamic imports** (`await import(...)`), adiando a avaliação e inicialização do Express para dentro do ciclo de vida assíncrono do evento `fetch`, impedindo crashes no escopo global da Cloudflare. Além disso, as configurações do `express.json` e `express.urlencoded` receberam `{ inflate: false }` (`src/app.ts`) minimizando chamadas pre-emptive a manipulações pesadas de streams.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/wrangler.toml`, `server/src/worker.ts`, `server/src/app.ts`
+
 ### [BUGFIX] - 2026-09-30
 - **Descrição:** Atualizada a `compatibility_date` no `/server/wrangler.toml` para `2024-09-23` a fim de corrigir a falha de resolução de módulos nativos do Node (ex: `events`, `util`, `net`, `stream`) sem o prefixo `node:` durante o build e deploy para Cloudflare Workers. As tipagens globais do `@types/node` foram conferidas nas devDependencies e a integridade do empacotamento com a flag `nodejs_compat` ativa foi mantida para garantir a correta compilação do `pg` e do `@codegenie/serverless-express`.
 - **Escopo:** `/server`

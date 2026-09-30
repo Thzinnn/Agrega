@@ -8,20 +8,20 @@ O projeto utiliza a arquitetura **Monorepo** simples com duas aplicações princ
 vagas-aggregator/
 ├── package.json           # Orquestração de scripts (concurrently)
 ├── .gitignore
-├── server/                # Backend (Node.js + Express + TypeScript + Prisma + PostgreSQL)
+├── server/                # Backend (Hono + TypeScript + Prisma + PostgreSQL + Cloudflare Workers)
 └── web/                   # Frontend (Next.js App Router + TypeScript + Tailwind CSS)
 
 2. Stack Tecnológica Obrigatória
 Backend (/server)
 Runtime & Linguagem: Node.js com TypeScript
 
-Framework HTTP: Express.js
+Framework HTTP: Hono (Edge/Cloudflare Workers Native)
 
 Banco de Dados & ORM: PostgreSQL com Prisma ORM
 
 Validação de Schemas: Zod
 
-Segurança & CORS: cors, helmet, dotenv
+Segurança & CORS: hono/cors, dotenv
 
 Frontend (/web)
 Framework: Next.js (App Router, Server Components para páginas e SSR de SEO)
@@ -129,7 +129,7 @@ Criar o diretório raiz do projeto e configurar o package.json principal:
 Criar .gitignore ignorando node_modules, .env, .next e pastas de build.
 
 Fase 1: Backend & Modelagem de Dados (/server)
-Inicializar TypeScript (tsconfig.json) e instalar dependências (express, @prisma/client, zod, cors, helmet, dotenv).
+Inicializar TypeScript (tsconfig.json) e instalar dependências (hono, @hono/node-server, @prisma/client, zod, dotenv).
 
 Configurar o arquivo prisma/schema.prisma com o modelo Job:
 

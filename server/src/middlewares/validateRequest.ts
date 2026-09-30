@@ -1,20 +1,28 @@
-import { Request, Response, NextFunction } from 'express';
+import { Context, Next } from 'hono';
 import { ZodSchema, ZodError } from 'zod';
 
-type RequestLocation = 'body' | 'query' | 'params';
+type RequestLocation = 'body' | 'query' | 'param';
 
 export const validateRequest = (schema: ZodSchema, location: RequestLocation = 'body') => {
-  return (req: Request, _res: Response, next: NextFunction): void => {
+  return async (c: Context, next: Next) => {
     try {
-      const parsed = schema.parse(req[location]);
-      req[location] = parsed;
-      next();
+      let data;
+      if (location === 'body') {
+        data = await c.req.json();
+      } else if (location === 'query') {
+        data = c.req.query();
+      } else if (location === 'param') {
+        data = c.req.param();
+      }
+
+      const parsed = schema.parse(data);
+      c.set(`valid_${location}`, parsed);
+      await next();
     } catch (error) {
       if (error instanceof ZodError) {
-        next(error);
-        return;
+        throw error;
       }
-      next(error);
+      throw error;
     }
   };
 };

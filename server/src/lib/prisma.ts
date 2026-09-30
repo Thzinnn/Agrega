@@ -44,7 +44,7 @@ export function initializePrisma(connectionString?: string): PrismaClient {
 
 // Export a proxy to maintain compatibility with existing controllers and services
 export const prisma = new Proxy({} as PrismaClient, {
-  get(target, prop) {
+  get(_target, prop) {
     if (!prismaInstance) {
       initializePrisma();
     }

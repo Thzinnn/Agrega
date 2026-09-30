@@ -1,40 +1,32 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import { env } from './config/env.js';
+import { Hono } from 'hono';
+import { cors } from 'hono/cors';
 import { routes } from './routes/index.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 
-export const app = express();
-
-// Security middlewares
-app.use(helmet());
-const allowedOrigins = [
-  'http://localhost:3000',
-  /^https:\/\/.*\.pages\.dev$/
-];
+export const app = new Hono();
 
 app.use(
+  '*',
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.some(regex => typeof regex === 'string' ? regex === origin : regex.test(origin))) {
-        return callback(null, true);
+    origin: (origin) => {
+      if (!origin) return origin; // Allow non-CORS requests
+      if (origin === 'http://localhost:3000' || /^https:\/\/.*\.pages\.dev$/.test(origin)) {
+        return origin;
       }
-      
-      return callback(new Error('Acesso negado pela política de CORS'), false);
+      return null;
     },
     credentials: true,
   })
 );
 
-// Body parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Basic health and control routes
+app.get('/', (c) => c.json({ status: 'ok', runtime: 'edge/hono' }));
+app.get('/favicon.ico', (c) => c.body(null, 204));
 
 // Application routes
-app.use(routes);
+app.route('/', routes);
 
 // Central error handler
-app.use(errorHandler);
+app.onError(errorHandler);
+
+export default app;

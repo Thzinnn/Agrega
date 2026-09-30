@@ -1,39 +1,27 @@
-import { Request, Response, NextFunction } from 'express';
+import { Context } from 'hono';
 import { jobService } from '../services/job.service.js';
 import { CreateJobInput, JobQueryInput, JobIdParam } from '../schemas/job.schema.js';
 
 export class JobController {
-  async listJobs(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const query = req.query as unknown as JobQueryInput;
-      const result = await jobService.listJobs(query);
-      res.status(200).json(result);
-    } catch (error) {
-      next(error);
-    }
+  async listJobs(c: Context) {
+    const query = c.get('valid_query') as JobQueryInput;
+    const result = await jobService.listJobs(query);
+    return c.json(result, 200);
   }
 
-  async getJobById(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { id } = req.params as unknown as JobIdParam;
-      const job = await jobService.getJobById(id);
-      res.status(200).json({ data: job });
-    } catch (error) {
-      next(error);
-    }
+  async getJobById(c: Context) {
+    const { id } = c.get('valid_param') as JobIdParam;
+    const job = await jobService.getJobById(id);
+    return c.json({ data: job }, 200);
   }
 
-  async createJob(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const body = req.body as CreateJobInput;
-      const createdJob = await jobService.createJob(body);
-      res.status(201).json({
-        success: true,
-        data: createdJob,
-      });
-    } catch (error) {
-      next(error);
-    }
+  async createJob(c: Context) {
+    const body = c.get('valid_body') as CreateJobInput;
+    const createdJob = await jobService.createJob(body);
+    return c.json({
+      success: true,
+      data: createdJob,
+    }, 201);
   }
 }
 

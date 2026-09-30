@@ -1,14 +1,18 @@
+import { serve } from '@hono/node-server';
 import { app } from './app.js';
 import { env } from './config/env.js';
 import { prisma } from './lib/prisma.js';
 
-const server = app.listen(env.PORT, () => {
-  console.log(`🚀 Servidor rodando com sucesso em http://localhost:${env.PORT}`);
+const server = serve({
+  fetch: app.fetch,
+  port: env.PORT,
+}, (info) => {
+  console.log(`🚀 Servidor rodando com sucesso em http://localhost:${info.port}`);
   console.log(`📡 Endpoints disponíveis:`);
-  console.log(`   - GET  http://localhost:${env.PORT}/health`);
-  console.log(`   - GET  http://localhost:${env.PORT}/api/v1/jobs`);
-  console.log(`   - GET  http://localhost:${env.PORT}/api/v1/jobs/:id`);
-  console.log(`   - POST http://localhost:${env.PORT}/api/v1/jobs`);
+  console.log(`   - GET  http://localhost:${info.port}/health`);
+  console.log(`   - GET  http://localhost:${info.port}/api/v1/jobs`);
+  console.log(`   - GET  http://localhost:${info.port}/api/v1/jobs/:id`);
+  console.log(`   - POST http://localhost:${info.port}/api/v1/jobs`);
 });
 
 const gracefulShutdown = async (signal: string) => {
