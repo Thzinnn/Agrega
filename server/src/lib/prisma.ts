@@ -27,7 +27,15 @@ export function initializePrisma(connectionString?: string): PrismaClient {
     throw new Error('Database connection string is required (via env.HYPERDRIVE or DATABASE_URL)');
   }
 
-  const pool = new Pool({ connectionString: dbUrl });
+  const pool = new Pool({ 
+    connectionString: dbUrl,
+    // Em ambientes Serverless/Edge, os sockets podem ser congelados.
+    // O Hyperdrive cuida do pool, então não precisamos manter conexões ociosas aqui.
+    max: 5,
+    idleTimeoutMillis: 0, 
+    connectionTimeoutMillis: 10000,
+    allowExitOnIdle: true
+  });
   const adapter = new PrismaPg(pool);
 
   prismaInstance = new PrismaClient({
