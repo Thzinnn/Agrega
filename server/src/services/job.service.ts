@@ -165,6 +165,7 @@ export class JobService {
         location: data.location,
         workplaceType: data.workplaceType,
         education: data.education,
+        requirements: data.requirements ?? [],
         contractType: data.contractType,
         benefits: data.benefits ?? null,
         hasVA: data.hasVA ?? false,

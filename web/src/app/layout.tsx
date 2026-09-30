@@ -33,7 +33,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${poppins.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col bg-brand-60 text-brand-text font-sans">
+      <body className="min-h-full flex flex-col bg-brand-60 text-brand-text font-sans overflow-x-hidden w-full">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
           <Header />
           <main className="flex-1 flex flex-col">{children}</main>

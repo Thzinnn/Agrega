@@ -14,13 +14,13 @@ const jobSchema = z.object({
   location: z.string().min(2, 'Localização é obrigatória').max(100),
   workplaceType: z.enum(['REMOTE', 'HYBRID', 'ON_SITE'], { message: "Modalidade é obrigatória" }),
   education: z.enum([
-    'FUNDAMENTAL_1_INCOMPLETE', 'FUNDAMENTAL_1_COMPLETE',
-    'FUNDAMENTAL_2_INCOMPLETE', 'FUNDAMENTAL_2_COMPLETE',
+    'FUNDAMENTAL_INCOMPLETE', 'FUNDAMENTAL_COMPLETE',
     'MEDIO_INCOMPLETE', 'MEDIO_COMPLETE',
     'SUPERIOR_INCOMPLETE', 'SUPERIOR_COMPLETE',
     'POS_GRADUACAO', 'MESTRADO', 'DOUTORADO'
   ], { message: "Escolaridade é obrigatória" }),
   contractType: z.enum(['CLT', 'PJ', 'OTHER'], { message: "Contrato é obrigatório" }),
+  requirements: z.array(z.string().min(1, 'O requisito não pode ser vazio')).optional().default([]),
   hasVA: z.boolean().default(false),
   hasVR: z.boolean().default(false),
   hasVT: z.boolean().default(false),
@@ -28,9 +28,9 @@ const jobSchema = z.object({
   hasMedicalInsurance: z.boolean().default(false),
   hasDentalInsurance: z.boolean().default(false),
   benefits: z.string().optional(),
-  salary: z.coerce.number().nullable().optional(),
-  salaryMin: z.coerce.number().nullable().optional(),
-  salaryMax: z.coerce.number().nullable().optional(),
+  salary: z.preprocess((val) => (val === '' || val === null || val === undefined ? null : Number(val)), z.number().nullable().optional()),
+  salaryMin: z.preprocess((val) => (val === '' || val === null || val === undefined ? null : Number(val)), z.number().nullable().optional()),
+  salaryMax: z.preprocess((val) => (val === '' || val === null || val === undefined ? null : Number(val)), z.number().nullable().optional()),
   applicationUrl: z.string().url('Insira uma URL válida (ex: https://...)').optional().or(z.literal('')),
   contactEmail: z.string().email('E-mail inválido').optional().or(z.literal('')),
   contactPhone: z.string().regex(/^[\d\s\-\+\(\)]*$/, 'Use apenas números e +, -, ()').optional().or(z.literal('')),
@@ -75,6 +75,11 @@ export default function NewJobPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
+  // Requirements State
+  const [requirementsList, setRequirementsList] = useState<string[]>([]);
+  const [newRequirement, setNewRequirement] = useState('');
+  const [showRequirementInput, setShowRequirementInput] = useState(false);
+
   const { register, handleSubmit, formState: { errors }, setValue, watch } = useForm({
     resolver: zodResolver(jobSchema),
     defaultValues: {
@@ -84,6 +89,7 @@ export default function NewJobPage() {
       hasLifeInsurance: false,
       hasMedicalInsurance: false,
       hasDentalInsurance: false,
+      requirements: [],
     }
   });
 
@@ -139,6 +145,22 @@ export default function NewJobPage() {
     setSearchLocation(loc);
     setValue('location', loc, { shouldValidate: true });
     setShowSuggestions(false);
+  };
+
+  const handleAddRequirement = () => {
+    if (newRequirement.trim().length > 0) {
+      const updatedList = [...requirementsList, newRequirement.trim()];
+      setRequirementsList(updatedList);
+      setValue('requirements', updatedList, { shouldValidate: true });
+      setNewRequirement('');
+      setShowRequirementInput(false);
+    }
+  };
+
+  const handleRemoveRequirement = (indexToRemove: number) => {
+    const updatedList = requirementsList.filter((_, idx) => idx !== indexToRemove);
+    setRequirementsList(updatedList);
+    setValue('requirements', updatedList, { shouldValidate: true });
   };
 
   const onSubmit = async (data: JobFormValues) => {
@@ -358,10 +380,8 @@ export default function NewJobPage() {
                   className="w-full bg-brand-60/50 border border-brand-60 text-brand-text rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-10/50 appearance-none"
                 >
                   <option value="" disabled>Não informado</option>
-                  <option value="FUNDAMENTAL_1_INCOMPLETE">Ensino Fundamental 1 - Incompleto</option>
-                  <option value="FUNDAMENTAL_1_COMPLETE">Ensino Fundamental 1 - Completo</option>
-                  <option value="FUNDAMENTAL_2_INCOMPLETE">Ensino Fundamental 2 - Incompleto</option>
-                  <option value="FUNDAMENTAL_2_COMPLETE">Ensino Fundamental 2 - Completo</option>
+                  <option value="FUNDAMENTAL_INCOMPLETE">Ensino Fundamental - Incompleto</option>
+                  <option value="FUNDAMENTAL_COMPLETE">Ensino Fundamental - Completo</option>
                   <option value="MEDIO_INCOMPLETE">Ensino Médio - Incompleto</option>
                   <option value="MEDIO_COMPLETE">Ensino Médio - Completo</option>
                   <option value="SUPERIOR_INCOMPLETE">Graduação - Incompleta</option>
@@ -387,6 +407,74 @@ export default function NewJobPage() {
                 </select>
                 {errors.contractType && <p className="text-red-500 text-sm">{errors.contractType.message}</p>}
               </div>
+            </div>
+          </div>
+
+          {/* Requisitos */}
+          <div className="space-y-6">
+            <h3 className="text-xl font-bold text-brand-text flex items-center gap-2 border-b border-brand-60 pb-3">
+              <CheckCircle2 className="w-5 h-5 text-brand-10" /> Requisitos Adicionais
+            </h3>
+            
+            <div className="flex flex-col gap-4">
+              {requirementsList.length > 0 && (
+                <ul className="flex flex-col gap-2">
+                  {requirementsList.map((req, idx) => (
+                    <li key={idx} className="flex items-center justify-between bg-brand-60/50 px-4 py-2 rounded-lg border border-brand-60">
+                      <span className="text-sm font-medium text-brand-text">{req}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveRequirement(idx)}
+                        className="text-red-500 hover:text-red-600 text-sm font-bold"
+                      >
+                        Remover
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              
+              {!showRequirementInput ? (
+                <button
+                  type="button"
+                  onClick={() => setShowRequirementInput(true)}
+                  className="w-full sm:w-auto self-start px-4 py-2 border-2 border-dashed border-brand-10/50 text-brand-10 rounded-xl hover:bg-brand-10/10 transition-colors font-medium text-sm"
+                >
+                  + Adicionar um requisito
+                </button>
+              ) : (
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    value={newRequirement}
+                    onChange={(e) => setNewRequirement(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRequirement())}
+                    className="flex-1 bg-brand-60/50 border border-brand-60 text-brand-text rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-10/50"
+                    placeholder="Ex: Inglês Intermediário, Pacote Office..."
+                    autoFocus
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddRequirement}
+                      className="px-6 py-3 bg-brand-10 text-white rounded-xl hover:bg-brand-10/90 font-medium transition-colors"
+                    >
+                      Adicionar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowRequirementInput(false);
+                        setNewRequirement('');
+                      }}
+                      className="px-6 py-3 bg-brand-60 text-brand-text rounded-xl hover:bg-brand-60/80 font-medium transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              )}
+              {errors.requirements && <p className="text-red-500 text-sm">{errors.requirements.message}</p>}
             </div>
           </div>
 
@@ -492,18 +580,18 @@ export default function NewJobPage() {
           </div>
 
           {/* Actions */}
-          <div className="pt-6 border-t border-brand-60 flex justify-end gap-4">
+          <div className="pt-6 border-t border-brand-60 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8">
             <button
               type="button"
               onClick={() => router.back()}
-              className="px-6 py-3 rounded-xl font-semibold text-brand-text bg-brand-60 hover:bg-brand-60/80 transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-6 py-3 min-h-[48px] rounded-xl font-semibold text-brand-text bg-brand-60 hover:bg-brand-60/80 transition-colors cursor-pointer order-2 sm:order-1"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-8 py-3 rounded-xl font-bold text-white bg-brand-10 hover:bg-brand-10-hover transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 cursor-pointer"
+              className="w-full sm:w-auto px-8 py-3 min-h-[48px] rounded-xl font-bold text-white bg-brand-10 hover:bg-brand-10-hover transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer order-1 sm:order-2"
             >
               {isSubmitting ? (
                 <>

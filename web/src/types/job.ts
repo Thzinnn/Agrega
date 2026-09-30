@@ -6,6 +6,7 @@ export interface Job {
   description: string;
   workplaceType: string;
   education: string;
+  requirements: string[];
   contractType: string;
   benefits: string | null;
   hasVA: boolean;

@@ -15,10 +15,8 @@ enum WorkplaceType {
 }
 
 enum EducationLevel {
-  FUNDAMENTAL_1_INCOMPLETE
-  FUNDAMENTAL_1_COMPLETE
-  FUNDAMENTAL_2_INCOMPLETE
-  FUNDAMENTAL_2_COMPLETE
+  FUNDAMENTAL_INCOMPLETE
+  FUNDAMENTAL_COMPLETE
   MEDIO_INCOMPLETE
   MEDIO_COMPLETE
   SUPERIOR_INCOMPLETE
@@ -42,6 +40,7 @@ model Job {
   location            String
   workplaceType       WorkplaceType
   education           EducationLevel
+  requirements        String[]      @default([])
   contractType        ContractType  @default(CLT)
   benefits            String?
   hasVA               Boolean       @default(false)
