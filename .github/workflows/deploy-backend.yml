@@ -8,6 +8,7 @@ on:
       - development
     paths:
       - 'server/**' # Só dispara se houver alterações na pasta /server
+      - '.github/workflows/deploy-backend.yml'
 
 jobs:
   deploy:
