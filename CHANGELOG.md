@@ -13,8 +13,9 @@ Histórico de modificações do projeto conforme categorização estipulada em `
   3. Layout Desktop: A visualização em grid introduzida anteriormente no desktop foi revertida para o modelo "Extenso" original (1 coluna).
   4. Nova funcionalidade de Requisitos: Implementado um sistema de requisitos extras por vaga. Adicionado campo de array no banco (`schema.prisma`), formulário dinâmico na criação de vagas ("Adicionar um requisito"), e a listagem desses requisitos no Modal de Detalhes da Vaga.
   5. Salário Opcional e Mensagem de Sucesso: Corrigido bug de coerção de tipos no formulário (frontend) que forçava a validação do salário mesmo quando deixado em branco. Agora é 100% opcional não informar remuneração, exibindo corretamente a página de Sucesso ao concluir o cadastro.
+  6. [FIX] Private Network Access: Auditado e substituído o hardcode de `http://localhost:3333` em `src/lib/api.ts` para carregar dinamicamente `process.env.NEXT_PUBLIC_API_URL` sem fallbacks silenciosos em produção. Adicionado `.env.example` no `/web`.
 - **Escopo:** `/web` e `/server`
-- **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/prisma/seed.ts`, `server/src/schemas/job.schema.ts`, `web/src/app/page.tsx`, `web/src/app/jobs/new/page.tsx`, `web/src/components/SidebarFilters.tsx`, `web/src/types/job.ts`, `web/src/components/JobDetailsModal.tsx`
+- **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/prisma/seed.ts`, `server/src/schemas/job.schema.ts`, `web/src/app/page.tsx`, `web/src/app/jobs/new/page.tsx`, `web/src/components/SidebarFilters.tsx`, `web/src/types/job.ts`, `web/src/components/JobDetailsModal.tsx`, `web/src/lib/api.ts`, `web/.env.example`
 
 ### [MODIFY] - 2026-09-30
 - **Descrição:** Revisão e refatoração completa da responsividade (Mobile-First) do frontend para acomodar telas de 320px até 4K.
