@@ -7,6 +7,11 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 ## [Unreleased]
 
 ### [BUGFIX] - 2026-09-30
+- **Descrição:** Correção do erro de compilação na Cloudflare Pages relacionado às dependências nativas opcionais do Tailwind CSS v4 (`lightningcss.linux-x64-gnu.node` e `@tailwindcss/oxide`). Contornado o bug crônico do `npm ci` (issue #4828 do NPM) que ignorava dependências cross-platform. O script `pages:build` foi atualizado para injetar um `npm install --no-package-lock --legacy-peer-deps` instantes antes da build do Next.js, forçando o servidor Linux da Cloudflare a baixar os executáveis nativos exatos da plataforma localmente.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/package.json`
+
+### [BUGFIX] - 2026-09-30
 - **Descrição:** Diagnóstico profundo e resolução dos bloqueios de deploy na primeira etapa do Cloudflare Pages/Workers, correção de tipos no Prisma e purga de resíduos:
   1. **Expurgo de Resíduos Vinext e Cloudflare Vite:** Removidos arquivos experimentais residuais (`cloudflare.config.ts`, `vite.config.ts` na raiz e em `/web`, além de dependências e scripts do Vinext no `package.json` raiz). A presença de `cloudflare.config.ts` no repositório fazia o pipeline do Cloudflare tentar instanciar auxiliary workers e cache bindings do R2 inexistentes, travando a inicialização do container por 15 minutos em timeout.
   2. **Garantia de Versão do Node (v20):** Adicionado `.nvmrc` com versão `20` na raiz e em `/web` para impedir que o Cloudflare Pages utilize o Node 18.17.1 legado por padrão, o qual entrava em conflito com o Next 15.5+ e o React 19.
