@@ -10,8 +10,16 @@ declare global {
 let prismaInstance: PrismaClient | undefined;
 
 export function initializePrisma(connectionString?: string): PrismaClient {
+  if (globalThis.prismaGlobal) {
+    prismaInstance = globalThis.prismaGlobal;
+    return prismaInstance;
+  }
+
+  if (prismaInstance) {
+    return prismaInstance;
+  }
+
   // Fallback to process.env.DATABASE_URL if no connection string is provided
-  // In Cloudflare Workers environment, process.env might not be populated natively
   const dbUrl = connectionString || (typeof process !== 'undefined' ? process.env.DATABASE_URL : undefined);
 
   if (!dbUrl) {
@@ -19,6 +27,12 @@ export function initializePrisma(connectionString?: string): PrismaClient {
   }
 
   const pool = new Pool({ connectionString: dbUrl });
+  
+  // Prevent pg from crashing the isolate when Hyperdrive drops idle connections
+  pool.on('error', (err) => {
+    console.error('Unexpected error on idle client (caught and ignored):', err.message);
+  });
+
   const adapter = new PrismaPg(pool);
 
   prismaInstance = new PrismaClient({
