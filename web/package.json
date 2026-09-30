@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "pages:build": "npx @cloudflare/next-on-pages",
+    "pages:build": "npm install --no-save --force lightningcss-linux-x64-gnu && npx @cloudflare/next-on-pages",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
@@ -47,8 +47,6 @@
   "type": "module",
   "optionalDependencies": {
     "@next/swc-linux-x64-gnu": "^15.5.2",
-    "@rollup/rollup-linux-x64-gnu": "^4.63.5",
-    "lightningcss-linux-x64-gnu": "^1.32.0",
-    "lightningcss-linux-x64-musl": "^1.32.0"
+    "@rollup/rollup-linux-x64-gnu": "^4.63.5"
   }
 }
