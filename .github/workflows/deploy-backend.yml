@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - development
     paths:
       - 'server/**' # Só dispara se houver alterações na pasta /server
 
@@ -27,9 +28,19 @@ jobs:
           cd server
           npm ci
 
-      - name: Deploy Worker via Wrangler
+      - name: Deploy Worker (Produção)
+        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: 'server'
+
+      - name: Deploy Worker (Preview / Staging)
+        if: github.ref == 'refs/heads/development'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: 'server'
+          environment: 'preview'

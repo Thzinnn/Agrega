@@ -7,6 +7,9 @@ compatibility_flags = ["nodejs_compat"]
 binding = "HYPERDRIVE"
 id = "860ba89398204814910a35015bc6c7de"
 
-[[previews.hyperdrive]]
+[env.preview]
+name = "jobs-api-preview"
+
+[[env.preview.hyperdrive]]
 binding = "HYPERDRIVE"
 id = "860ba89398204814910a35015bc6c7de"
