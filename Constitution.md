@@ -108,3 +108,6 @@ Toda alteração de código, arquitetura ou documentação deve ser registrada s
 
 > [!NOTE] Atualização Automática do Changelog
 > Nunca finalize um prompt, tarefa ou implementação de fase sem anexar a respectiva entrada categorizada (`[FACT]`, `[BUGFIX]`, `[MODIFY]`, `[TEST]`, `[DOCS]`) ao arquivo `CHANGELOG.md` na raiz do projeto.
+
+> [!CAUTION] Preservação Inviolável da Infraestrutura Cloudflare
+> **NUNCA** modifique arquivos sensíveis de configuração de build da Cloudflare ou Next.js (como as diretivas e scripts do `web/package.json` — especialmente o `pages:build` nuclear workaround —, `web/next.config.ts`, `server/wrangler.toml` ou os arquivos `.nvmrc`) a menos que o usuário solicite **EXPLICITAMENTE** sua alteração, declarando expressamente a justificativa. Essas configurações foram cirurgicamente elaboradas para bypassar bugs complexos de ambientes cross-platform (Windows/Linux) e dependências nativas (`Tailwind Oxide/LightningCSS`). Modificações não solicitadas por "limpeza" ou "otimização" irão quebrar silenciosamente os pipelines remotos de deploy.
