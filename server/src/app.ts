@@ -9,9 +9,22 @@ export const app = express();
 
 // Security middlewares
 app.use(helmet());
+const allowedOrigins = [
+  'http://localhost:3000',
+  /^https:\/\/.*\.pages\.dev$/
+];
+
 app.use(
   cors({
-    origin: env.CORS_ORIGIN,
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.some(regex => typeof regex === 'string' ? regex === origin : regex.test(origin))) {
+        return callback(null, true);
+      }
+      
+      return callback(new Error('Acesso negado pela política de CORS'), false);
+    },
     credentials: true,
   })
 );

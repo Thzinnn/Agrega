@@ -7,6 +7,11 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 ## [Unreleased]
 
 ### [MODIFY] - 2026-09-30
+- **Descrição:** Configuração final do backend `/server` para o Cloudflare Workers. Criado o arquivo `wrangler.toml` com bindings de compatibilidade NodeJS (`nodejs_compat`) e banco de dados via Hyperdrive. O validador da variável `DATABASE_URL` no `env.ts` tornou-se opcional para evitar instabilidades na importação pelo Worker. As diretivas de CORS no Express (`app.ts`) foram otimizadas via Regex para aceitar integralmente a origem de desenvolvimento (`localhost:3000`) e domínios de produção/preview nativos da Cloudflare (`*.pages.dev`). Foi adicionado o script `"deploy": "wrangler deploy"` no `package.json`.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/wrangler.toml`, `server/package.json`, `server/src/app.ts`, `server/src/config/env.ts`
+
+### [MODIFY] - 2026-09-30
 - **Descrição:** Auditoria e preparação do frontend `/web` para deploy no Cloudflare Pages. Foram instaladas as dependências `@cloudflare/next-on-pages` e `wrangler` no modo dev, e adicionado o script de build `"pages:build": "npx @cloudflare/next-on-pages"` ao `package.json`. Adicionalmente, foram inseridas as dependências nativas opcionais de compilação para Linux (`@next/swc-linux-x64-gnu`, `@rollup/rollup-linux-x64-gnu`) com a flag `--save-optional` para evitar erros no `npm ci` durante o build no ambiente Ubuntu da Cloudflare (compatibilidade cross-platform).
 - **Escopo:** `/web`
 - **Arquivos Afetados:** `web/package.json`, `web/package-lock.json`
