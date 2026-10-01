@@ -119,7 +119,7 @@ function JobsContent() {
         />
 
         <div className="flex flex-col md:flex-row gap-8 items-start">
-          <aside className="w-full md:w-64 lg:w-72 shrink-0 sticky top-24">
+          <aside className="w-full md:w-64 lg:w-72 shrink-0 md:sticky md:top-24 z-10">
             <SidebarFilters filters={initialFilters} onChange={handleFilterChange} />
           </aside>
 
@@ -130,7 +130,7 @@ function JobsContent() {
               </h2>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 sm:gap-6">
               {loading ? (
                 <>
                   <JobCardSkeleton />
@@ -147,10 +147,10 @@ function JobsContent() {
                   />
                 ))
               ) : (
-                <div className="p-12 text-center bg-brand-30 rounded-2xl border border-brand-30/50 text-brand-muted shadow-sm flex flex-col items-center justify-center gap-3 mt-4">
+                <div className="p-8 sm:p-12 text-center bg-brand-30 rounded-2xl border border-brand-30/50 text-brand-muted shadow-sm flex flex-col items-center justify-center gap-3 mt-4">
                   <div className="text-5xl mb-2 opacity-80">🕵️</div>
-                  <h3 className="text-xl font-bold text-brand-text">Nenhuma vaga encontrada</h3>
-                  <p className="max-w-sm font-medium">Tente ajustar seus filtros ou termos de busca para ver mais resultados.</p>
+                  <h3 className="text-xl sm:text-2xl font-bold text-brand-text">Nenhuma vaga encontrada</h3>
+                  <p className="max-w-sm font-medium text-sm sm:text-base">Tente ajustar seus filtros ou termos de busca para ver mais resultados.</p>
                 </div>
               )}
             </div>

@@ -1,5 +1,4 @@
-import { Prisma } from '@prisma/client';
-import { prisma } from '../lib/prisma.js';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { CreateJobInput, JobQueryInput } from '../schemas/job.schema.js';
 import { AppError } from '../errors/AppError.js';
 
@@ -14,7 +13,7 @@ export interface PaginatedResult<T> {
 }
 
 export class JobService {
-  async listJobs(query: JobQueryInput): Promise<PaginatedResult<Prisma.JobGetPayload<object>>> {
+  async listJobs(prisma: PrismaClient, query: JobQueryInput): Promise<PaginatedResult<Prisma.JobGetPayload<object>>> {
     const {
       q,
       location,
@@ -144,7 +143,7 @@ export class JobService {
     };
   }
 
-  async getJobById(id: string) {
+  async getJobById(prisma: PrismaClient, id: string) {
     const job = await prisma.job.findUnique({
       where: { id },
     });
@@ -156,7 +155,7 @@ export class JobService {
     return job;
   }
 
-  async createJob(data: CreateJobInput) {
+  async createJob(prisma: PrismaClient, data: CreateJobInput) {
     const createdJob = await prisma.job.create({
       data: {
         title: data.title,
@@ -165,6 +164,7 @@ export class JobService {
         location: data.location,
         workplaceType: data.workplaceType,
         education: data.education,
+        requirements: data.requirements ?? [],
         contractType: data.contractType,
         benefits: data.benefits ?? null,
         hasVA: data.hasVA ?? false,

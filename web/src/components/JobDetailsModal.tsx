@@ -25,37 +25,37 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
             <motion.div
               layoutId={`job-card-${job.id}`}
-              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-brand-30 shadow-2xl pointer-events-auto border border-brand-30/50"
+              className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl bg-brand-30 shadow-2xl pointer-events-auto border border-brand-30/50 flex flex-col"
             >
-              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-60 bg-brand-30/95 px-6 py-4 backdrop-blur">
-                <h2 className="text-xl font-bold tracking-tight text-brand-text">{job.title}</h2>
+              <div className="sticky top-0 z-10 flex items-center justify-between border-b border-brand-60 bg-brand-30/95 px-4 sm:px-6 py-4 backdrop-blur shrink-0">
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight text-brand-text break-words line-clamp-2 pr-4">{job.title}</h2>
                 <button
                   onClick={onClose}
-                  className="rounded-full p-2 transition-colors hover:bg-brand-60 text-brand-muted hover:text-brand-text"
+                  className="rounded-full p-2 min-h-[44px] min-w-[44px] flex items-center justify-center transition-colors hover:bg-brand-60 text-brand-muted hover:text-brand-text shrink-0"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6 sm:w-5 sm:h-5" />
                 </button>
               </div>
 
-              <div className="p-6 flex flex-col gap-6">
-                <div className="flex flex-wrap gap-4 text-sm text-brand-muted font-medium">
-                  <div className="flex items-center gap-1.5">
-                    <Building2 className="w-4 h-4 text-brand-muted/70" />
-                    <span className="font-semibold text-brand-text">{job.company}</span>
+              <div className="p-4 sm:p-6 flex flex-col gap-4 sm:gap-6">
+                <div className="flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm text-brand-muted font-medium">
+                  <div className="flex items-center gap-1.5 max-w-full">
+                    <Building2 className="w-4 h-4 text-brand-muted/70 shrink-0" />
+                    <span className="font-semibold text-brand-text truncate">{job.company}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 max-w-full">
+                    <MapPin className="w-4 h-4 text-brand-muted/70 shrink-0" />
+                    <span className="truncate">{job.location}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <MapPin className="w-4 h-4 text-brand-muted/70" />
-                    <span>{job.location}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-brand-muted/70" />
+                    <Calendar className="w-4 h-4 text-brand-muted/70 shrink-0" />
                     <span>{new Date(job.createdAt).toLocaleDateString('pt-BR')}</span>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2 sm:gap-3">
                   {(job.salary || job.salaryMin || job.salaryMax) && (
-                    <div className="flex items-center gap-2 rounded-xl border border-brand-accent/20 bg-brand-accent/10 px-4 py-2 text-brand-accent">
+                    <div className="flex items-center gap-2 rounded-xl border border-brand-accent/20 bg-brand-accent/10 px-3 sm:px-4 py-2 text-brand-accent text-sm sm:text-base">
                       <DollarSign className="w-4 h-4" />
                       <span className="font-bold">
                         {job.salary 
@@ -81,6 +81,30 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                   <div className="text-brand-muted whitespace-pre-wrap leading-relaxed text-sm font-medium">
                     {job.description}
                   </div>
+                </div>
+
+                <div className="space-y-4 bg-brand-60/50 p-5 rounded-2xl">
+                  <h3 className="font-bold text-lg text-brand-text">Requisitos e Qualificações</h3>
+                  <ul className="list-disc pl-5 text-brand-muted text-sm font-medium space-y-2">
+                    <li>
+                      <strong>Escolaridade Mínima:</strong> {
+                        {
+                          'FUNDAMENTAL_INCOMPLETE': 'Ensino Fundamental - Incompleto',
+                          'FUNDAMENTAL_COMPLETE': 'Ensino Fundamental - Completo',
+                          'MEDIO_INCOMPLETE': 'Ensino Médio - Incompleto',
+                          'MEDIO_COMPLETE': 'Ensino Médio - Completo',
+                          'SUPERIOR_INCOMPLETE': 'Graduação - Incompleta',
+                          'SUPERIOR_COMPLETE': 'Graduação - Completa',
+                          'POS_GRADUACAO': 'Pós-graduação',
+                          'MESTRADO': 'Mestrado',
+                          'DOUTORADO': 'Doutorado',
+                        }[job.education] || job.education
+                      }
+                    </li>
+                    {job.requirements?.map((req, index) => (
+                      <li key={index}>{req}</li>
+                    ))}
+                  </ul>
                 </div>
                 
                 {(job.benefits || job.hasVA || job.hasVR || job.hasVT || job.hasLifeInsurance || job.hasMedicalInsurance || job.hasDentalInsurance) && (

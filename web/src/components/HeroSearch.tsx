@@ -70,35 +70,35 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
   };
 
   return (
-    <div className="w-full bg-brand-10 rounded-3xl p-10 text-white flex flex-col gap-6 items-center justify-center text-center shadow-lg relative">
+    <div className="w-full bg-brand-10 rounded-3xl p-6 sm:p-10 text-white flex flex-col gap-4 sm:gap-6 items-center justify-center text-center shadow-lg relative overflow-hidden">
       {/* Decorative background elements */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden rounded-3xl pointer-events-none">
         <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
         <div className="absolute -bottom-24 -right-24 w-80 h-80 bg-brand-10-hover/50 rounded-full blur-3xl"></div>
       </div>
 
-      <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight z-10">
+      <h1 className="text-2xl sm:text-3xl md:text-5xl font-extrabold tracking-tight z-10 px-2">
         Encontre a sua próxima oportunidade
       </h1>
-      <p className="text-white/80 max-w-lg md:text-lg z-10 font-medium">
+      <p className="text-white/90 max-w-lg text-sm sm:text-base md:text-lg z-10 font-medium px-4">
         Busque por cargo, tecnologia ou empresa em milhares de vagas disponíveis no momento.
       </p>
 
-      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 w-full max-w-4xl bg-brand-30 p-2 rounded-2xl shadow-xl mt-6 focus-within:ring-4 focus-within:ring-brand-10/30 transition-all z-10">
-        <div className="flex-1 flex items-center gap-3 px-4">
+      <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 sm:gap-2 w-full max-w-4xl bg-brand-30 p-3 sm:p-2 rounded-2xl shadow-xl mt-4 sm:mt-6 focus-within:ring-4 focus-within:ring-brand-10/30 transition-all z-10">
+        <div className="flex-1 flex items-center gap-3 px-4 bg-brand-60/30 sm:bg-transparent rounded-xl sm:rounded-none">
           <Search className="w-5 h-5 text-brand-muted shrink-0" />
           <input
             name="term"
             defaultValue={defaultTerm}
             placeholder="Cargo, empresa ou tecnologia"
-            className="w-full py-4 text-brand-text focus:outline-none bg-transparent placeholder:text-brand-muted font-medium"
+            className="w-full py-3 sm:py-4 min-h-[44px] text-brand-text focus:outline-none bg-transparent placeholder:text-brand-muted font-medium text-sm sm:text-base"
             autoComplete="off"
           />
         </div>
         
         <div className="hidden sm:block w-px bg-brand-60 my-3"></div>
         
-        <div className="flex-1 flex items-center gap-3 px-4 border-t sm:border-t-0 border-brand-60 sm:pt-0 pt-2 relative" ref={wrapperRef}>
+        <div className="flex-1 flex items-center gap-3 px-4 bg-brand-60/30 sm:bg-transparent rounded-xl sm:rounded-none relative" ref={wrapperRef}>
           <MapPin className="w-5 h-5 text-brand-muted shrink-0" />
           <input
             name="location"
@@ -109,7 +109,7 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
             }}
             onFocus={() => setShowSuggestions(true)}
             placeholder="Estado, cidade ou remoto"
-            className="w-full py-4 text-brand-text focus:outline-none bg-transparent placeholder:text-brand-muted font-medium"
+            className="w-full py-3 sm:py-4 min-h-[44px] text-brand-text focus:outline-none bg-transparent placeholder:text-brand-muted font-medium text-sm sm:text-base"
             autoComplete="off"
           />
           
@@ -120,7 +120,7 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
                 <li 
                   key={loc}
                   onClick={() => handleSelectLocation(loc)}
-                  className="px-4 py-2 hover:bg-brand-60 text-brand-text cursor-pointer text-left text-sm font-medium transition-colors"
+                  className="px-4 py-3 min-h-[44px] flex items-center hover:bg-brand-60 text-brand-text cursor-pointer text-left text-sm font-medium transition-colors"
                 >
                   {loc}
                 </li>
@@ -131,7 +131,7 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
 
         <button
           type="submit"
-          className="bg-brand-10 hover:bg-brand-10-hover text-white px-10 py-4 rounded-xl font-bold transition-all mt-2 sm:mt-0 shadow-md hover:shadow-lg active:scale-95"
+          className="w-full sm:w-auto bg-brand-10 hover:bg-brand-10-hover text-white px-6 sm:px-10 py-3 sm:py-4 min-h-[48px] rounded-xl font-bold transition-all shadow-md hover:shadow-lg active:scale-95 text-base"
         >
           Buscar Vagas
         </button>

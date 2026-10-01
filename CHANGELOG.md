@@ -6,6 +6,26 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 
 ## [Unreleased]
 
+### [MODIFY] - 2026-09-30
+- **Descrição:** Refinamentos de usabilidade e unificação de níveis de escolaridade (Fase Final do Goal).
+  1. Unificação do Ensino Fundamental: "Ensino Fundamental 1" e "Ensino Fundamental 2" foram mesclados em apenas "Ensino Fundamental - Incompleto" e "Ensino Fundamental - Completo", refletindo no banco (schema.prisma/Enum), nas validações (`job.schema.ts`), no componente de filtro (`SidebarFilters.tsx`) e na página de criação de vaga (`jobs/new/page.tsx`). O banco de dados de desenvolvimento foi resetado e repovoado com a nova seed.
+  2. Mobile-First (Ocultação de Filtros): A barra lateral de filtros (`SidebarFilters`) no mobile agora inicia colapsada em formato sanfona (accordion). Além disso, removemos o comportamento `sticky` no celular, garantindo que o filtro role normalmente com a página em vez de ficar fixo, evitando que as vagas passem por cima dele ao rolar.
+  3. Layout Desktop: A visualização em grid introduzida anteriormente no desktop foi revertida para o modelo "Extenso" original (1 coluna).
+  4. Nova funcionalidade de Requisitos: Implementado um sistema de requisitos extras por vaga. Adicionado campo de array no banco (`schema.prisma`), formulário dinâmico na criação de vagas ("Adicionar um requisito"), e a listagem desses requisitos no Modal de Detalhes da Vaga.
+  5. Salário Opcional e Mensagem de Sucesso: Corrigido bug de coerção de tipos no formulário (frontend) que forçava a validação do salário mesmo quando deixado em branco. Agora é 100% opcional não informar remuneração, exibindo corretamente a página de Sucesso ao concluir o cadastro.
+  6. [FIX] Private Network Access: Auditado e substituído o hardcode de `http://localhost:3333` em `src/lib/api.ts` para carregar dinamicamente `process.env.NEXT_PUBLIC_API_URL` sem fallbacks silenciosos em produção. Adicionado `.env.example` no `/web`.
+- **Escopo:** `/web` e `/server`
+- **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/prisma/seed.ts`, `server/src/schemas/job.schema.ts`, `web/src/app/page.tsx`, `web/src/app/jobs/new/page.tsx`, `web/src/components/SidebarFilters.tsx`, `web/src/types/job.ts`, `web/src/components/JobDetailsModal.tsx`, `web/src/lib/api.ts`, `web/.env.example`
+
+### [MODIFY] - 2026-09-30
+- **Descrição:** Revisão e refatoração completa da responsividade (Mobile-First) do frontend para acomodar telas de 320px até 4K.
+  1. Adicionado `overflow-x-hidden` e `w-full` na tag `body` (`layout.tsx`) para eliminar vazamentos de tela no mobile.
+  2. Implementado comportamento adaptativo progressivo para grids: listagem de vagas configurada como `grid-cols-1 lg:grid-cols-2`.
+  3. Escalabilidade de toque: ajustado `min-h-[44px]` (Área Mínima de Toque - Acessibilidade) em inputs, botões do filtro (`SidebarFilters`) e botão de `+` / Publicar Vaga (`Header`).
+  4. Melhorias de tipografia responsiva: botões em forms adaptando `w-full sm:w-auto` (`jobs/new/page.tsx`), prevenção de estouro de badges e títulos flexíveis com `line-clamp-2` e truncamento (`JobCard.tsx`, `JobDetailsModal.tsx`).
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/app/layout.tsx`, `web/src/app/page.tsx`, `web/src/app/jobs/new/page.tsx`, `web/src/components/Header.tsx`, `web/src/components/HeroSearch.tsx`, `web/src/components/SidebarFilters.tsx`, `web/src/components/JobCard.tsx`, `web/src/components/JobCardSkeleton.tsx`, `web/src/components/JobDetailsModal.tsx`
+
 ### [BUGFIX] - 2026-09-30
 - **Descrição:** Correção do erro de compilação na Cloudflare Pages relacionado às dependências nativas opcionais do Tailwind CSS v4 (`lightningcss.linux-x64-gnu.node` e `@tailwindcss/oxide`). Contornado o bug crônico do `npm ci` (issue #4828 do NPM) e erros de incompatibilidade de versão na engine nativa. O script `pages:build` foi atualizado para efetuar a "solução nuclear" sugerida pelos próprios desenvolvedores do Tailwind: `rm -rf node_modules package-lock.json && npm install --legacy-peer-deps` antes do Next.js. Isso apaga o cache poluído pela etapa anterior da Cloudflare e força uma instalação perfeitamente mapeada para o sistema Linux alvo, ignorando conflitos de pacotes legados do próprio Cloudflare workers. Adicionalmente, foi removida a configuração `outputFileTracingRoot` do `next.config.ts` que estava causando um bug de duplicação de diretório (`web/web/.next`) no final do processo de build do Next-on-Pages. Por fim, a versão do Node.js nos arquivos `.nvmrc` foi elevada de `20` para `22` para satisfazer os requisitos do novo compilador do `wrangler`.
 - **Escopo:** `/web`
@@ -197,3 +217,19 @@ Histórico de modificações do projeto conforme categorização estipulada em `
 - **Descrição:** Implementação completa da Fase 0 (Setup do Monorepo) e Fase 1 (Backend com Express, TypeScript, Prisma, Zod e PostgreSQL).
 - **Escopo:** `raiz`, `/server`
 - **Arquivos Afetados:** `package.json`, `.gitignore`, `server/package.json`, `server/tsconfig.json`, `server/prisma/schema.prisma`, `server/prisma/migrations/20250101000000_init/migration.sql`, `server/prisma/seed.ts`, `server/src/server.ts`, `server/src/app.ts`, `server/src/routes/*`, `server/src/controllers/*`, `server/src/services/*`, `server/src/schemas/*`, `server/src/middlewares/*`, `server/src/lib/prisma.ts`
+
+### [FIX] - 2026-09-30
+- **Descri��o:** Corre��o do travamento infinito (loading eterno) na rota de listagem de vagas. O problema era causado pelo esgotamento de conex�es no Hyperdrive devido a inst�ncias globais do Pool em ambientes de edge/isolates.
+- **Escopo:** /server
+- **Arquivos Afetados:** server/src/app.ts, server/src/lib/prisma.ts, server/src/controllers/job.controller.ts, server/src/services/job.service.ts, server/src/server.ts
+
+### [MODIFY] - 2026-09-30
+- **Descri��o:** Refatora��o completa da inje��o de depend�ncia do PrismaClient. A inst�ncia do banco e o Pool do pg s�o agora criados sob demanda por requisi��o e gerenciados via Hono Context (c.set/c.get), com teardown gracioso garantido via c.executionCtx.waitUntil(pool.end()).
+- **Escopo:** /server
+- **Arquivos Afetados:** server/src/app.ts, server/src/lib/prisma.ts, server/src/controllers/job.controller.ts, server/src/services/job.service.ts, server/src/server.ts
+
+### [FIX] - 2026-09-30
+- **Descri��o:** Resolu��o do bug de deploy pelo GitHub Actions. Foi equalizada a vers�o do @prisma/client, @prisma/adapter-pg e do CLI do prisma em package.json (todos na v5.22.0) para prevenir diverg�ncias na gera��o do driver e do WASM query engine no runner do Ubuntu.
+- **Escopo:** /server
+- **Arquivos Afetados:** server/package.json
+

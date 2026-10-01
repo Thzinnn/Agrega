@@ -33,23 +33,23 @@ export function JobCard({ job, onClick }: JobCardProps) {
     <motion.div
       layoutId={`job-card-${job.id}`}
       onClick={onClick}
-      className="group flex flex-col justify-between gap-3 rounded-2xl border border-brand-30/50 bg-brand-30 p-6 text-brand-text shadow-sm transition-all hover:shadow-lg cursor-pointer hover:border-brand-10/50 min-h-[160px] relative overflow-hidden"
+      className="group flex flex-col justify-between gap-3 rounded-2xl border border-brand-30/50 bg-brand-30 p-4 sm:p-6 text-brand-text shadow-sm transition-all hover:shadow-lg cursor-pointer hover:border-brand-10/50 min-h-[160px] relative overflow-hidden"
     >
       <div className="absolute top-0 left-0 w-1 h-full bg-transparent group-hover:bg-brand-10 transition-colors"></div>
 
       <div className="flex flex-col gap-2">
-        <h3 className="font-bold text-xl leading-tight tracking-tight group-hover:text-brand-10 transition-colors">
+        <h3 className="font-bold text-lg sm:text-xl leading-tight tracking-tight group-hover:text-brand-10 transition-colors break-words line-clamp-2">
           {job.title}
         </h3>
         
-        <div className="flex flex-wrap items-center text-sm text-brand-muted gap-4">
-          <div className="flex items-center gap-1.5 font-medium">
-            <Building2 className="w-4 h-4 text-brand-muted/70" />
-            <span>{job.company}</span>
+        <div className="flex flex-wrap items-center text-xs sm:text-sm text-brand-muted gap-3 sm:gap-4">
+          <div className="flex items-center gap-1.5 font-medium max-w-full">
+            <Building2 className="w-4 h-4 text-brand-muted/70 shrink-0" />
+            <span className="truncate">{job.company}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <MapPin className="w-4 h-4 text-brand-muted/70" />
-            <span>{job.location}</span>
+          <div className="flex items-center gap-1.5 max-w-full">
+            <MapPin className="w-4 h-4 text-brand-muted/70 shrink-0" />
+            <span className="truncate">{job.location}</span>
           </div>
         </div>
       </div>

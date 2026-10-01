@@ -2,10 +2,8 @@ import { z } from 'zod';
 
 export const workplaceTypeEnum = z.enum(['REMOTE', 'HYBRID', 'ON_SITE']);
 export const educationLevelEnum = z.enum([
-  'FUNDAMENTAL_1_INCOMPLETE',
-  'FUNDAMENTAL_1_COMPLETE',
-  'FUNDAMENTAL_2_INCOMPLETE',
-  'FUNDAMENTAL_2_COMPLETE',
+  'FUNDAMENTAL_INCOMPLETE',
+  'FUNDAMENTAL_COMPLETE',
   'MEDIO_INCOMPLETE',
   'MEDIO_COMPLETE',
   'SUPERIOR_INCOMPLETE',
@@ -24,6 +22,7 @@ export const createJobSchema = z
     location: z.string({ required_error: 'Localização é obrigatória' }).min(2, 'Localização deve ter pelo menos 2 caracteres').max(100),
     workplaceType: workplaceTypeEnum,
     education: educationLevelEnum,
+    requirements: z.array(z.string().min(1, 'Requisito não pode ser vazio')).default([]).optional(),
     contractType: contractTypeEnum.default('CLT'),
     benefits: z
       .string()

@@ -22,18 +22,20 @@ export function Header() {
           </span>
         </Link>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <Link
             href="/jobs/new"
-            className="hidden sm:flex items-center gap-2 bg-brand-10 hover:bg-brand-10-hover text-white px-4 py-2 rounded-xl font-bold transition-all shadow-sm active:scale-95 text-sm"
+            className="flex items-center justify-center gap-2 bg-brand-10 hover:bg-brand-10-hover text-white px-3 sm:px-4 py-2 min-h-[44px] min-w-[44px] rounded-xl font-bold transition-all shadow-sm active:scale-95 text-sm"
+            aria-label="Publicar Vaga"
           >
-            Publicar Vaga
+            <span className="hidden sm:inline">Publicar Vaga</span>
+            <span className="sm:hidden text-lg leading-none">+</span>
           </Link>
 
           {mounted && (
             <button
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex h-10 w-10 items-center justify-center rounded-full hover:bg-brand-60 text-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-10"
+              className="flex h-11 w-11 min-h-[44px] min-w-[44px] items-center justify-center rounded-full hover:bg-brand-60 text-brand-text transition-colors focus:outline-none focus:ring-2 focus:ring-brand-10"
               aria-label="Alternar tema"
             >
               {theme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
