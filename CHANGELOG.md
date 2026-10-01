@@ -217,3 +217,19 @@ HistÃ³rico de modificaÃ§Ãµes do projeto conforme categorizaÃ§Ã£o estipulada em `
 - **DescriÃ§Ã£o:** ImplementaÃ§Ã£o completa da Fase 0 (Setup do Monorepo) e Fase 1 (Backend com Express, TypeScript, Prisma, Zod e PostgreSQL).
 - **Escopo:** `raiz`, `/server`
 - **Arquivos Afetados:** `package.json`, `.gitignore`, `server/package.json`, `server/tsconfig.json`, `server/prisma/schema.prisma`, `server/prisma/migrations/20250101000000_init/migration.sql`, `server/prisma/seed.ts`, `server/src/server.ts`, `server/src/app.ts`, `server/src/routes/*`, `server/src/controllers/*`, `server/src/services/*`, `server/src/schemas/*`, `server/src/middlewares/*`, `server/src/lib/prisma.ts`
+
+### [FIX] - 2026-09-30
+- **Descrição:** Correção do travamento infinito (loading eterno) na rota de listagem de vagas. O problema era causado pelo esgotamento de conexões no Hyperdrive devido a instâncias globais do Pool em ambientes de edge/isolates.
+- **Escopo:** /server
+- **Arquivos Afetados:** server/src/app.ts, server/src/lib/prisma.ts, server/src/controllers/job.controller.ts, server/src/services/job.service.ts, server/src/server.ts
+
+### [MODIFY] - 2026-09-30
+- **Descrição:** Refatoração completa da injeção de dependência do PrismaClient. A instância do banco e o Pool do pg são agora criados sob demanda por requisição e gerenciados via Hono Context (c.set/c.get), com teardown gracioso garantido via c.executionCtx.waitUntil(pool.end()).
+- **Escopo:** /server
+- **Arquivos Afetados:** server/src/app.ts, server/src/lib/prisma.ts, server/src/controllers/job.controller.ts, server/src/services/job.service.ts, server/src/server.ts
+
+### [FIX] - 2026-09-30
+- **Descrição:** Resolução do bug de deploy pelo GitHub Actions. Foi equalizada a versão do @prisma/client, @prisma/adapter-pg e do CLI do prisma em package.json (todos na v5.22.0) para prevenir divergências na geração do driver e do WASM query engine no runner do Ubuntu.
+- **Escopo:** /server
+- **Arquivos Afetados:** server/package.json
+
