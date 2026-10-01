@@ -35,19 +35,11 @@ app.use('*', async (c, next) => {
   const dbUrl = c.env?.HYPERDRIVE ? (c.env.HYPERDRIVE as { connectionString: string }).connectionString : (c.env?.DATABASE_URL as string | undefined);
   
   if (dbUrl) {
-    const { prisma, pool } = initializePrisma(dbUrl);
+    const { prisma } = initializePrisma(dbUrl);
     c.set('prisma', prisma);
-    
-    await next();
-    
-    // Assegura que o socket do pool seja fechado ao fim da requisição
-    // para evitar TCP half-open hangs no Cloudflare Workers
-    if (pool) {
-      c.executionCtx.waitUntil(pool.end());
-    }
-  } else {
-    await next();
   }
+  
+  await next();
 });
 
 // Basic health and control routes
