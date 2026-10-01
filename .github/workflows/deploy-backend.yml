@@ -37,6 +37,7 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: 'server'
+          wranglerVersion: '4'
 
       - name: Deploy Worker (Preview / Staging)
         if: github.ref == 'refs/heads/development'
@@ -46,3 +47,4 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           workingDirectory: 'server'
           environment: 'preview'
+          wranglerVersion: '4'
