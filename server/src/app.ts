@@ -35,11 +35,17 @@ app.use('*', async (c, next) => {
   const dbUrl = c.env?.HYPERDRIVE ? (c.env.HYPERDRIVE as { connectionString: string }).connectionString : (c.env?.DATABASE_URL as string | undefined);
   
   if (dbUrl) {
-    const { prisma } = initializePrisma(dbUrl);
+    const { prisma, pool } = initializePrisma(dbUrl);
     c.set('prisma', prisma);
+    
+    await next();
+    
+    if (pool) {
+      c.executionCtx.waitUntil(pool.end());
+    }
+  } else {
+    await next();
   }
-  
-  await next();
 });
 
 // Basic health and control routes
