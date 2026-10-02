@@ -230,8 +230,8 @@ export default function NewJobPage() {
           <div className="w-20 h-20 bg-brand-10/20 text-brand-10 rounded-full flex items-center justify-center mb-6">
             <CheckCircle2 className="w-10 h-10" />
           </div>
-          <h2 className="text-3xl font-bold text-brand-text mb-4">Vaga Publicada!</h2>
-          <p className="text-brand-muted text-lg mb-8">Sua oportunidade já está disponível para milhares de talentos na plataforma.</p>
+          <h2 className="text-3xl font-bold text-brand-text mb-4">Vaga Publicada com Sucesso!</h2>
+          <p className="text-brand-muted text-lg mb-8">Sua oportunidade estará disponível na nossa página de buscas em alguns instantes.</p>
           <div className="w-8 h-8 border-4 border-brand-10 border-t-transparent rounded-full animate-spin"></div>
           <span className="text-sm text-brand-muted mt-4">Redirecionando...</span>
         </div>

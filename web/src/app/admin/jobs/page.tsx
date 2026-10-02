@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Trash2, Plus, Loader2, Edit, Eye, X, CheckCircle2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { JobFormModal, JobFormData } from '@/components/JobFormModal';
 
 interface Job {
@@ -41,6 +43,7 @@ export default function AdminJobsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [jobToEdit, setJobToEdit] = useState<JobFormData | null>(null);
   const [jobToView, setJobToView] = useState<JobFormData | null>(null);
+  const [modalAction, setModalAction] = useState<{type: 'DELETE' | 'ACTIVATE', id: string} | null>(null);
 
   const fetchJobs = async () => {
     try {
@@ -58,33 +61,24 @@ export default function AdminJobsPage() {
     fetchJobs();
   }, []);
 
-  const handleSoftDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja inativar esta vaga? Ela não aparecerá mais nas buscas, mas seus dados e métricas serão mantidos.')) {
-      return;
-    }
+  const handleConfirmAction = async () => {
+    if (!modalAction) return;
+    const { type, id } = modalAction;
     
     try {
       setActionLoading(id);
-      await api.patch(`/admin/jobs/${id}/soft-delete`);
-      await fetchJobs();
+      if (type === 'DELETE') {
+        await api.patch(`/admin/jobs/${id}/soft-delete`);
+        toast.success('Vaga inativada com sucesso!');
+        setJobs(prev => prev.map(j => j.id === id ? { ...j, isActive: false } : j));
+      } else {
+        await api.patch(`/admin/jobs/${id}/activate`);
+        toast.success('Vaga ativada com sucesso!');
+        setJobs(prev => prev.map(j => j.id === id ? { ...j, isActive: true } : j));
+      }
+      setModalAction(null);
     } catch (_) {
-      alert('Erro ao inativar a vaga.');
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
-  const handleActivate = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja reativar esta vaga? Ela voltará a aparecer nas buscas imediatamente.')) {
-      return;
-    }
-    
-    try {
-      setActionLoading(id);
-      await api.patch(`/admin/jobs/${id}/activate`);
-      await fetchJobs();
-    } catch (_) {
-      alert('Erro ao ativar a vaga.');
+      toast.error(`Erro ao ${type === 'DELETE' ? 'inativar' : 'ativar'} a vaga.`);
     } finally {
       setActionLoading(null);
     }
@@ -180,7 +174,7 @@ export default function AdminJobsPage() {
                         </button>
                         {job.isActive ? (
                           <button 
-                            onClick={() => handleSoftDelete(job.id)}
+                            onClick={() => setModalAction({ type: 'DELETE', id: job.id })}
                             disabled={actionLoading === job.id}
                             className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                             title="Inativar Vaga"
@@ -189,7 +183,7 @@ export default function AdminJobsPage() {
                           </button>
                         ) : (
                           <button 
-                            onClick={() => handleActivate(job.id)}
+                            onClick={() => setModalAction({ type: 'ACTIVATE', id: job.id })}
                             disabled={actionLoading === job.id}
                             className="p-2 text-emerald-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-50"
                             title="Ativar Vaga"
@@ -292,6 +286,17 @@ export default function AdminJobsPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={modalAction !== null}
+        title={modalAction?.type === 'DELETE' ? 'Inativar Vaga' : 'Ativar Vaga'}
+        description={modalAction?.type === 'DELETE' 
+          ? 'Tem certeza que deseja inativar esta vaga? Ela não aparecerá mais nas buscas, mas seus dados e métricas serão mantidos.' 
+          : 'Tem certeza que deseja reativar esta vaga? Ela voltará a aparecer nas buscas imediatamente.'}
+        onConfirm={handleConfirmAction}
+        onCancel={() => setModalAction(null)}
+        isLoading={!!actionLoading}
+      />
     </div>
   );
 }

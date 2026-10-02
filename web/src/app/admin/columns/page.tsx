@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Trash2, Plus, Loader2, Edit } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface CustomColumn {
   id: string;
@@ -25,6 +27,9 @@ export default function AdminColumnsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [columnToEdit, setColumnToEdit] = useState<CustomColumn | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const { register, handleSubmit, reset, setValue, watch } = useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,32 +90,53 @@ export default function AdminColumnsPage() {
       }
       delete payload.optionsString;
 
+      let updatedColumn;
       if (columnToEdit) {
-        await api.put(`/admin/columns/${columnToEdit.id}`, payload);
+        const response = await api.put(`/admin/columns/${columnToEdit.id}`, payload);
+        updatedColumn = response.data.data;
       } else {
-        await api.post('/admin/columns', payload);
+        const response = await api.post('/admin/columns', payload);
+        updatedColumn = response.data.data;
       }
+      
       setIsModalOpen(false);
-      alert('Coluna salva com sucesso!');
-      fetchColumns();
+      toast.success(columnToEdit ? 'Coluna editada com sucesso!' : 'Coluna salva com sucesso!');
+      
+      // Update local state directly
+      if (columnToEdit) {
+        setColumns(prev => prev.map(c => c.id === updatedColumn.id ? updatedColumn : c));
+      } else {
+        setColumns(prev => [...prev, updatedColumn]);
+      }
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;
-      alert(axiosError.response?.data?.message || 'Erro ao salvar coluna');
+      toast.error(axiosError.response?.data?.message || 'Erro ao salvar coluna');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir esta coluna? Os dados existentes nas vagas para esta coluna não serão apagados do JSON, mas deixarão de aparecer nos formulários.')) {
-      return;
-    }
+  const confirmDelete = (id: string) => {
+    setColumnToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!columnToDelete) return;
+    setIsDeleting(true);
     try {
-      await api.delete(`/admin/columns/${id}`);
-      alert('Coluna excluída com sucesso!');
-      fetchColumns();
+      await api.delete(`/admin/columns/${columnToDelete}`);
+      toast.success('Coluna excluída com sucesso!');
+      
+      // Update local state directly
+      setColumns(prev => prev.filter(c => c.id !== columnToDelete));
+      
+      setIsDeleteModalOpen(false);
+      setColumnToDelete(null);
     } catch (_) {
-      alert('Erro ao excluir coluna.');
+      toast.error('Erro ao excluir coluna.');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -221,7 +247,7 @@ export default function AdminColumnsPage() {
                           </button>
                           {!col.isNative && (
                             <button 
-                              onClick={() => handleDelete(col.id)}
+                              onClick={() => confirmDelete(col.id)}
                               className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors pointer-events-auto"
                               title="Excluir Coluna"
                             >

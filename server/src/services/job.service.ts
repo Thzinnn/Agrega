@@ -120,7 +120,8 @@ export class JobService {
     }
 
     Object.entries(dynamicParams).forEach(([key, val]) => {
-      if (val === undefined || val === '') return;
+      // Ignore technical parameters like _t (cache buster)
+      if (key === '_t' || val === undefined || val === '') return;
       // split commas just in case, but validateRequest already handles array if passed as ?key=a&key=b
       let valuesArray: string[] = [];
       if (Array.isArray(val)) {
