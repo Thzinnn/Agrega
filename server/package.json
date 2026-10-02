@@ -12,7 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts",
-    "deploy": "wrangler deploy"
+    "deploy": "prisma generate && prisma migrate deploy && tsx scripts/reprocessar-vagas.ts && wrangler deploy"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

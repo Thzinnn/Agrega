@@ -12,6 +12,11 @@
 - **Escopo:** `/server` e `/web`
 - **Arquivos Afetados:** `web/src/app/admin/jobs/page.tsx`
 
+### [FEAT] - 2026-10-02
+- **Descrição:** Implementação do **Auto-Preenchimento Retroativo (Retroactive Sync)**. Agora, sempre que o usuário criar uma nova "Opção" para uma coluna ou filtro no Painel Admin (ex: adicionar a opção "Híbrido Flex" na modalidade, ou "CNH B" numa coluna dinâmica de CNH), o sistema rodará um script no backend, invisível ao usuário, que escaneia a `description` de TODAS as vagas já existentes no banco. Caso o nome dessa nova opção seja encontrado no texto da vaga, e o campo da vaga estiver vazio (ou sem essa opção), o sistema o preencherá automaticamente.
+- **Escopo:** `/server` (Rotas Admin)
+- **Arquivos Afetados:** `server/src/routes/admin.routes.ts`
+
 ### [FEAT]
 - Infraestrutura de ingestão externa via API (`POST /api/v1/jobs/ingest`) para receber dados de vagas em lote por robô de web scraping em Python.
 - Painel Administrativo Completo (`/admin`) implementado com rotas protegidas e autenticação.

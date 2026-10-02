@@ -324,12 +324,12 @@ export class JobService {
         if (descLower.includes('doutorado')) inferredEducation = 'DOUTORADO';
         else if (descLower.includes('mestrado')) inferredEducation = 'MESTRADO';
         else if (descLower.includes('pós-graduação') || descLower.includes('pos-graduacao') || descLower.includes('pós graduação')) inferredEducation = 'POS_GRADUACAO';
-        else if (descLower.includes('superior completo') || descLower.includes('graduação completa') || (descLower.includes('ensino superior') && !descLower.includes('cursando'))) inferredEducation = 'SUPERIOR_COMPLETE';
-        else if (descLower.includes('superior cursando') || descLower.includes('superior incompleto') || descLower.includes('graduação incompleta') || (descLower.includes('ensino superior') && descLower.includes('cursando'))) inferredEducation = 'SUPERIOR_INCOMPLETE';
-        else if (descLower.includes('ensino médio completo') || descLower.includes('ensino medio completo') || ((descLower.includes('ensino médio') || descLower.includes('ensino medio')) && !descLower.includes('incompleto') && !descLower.includes('cursando'))) inferredEducation = 'MEDIO_COMPLETE';
+        else if (descLower.includes('superior cursando') || descLower.includes('superior incompleto') || descLower.includes('graduação incompleta') || descLower.includes('ensino superior incompleto') || descLower.includes('ensino superior cursando')) inferredEducation = 'SUPERIOR_INCOMPLETE';
+        else if (descLower.includes('ensino superior') || descLower.includes('superior completo') || descLower.includes('graduação completa')) inferredEducation = 'SUPERIOR_COMPLETE';
         else if (descLower.includes('ensino médio incompleto') || descLower.includes('ensino medio incompleto') || descLower.includes('ensino médio cursando') || descLower.includes('ensino medio cursando')) inferredEducation = 'MEDIO_INCOMPLETE';
-        else if (descLower.includes('ensino fundamental completo') || (descLower.includes('ensino fundamental') && !descLower.includes('incompleto'))) inferredEducation = 'FUNDAMENTAL_COMPLETE';
+        else if (descLower.includes('ensino médio') || descLower.includes('ensino medio') || descLower.includes('2º grau') || descLower.includes('segundo grau')) inferredEducation = 'MEDIO_COMPLETE';
         else if (descLower.includes('ensino fundamental incompleto')) inferredEducation = 'FUNDAMENTAL_INCOMPLETE';
+        else if (descLower.includes('ensino fundamental') || descLower.includes('1º grau') || descLower.includes('primeiro grau')) inferredEducation = 'FUNDAMENTAL_COMPLETE';
       }
 
       // Extract Requirements from description using heuristics (Experience, tools, languages)

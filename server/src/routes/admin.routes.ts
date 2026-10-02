@@ -160,8 +160,88 @@ adminRoutes.post('/filters/options', async (c) => {
     where: { id: body.filterCategoryId },
     data: { options: Array.from(new Set(updatedOptions)) },
   });
+
+  // Roda o auto-preenchimento retroativo assincronamente (background)
+  // Utiliza waitUntil para garantir que o Cloudflare Workers/Vercel mantenha a execução
+  const syncPromise = syncJobCustomColumnOption(prisma, col, body.value);
+  if (c.executionCtx && c.executionCtx.waitUntil) {
+    c.executionCtx.waitUntil(syncPromise);
+  } else {
+    // Fallback para Node.js puro sem waitUntil
+    syncPromise.catch(console.error);
+  }
+
   return c.json({ success: true, data: col }, 201);
 });
+
+function escapeRegExp(string: string) {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+async function syncJobCustomColumnOption(prisma: any, column: any, optionValue: string) {
+  try {
+    let skip = 0;
+    const take = 100;
+    let hasMore = true;
+
+    while (hasMore) {
+      const jobs = await prisma.job.findMany({
+        skip,
+        take,
+        select: { id: true, description: true, workplaceType: true, education: true, contractType: true, customData: true }
+      });
+
+      if (jobs.length < take) {
+        hasMore = false;
+      }
+
+      for (const job of jobs) {
+        if (!job.description) continue;
+        const desc = job.description.toLowerCase();
+        
+        // Match exato (com bordas de palavras) ou apenas includes
+        const searchRegex = new RegExp(`\\b${escapeRegExp(optionValue.toLowerCase())}\\b`, 'i');
+        
+        if (searchRegex.test(desc) || desc.includes(optionValue.toLowerCase())) {
+           if (column.isNative) {
+             if (column.slug === 'workplaceType' && (!job.workplaceType || job.workplaceType === 'ON_SITE')) {
+                await prisma.job.update({ where: { id: job.id }, data: { workplaceType: optionValue } });
+             } else if (column.slug === 'education' && !job.education) {
+                await prisma.job.update({ where: { id: job.id }, data: { education: optionValue } });
+             } else if (column.slug === 'contractType' && (!job.contractType || job.contractType === 'CLT')) {
+                await prisma.job.update({ where: { id: job.id }, data: { contractType: optionValue } });
+             }
+           } else {
+             const customData = (job.customData as Record<string, any>) || {};
+             let currentValue = customData[column.slug];
+             let shouldUpdate = false;
+             
+             if (column.type === 'LIST') {
+               if (!Array.isArray(currentValue)) currentValue = currentValue ? [currentValue] : [];
+               if (!currentValue.includes(optionValue)) {
+                 currentValue.push(optionValue);
+                 customData[column.slug] = currentValue;
+                 shouldUpdate = true;
+               }
+             } else {
+               if (!currentValue) {
+                 customData[column.slug] = optionValue;
+                 shouldUpdate = true;
+               }
+             }
+
+             if (shouldUpdate) {
+               await prisma.job.update({ where: { id: job.id }, data: { customData } });
+             }
+           }
+        }
+      }
+      skip += take;
+    }
+  } catch (err) {
+    console.error('Retroactive sync failed:', err);
+  }
+}
 
 adminRoutes.delete('/filters/categories/:id', async (c) => {
   const prisma = c.get('prisma');
