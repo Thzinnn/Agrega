@@ -57,9 +57,11 @@ adminRoutes.get('/metrics', async (c) => {
 // ==========================================
 adminRoutes.get('/jobs', async (c) => {
   const prisma = c.get('prisma');
-  const jobs = await prisma.job.findMany({
-    orderBy: { createdAt: 'desc' },
-  });
+  const [jobs] = await prisma.$transaction([
+    prisma.job.findMany({
+      orderBy: { createdAt: 'desc' },
+    })
+  ]);
   return c.json({ success: true, data: jobs });
 });
 
@@ -95,10 +97,13 @@ adminRoutes.delete('/jobs/:id', async (c) => {
 // ==========================================
 adminRoutes.get('/filters', async (c) => {
   const prisma = c.get('prisma');
-  const columns = await prisma.jobCustomColumn.findMany({
-    where: { isFilterable: true, isActive: true },
-    orderBy: { name: 'asc' },
-  });
+  // Wrap in transaction to completely bypass Hyperdrive cache for Admin queries
+  const [columns] = await prisma.$transaction([
+    prisma.jobCustomColumn.findMany({
+      where: { isFilterable: true, isActive: true },
+      orderBy: { name: 'asc' },
+    })
+  ]);
   
   const OPTION_LABELS: Record<string, string> = {
     REMOTE: 'Remoto',
@@ -180,9 +185,11 @@ adminRoutes.post('/filters/options/delete', async (c) => {
 // ==========================================
 adminRoutes.get('/users', async (c) => {
   const prisma = c.get('prisma');
-  const users = await prisma.user.findMany({
-    select: { id: true, email: true, name: true, role: true, createdAt: true },
-  });
+  const [users] = await prisma.$transaction([
+    prisma.user.findMany({
+      select: { id: true, email: true, name: true, role: true, createdAt: true },
+    })
+  ]);
   return c.json({ success: true, data: users });
 });
 
@@ -337,9 +344,11 @@ adminRoutes.put('/jobs/:id', async (c) => {
 
 adminRoutes.get('/columns', async (c) => {
   const prisma = c.get('prisma');
-  const columns = await prisma.jobCustomColumn.findMany({
-    orderBy: { createdAt: 'asc' },
-  });
+  const [columns] = await prisma.$transaction([
+    prisma.jobCustomColumn.findMany({
+      orderBy: { createdAt: 'asc' },
+    })
+  ]);
   return c.json({ success: true, data: columns });
 });
 

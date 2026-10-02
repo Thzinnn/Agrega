@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Loader2, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface FilterCategory {
   id: string;
@@ -26,6 +28,7 @@ export default function AdminFiltersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedToDelete, setSelectedToDelete] = useState<{categoryId: string, value: string}[]>([]);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   const fetchFilters = async () => {
     try {
@@ -56,12 +59,12 @@ export default function AdminFiltersPage() {
     
     try {
       await api.post('/admin/filters/options', { label: value, value, filterCategoryId: modalCategoryId });
-      alert('Opção adicionada com sucesso!');
+      toast.success('Opção adicionada com sucesso!');
       setIsModalOpen(false);
       setNewOptionLabel('');
       await fetchFilters();
     } catch (_) {
-      alert('Erro ao adicionar opção');
+      toast.error('Erro ao adicionar opção');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,12 +87,13 @@ export default function AdminFiltersPage() {
           api.post('/admin/filters/options/delete', { categoryId, values })
         )
       );
-      alert('Opções excluídas com sucesso!');
+      toast.success('Opções excluídas com sucesso!');
       setIsDeleteMode(false);
       setSelectedToDelete([]);
+      setIsDeleteModalOpen(false);
       await fetchFilters();
     } catch (_) {
-      alert('Erro ao excluir opções');
+      toast.error('Erro ao excluir opções');
     } finally {
       setIsSubmitting(false);
     }
@@ -115,7 +119,7 @@ export default function AdminFiltersPage() {
                 Cancelar
               </button>
               <button 
-                onClick={handleBulkDelete}
+                onClick={() => setIsDeleteModalOpen(true)}
                 disabled={selectedToDelete.length === 0 || isSubmitting}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-red-600 hover:bg-red-700 rounded-xl transition-colors disabled:opacity-50"
               >
@@ -227,6 +231,15 @@ export default function AdminFiltersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="Excluir Opções de Filtro"
+        description={`Tem certeza que deseja excluir as ${selectedToDelete.length} opções selecionadas?`}
+        onConfirm={handleBulkDelete}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        isLoading={isSubmitting}
+      />
     </div>
   );
 }

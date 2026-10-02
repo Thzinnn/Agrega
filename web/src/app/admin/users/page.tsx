@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Loader2, Shield, Pencil, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { ConfirmModal } from '@/components/ConfirmModal';
 
 interface User {
   id: string;
@@ -19,6 +21,10 @@ export default function AdminUsersPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'ADMIN' });
+  
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsers = async () => {
       try {
@@ -46,11 +52,11 @@ export default function AdminUsersPage() {
       setFormData({ name: '', email: '', password: '', role: 'ADMIN' });
       setUserToEdit(null);
       setIsModalOpen(false);
-      alert('Usuário salvo com sucesso!');
+      toast.success(userToEdit ? 'Usuário editado com sucesso!' : 'Usuário criado com sucesso!');
       fetchUsers();
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;
-      alert(axiosError.response?.data?.message || 'Erro ao salvar usuário');
+      toast.error(axiosError.response?.data?.message || 'Erro ao salvar usuário');
     } finally {
       setIsSubmitting(false);
     }
@@ -62,15 +68,25 @@ export default function AdminUsersPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
+  const confirmDelete = (id: string) => {
+    setUserToDelete(id);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+    setIsDeleting(true);
     try {
-      await api.delete(`/admin/users/${id}`);
-      alert('Usuário excluído com sucesso!');
+      await api.delete(`/admin/users/${userToDelete}`);
+      toast.success('Usuário excluído com sucesso!');
       fetchUsers();
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;
-      alert(axiosError.response?.data?.message || 'Erro ao excluir usuário');
+      toast.error(axiosError.response?.data?.message || 'Erro ao excluir usuário');
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -132,7 +148,7 @@ export default function AdminUsersPage() {
                         <Pencil className="w-4 h-4" />
                       </button>
                       <button 
-                        onClick={() => handleDelete(u.id)}
+                        onClick={() => confirmDelete(u.id)}
                         className="p-2 text-brand-muted hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Excluir Usuário"
                       >
@@ -227,6 +243,18 @@ export default function AdminUsersPage() {
           </div>
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="Excluir Usuário"
+        description="Tem certeza que deseja excluir este usuário? Esta ação não poderá ser desfeita e o acesso ao painel será revogado imediatamente."
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setUserToDelete(null);
+        }}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }
