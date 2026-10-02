@@ -8,11 +8,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum JobSource {
-  MANUAL
-  SCRAPER
-}
-
 enum Role {
   ADMIN
 }
@@ -68,7 +63,10 @@ model Job {
   applicationUrl      String?
   contactEmail        String?
   contactPhone        String?
-  source              JobSource      @default(MANUAL)
+  originalUrl         String?
+  workSchedule        String?
+  source              String         @default("MANUAL")
+  sourceJobId         String?        @unique
   clicksCount         Int            @default(0)
   isActive            Boolean        @default(true)
   customData          Json?          @default("{}")
