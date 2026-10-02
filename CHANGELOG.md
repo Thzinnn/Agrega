@@ -1,6 +1,17 @@
 # Changelog
 
 ## [Unreleased]
+
+### [BUGFIX] - 2026-10-02
+- **Descrição:** Correção no algoritmo de parsing de salários na API de Ingestão para extrair faixas salariais (min e max) e evitar concatenação de valores. Ajuste na heurística de extração de requisitos para ignorar títulos de seções e evitar sobreposição com campos nativos. Implementação de uma heurística inteligente que rastreia todo o texto da descrição da vaga procurando termos como "ensino superior", "médio completo", etc, e preenche nativamente a coluna `education` do banco de dados na inserção via Scraper. Realocação do bloco "Descrição Completa" no `JobDetailsModal` para aparecer logo acima dos contatos.
+- **Escopo:** `/server` e `/web`
+- **Arquivos Afetados:** `server/src/services/job.service.ts`, `web/src/components/JobDetailsModal.tsx`
+
+### [FACT] - 2026-10-02
+- **Descrição:** Adição de barra de pesquisa textual e filtros avançados (Status Ativo/Inativo e Origem Manual/Scraper) com resposta em tempo real na página de gerenciamento de vagas do painel Admin. Alteração da configuração do banco de dados (via script interno) para tornar o preenchimento de Escolaridade opcional nos envios do Scraper.
+- **Escopo:** `/server` e `/web`
+- **Arquivos Afetados:** `web/src/app/admin/jobs/page.tsx`
+
 ### [FEAT]
 - Infraestrutura de ingestão externa via API (`POST /api/v1/jobs/ingest`) para receber dados de vagas em lote por robô de web scraping em Python.
 - Painel Administrativo Completo (`/admin`) implementado com rotas protegidas e autenticação.

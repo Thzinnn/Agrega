@@ -1,7 +1,14 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SidebarFilters } from '../SidebarFilters';
+import { api } from '@/lib/api';
+
+vi.mock('@/lib/api', () => ({
+  api: {
+    get: vi.fn(),
+  },
+}));
 
 const defaultFilters = {
   workplaceType: [],
@@ -13,10 +20,29 @@ const defaultFilters = {
 };
 
 describe('SidebarFilters Component', () => {
-  it('renders correctly with default values', () => {
+  beforeEach(() => {
+    (api.get as import('vitest').Mock).mockResolvedValue({
+      data: {
+        data: [
+          {
+            slug: 'workplaceType',
+            name: 'Modelo de Trabalho',
+            options: [{ label: 'Remoto', value: 'REMOTE' }]
+          },
+          {
+            slug: 'education',
+            name: 'Escolaridade',
+            options: [{ label: 'Graduação - Completa', value: 'SUPERIOR_COMPLETE' }]
+          }
+        ]
+      }
+    });
+  });
+
+  it('renders correctly with default values', async () => {
     render(<SidebarFilters filters={defaultFilters} onChange={() => {}} />);
     
-    expect(screen.getByLabelText(/Apenas Remoto/i)).not.toBeChecked();
+    expect(await screen.findByLabelText(/Apenas Remoto/i)).not.toBeChecked();
     expect(screen.getByLabelText(/Com salário informado/i)).not.toBeChecked();
   });
 
@@ -36,9 +62,8 @@ describe('SidebarFilters Component', () => {
     const handleChange = vi.fn();
     render(<SidebarFilters filters={defaultFilters} onChange={handleChange} />);
     
-    // Procura por um checkbox de escolaridade que exista no SidebarFilters, ex: "Graduação Completa" ou similar
-    // O texto exato renderizado no SidebarFilters é "Graduação - Completa", mas o regex acha parte.
-    const educationCheck = screen.getByLabelText(/Graduação - Completa/i);
+    // Agora aguardamos o carregamento da API mockada
+    const educationCheck = await screen.findByLabelText(/Graduação - Completa/i);
     await userEvent.click(educationCheck);
     
     expect(handleChange).toHaveBeenCalledWith(expect.objectContaining({
