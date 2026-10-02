@@ -43,10 +43,11 @@ authRoutes.post('/login', async (c) => {
   const secret = getJwtSecret(c);
   const token = await sign(payload, secret, 'HS256');
 
+  const isProd = process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development';
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'Lax',
+    secure: isProd,
+    sameSite: isProd ? 'None' : 'Lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   });
@@ -62,8 +63,11 @@ authRoutes.post('/login', async (c) => {
 });
 
 authRoutes.post('/logout', (c) => {
+  const isProd = process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development';
   deleteCookie(c, 'auth_token', {
     path: '/',
+    secure: isProd,
+    sameSite: isProd ? 'None' : 'Lax',
   });
   return c.json({ success: true });
 });
