@@ -14,8 +14,9 @@ api.interceptors.request.use((config) => {
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    // Prevent any browser or CDN caching by appending a unique timestamp
-    if (config.method?.toLowerCase() === 'get') {
+    // Prevent caching ONLY for Admin routes by appending a unique timestamp.
+    // Public routes MUST BE cached to handle traffic.
+    if (config.method?.toLowerCase() === 'get' && config.url?.includes('/admin/')) {
       config.params = {
         ...config.params,
         _t: Date.now(),
