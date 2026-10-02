@@ -57,11 +57,13 @@ adminRoutes.get('/metrics', async (c) => {
 // ==========================================
 adminRoutes.get('/jobs', async (c) => {
   const prisma = c.get('prisma');
-  const [jobs] = await prisma.$transaction([
-    prisma.job.findMany({
+  // Force interactive transaction to ensure BEGIN/COMMIT are emitted, bypassing Hyperdrive cache
+  const jobs = await prisma.$transaction(async (tx) => {
+    return tx.job.findMany({
+      where: { id: { not: Date.now().toString() } }, // Bypass Hyperdrive cache
       orderBy: { createdAt: 'desc' },
-    })
-  ]);
+    });
+  });
   return c.json({ success: true, data: jobs });
 });
 
@@ -98,12 +100,13 @@ adminRoutes.delete('/jobs/:id', async (c) => {
 adminRoutes.get('/filters', async (c) => {
   const prisma = c.get('prisma');
   // Wrap in transaction to completely bypass Hyperdrive cache for Admin queries
-  const [columns] = await prisma.$transaction([
-    prisma.jobCustomColumn.findMany({
-      where: { isFilterable: true, isActive: true },
+  // Force interactive transaction to ensure BEGIN/COMMIT are emitted, bypassing Hyperdrive cache
+  const columns = await prisma.$transaction(async (tx) => {
+    return tx.jobCustomColumn.findMany({
+      where: { isFilterable: true, isActive: true, id: { not: Date.now().toString() } }, // Bypass Hyperdrive cache
       orderBy: { name: 'asc' },
-    })
-  ]);
+    });
+  });
   
   const OPTION_LABELS: Record<string, string> = {
     REMOTE: 'Remoto',
@@ -185,11 +188,13 @@ adminRoutes.post('/filters/options/delete', async (c) => {
 // ==========================================
 adminRoutes.get('/users', async (c) => {
   const prisma = c.get('prisma');
-  const [users] = await prisma.$transaction([
-    prisma.user.findMany({
+  // Force interactive transaction
+  const users = await prisma.$transaction(async (tx) => {
+    return tx.user.findMany({
+      where: { id: { not: Date.now().toString() } }, // Bypass Hyperdrive cache
       select: { id: true, email: true, name: true, role: true, createdAt: true },
-    })
-  ]);
+    });
+  });
   return c.json({ success: true, data: users });
 });
 
@@ -290,9 +295,9 @@ const jobCreateSchema = z.object({
   company: z.string(),
   description: z.string(),
   location: z.string(),
-  workplaceType: z.enum(['REMOTE', 'HYBRID', 'ON_SITE']),
-  education: z.enum(['FUNDAMENTAL_INCOMPLETE', 'FUNDAMENTAL_COMPLETE', 'MEDIO_INCOMPLETE', 'MEDIO_COMPLETE', 'SUPERIOR_INCOMPLETE', 'SUPERIOR_COMPLETE', 'POS_GRADUACAO', 'MESTRADO', 'DOUTORADO']).optional().nullable(),
-  contractType: z.enum(['CLT', 'PJ', 'OTHER']).default('CLT'),
+  workplaceType: z.string(),
+  education: z.string().optional().nullable(),
+  contractType: z.string().default('CLT'),
   requirements: z.array(z.string()).default([]),
   benefits: z.string().nullable().optional(),
   hasVA: z.boolean().default(false),
@@ -344,11 +349,12 @@ adminRoutes.put('/jobs/:id', async (c) => {
 
 adminRoutes.get('/columns', async (c) => {
   const prisma = c.get('prisma');
-  const [columns] = await prisma.$transaction([
-    prisma.jobCustomColumn.findMany({
+  const columns = await prisma.$transaction(async (tx) => {
+    return tx.jobCustomColumn.findMany({
+      where: { id: { not: Date.now().toString() } }, // Bypass Hyperdrive cache
       orderBy: { createdAt: 'asc' },
-    })
-  ]);
+    });
+  });
   return c.json({ success: true, data: columns });
 });
 
