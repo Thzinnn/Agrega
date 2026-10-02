@@ -90,14 +90,24 @@ export default function AdminColumnsPage() {
       }
       delete payload.optionsString;
 
+      let updatedColumn;
       if (columnToEdit) {
-        await api.put(`/admin/columns/${columnToEdit.id}`, payload);
+        const response = await api.put(`/admin/columns/${columnToEdit.id}`, payload);
+        updatedColumn = response.data.data;
       } else {
-        await api.post('/admin/columns', payload);
+        const response = await api.post('/admin/columns', payload);
+        updatedColumn = response.data.data;
       }
+      
       setIsModalOpen(false);
       toast.success(columnToEdit ? 'Coluna editada com sucesso!' : 'Coluna salva com sucesso!');
-      fetchColumns();
+      
+      // Update local state directly
+      if (columnToEdit) {
+        setColumns(prev => prev.map(c => c.id === updatedColumn.id ? updatedColumn : c));
+      } else {
+        setColumns(prev => [...prev, updatedColumn]);
+      }
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;
       toast.error(axiosError.response?.data?.message || 'Erro ao salvar coluna');
@@ -117,7 +127,10 @@ export default function AdminColumnsPage() {
     try {
       await api.delete(`/admin/columns/${columnToDelete}`);
       toast.success('Coluna excluída com sucesso!');
-      fetchColumns();
+      
+      // Update local state directly
+      setColumns(prev => prev.filter(c => c.id !== columnToDelete));
+      
       setIsDeleteModalOpen(false);
       setColumnToDelete(null);
     } catch (_) {

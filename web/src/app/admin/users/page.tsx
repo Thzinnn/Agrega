@@ -44,16 +44,25 @@ export default function AdminUsersPage() {
     e.preventDefault();
     try {
       setIsSubmitting(true);
+      let updatedUser;
       if (userToEdit) {
-        await api.put(`/admin/users/${userToEdit.id}`, formData);
+        const response = await api.put(`/admin/users/${userToEdit.id}`, formData);
+        updatedUser = response.data.data;
       } else {
-        await api.post('/admin/users', formData);
+        const response = await api.post('/admin/users', formData);
+        updatedUser = response.data.data;
       }
       setFormData({ name: '', email: '', password: '', role: 'ADMIN' });
       setUserToEdit(null);
       setIsModalOpen(false);
       toast.success(userToEdit ? 'Usuário editado com sucesso!' : 'Usuário criado com sucesso!');
-      fetchUsers();
+      
+      // Update local state directly
+      if (userToEdit) {
+        setUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
+      } else {
+        setUsers(prev => [...prev, updatedUser]);
+      }
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;
       toast.error(axiosError.response?.data?.message || 'Erro ao salvar usuário');
@@ -79,7 +88,10 @@ export default function AdminUsersPage() {
     try {
       await api.delete(`/admin/users/${userToDelete}`);
       toast.success('Usuário excluído com sucesso!');
-      fetchUsers();
+      
+      // Update local state directly
+      setUsers(prev => prev.filter(u => u.id !== userToDelete));
+      
       setIsDeleteModalOpen(false);
       setUserToDelete(null);
     } catch (error: unknown) {

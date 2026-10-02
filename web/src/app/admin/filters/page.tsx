@@ -58,11 +58,27 @@ export default function AdminFiltersPage() {
     const value = newOptionLabel.trim();
     
     try {
-      await api.post('/admin/filters/options', { label: value, value, filterCategoryId: modalCategoryId });
+      const response = await api.post('/admin/filters/options', { label: value, value, filterCategoryId: modalCategoryId });
+      const updatedCol = response.data.data;
+      
+      // Atualiza o estado local imediatamente sem precisar refetch
+      setCategories(prev => prev.map(cat => {
+        if (cat.id === modalCategoryId) {
+          // Mantém as opções existentes e adiciona a nova
+          const exists = cat.options.find(o => o.value === value);
+          if (!exists) {
+            return {
+              ...cat,
+              options: [...cat.options, { id: value, label: value, value }]
+            };
+          }
+        }
+        return cat;
+      }));
+
       toast.success('Opção adicionada com sucesso!');
       setIsModalOpen(false);
       setNewOptionLabel('');
-      await fetchFilters();
     } catch (_) {
       toast.error('Erro ao adicionar opção');
     } finally {
@@ -87,11 +103,22 @@ export default function AdminFiltersPage() {
           api.post('/admin/filters/options/delete', { categoryId, values })
         )
       );
+      
+      // Atualiza o estado local imediatamente
+      setCategories(prev => prev.map(cat => {
+        if (groups[cat.id]) {
+          return {
+            ...cat,
+            options: cat.options.filter(opt => !groups[cat.id].includes(opt.value))
+          };
+        }
+        return cat;
+      }));
+
       toast.success('Opções excluídas com sucesso!');
       setIsDeleteMode(false);
       setSelectedToDelete([]);
       setIsDeleteModalOpen(false);
-      await fetchFilters();
     } catch (_) {
       toast.error('Erro ao excluir opções');
     } finally {
