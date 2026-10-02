@@ -91,6 +91,7 @@ export default function AdminColumnsPage() {
         await api.post('/admin/columns', payload);
       }
       setIsModalOpen(false);
+      alert('Coluna salva com sucesso!');
       fetchColumns();
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;
@@ -106,6 +107,7 @@ export default function AdminColumnsPage() {
     }
     try {
       await api.delete(`/admin/columns/${id}`);
+      alert('Coluna excluída com sucesso!');
       fetchColumns();
     } catch (_) {
       alert('Erro ao excluir coluna.');

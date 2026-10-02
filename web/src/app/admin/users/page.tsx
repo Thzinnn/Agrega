@@ -46,6 +46,7 @@ export default function AdminUsersPage() {
       setFormData({ name: '', email: '', password: '', role: 'ADMIN' });
       setUserToEdit(null);
       setIsModalOpen(false);
+      alert('Usuário salvo com sucesso!');
       fetchUsers();
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;
@@ -65,6 +66,7 @@ export default function AdminUsersPage() {
     if (!window.confirm('Tem certeza que deseja excluir este usuário?')) return;
     try {
       await api.delete(`/admin/users/${id}`);
+      alert('Usuário excluído com sucesso!');
       fetchUsers();
     } catch (error: unknown) {
       const axiosError = error as import('axios').AxiosError<{message: string}>;

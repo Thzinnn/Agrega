@@ -27,17 +27,18 @@ export default function AdminFiltersPage() {
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [selectedToDelete, setSelectedToDelete] = useState<{categoryId: string, value: string}[]>([]);
 
+  const fetchFilters = async () => {
+    try {
+      const response = await api.get('/admin/filters');
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchFilters = async () => {
-      try {
-        const response = await api.get('/admin/filters');
-        setCategories(response.data.data);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchFilters();
   }, []);
 
@@ -55,9 +56,13 @@ export default function AdminFiltersPage() {
     
     try {
       await api.post('/admin/filters/options', { label: value, value, filterCategoryId: modalCategoryId });
-      window.location.reload();
+      alert('Opção adicionada com sucesso!');
+      setIsModalOpen(false);
+      setNewOptionLabel('');
+      await fetchFilters();
     } catch (_) {
       alert('Erro ao adicionar opção');
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -79,9 +84,13 @@ export default function AdminFiltersPage() {
           api.post('/admin/filters/options/delete', { categoryId, values })
         )
       );
-      window.location.reload();
+      alert('Opções excluídas com sucesso!');
+      setIsDeleteMode(false);
+      setSelectedToDelete([]);
+      await fetchFilters();
     } catch (_) {
       alert('Erro ao excluir opções');
+    } finally {
       setIsSubmitting(false);
     }
   };
