@@ -12,7 +12,7 @@ vi.mock('@/lib/api', () => ({
 
 describe('AdminJobsPage', () => {
   it('renders loading state initially', () => {
-    (api.get as any).mockResolvedValueOnce({ data: { data: [] } });
+    (api.get as import('vitest').Mock).mockResolvedValueOnce({ data: { data: [] } });
     render(<AdminJobsPage />);
     expect(screen.getByText('Carregando vagas...')).toBeInTheDocument();
   });
@@ -22,7 +22,7 @@ describe('AdminJobsPage', () => {
       { id: '1', title: 'Developer', company: 'Tech', source: 'MANUAL', isActive: true, clicksCount: 10, createdAt: new Date().toISOString() },
       { id: '2', title: 'Designer', company: 'Art', source: 'SCRAPER', isActive: false, clicksCount: 5, createdAt: new Date().toISOString() }
     ];
-    (api.get as any).mockResolvedValueOnce({ data: { data: mockJobs } });
+    (api.get as import('vitest').Mock).mockResolvedValueOnce({ data: { data: mockJobs } });
     
     render(<AdminJobsPage />);
     
@@ -38,8 +38,8 @@ describe('AdminJobsPage', () => {
     const mockJobs = [
       { id: '1', title: 'Developer', company: 'Tech', source: 'MANUAL', isActive: true, clicksCount: 10, createdAt: new Date().toISOString() }
     ];
-    (api.get as any).mockResolvedValue({ data: { data: mockJobs } });
-    (api.patch as any).mockResolvedValue({ data: { success: true } });
+    (api.get as import('vitest').Mock).mockResolvedValue({ data: { data: mockJobs } });
+    (api.patch as import('vitest').Mock).mockResolvedValue({ data: { success: true } });
     
     const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => true);
 

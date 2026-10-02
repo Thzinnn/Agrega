@@ -107,7 +107,7 @@ export default function AdminColumnsPage() {
     try {
       await api.delete(`/admin/columns/${id}`);
       fetchColumns();
-    } catch (error) {
+    } catch (_) {
       alert('Erro ao excluir coluna.');
     }
   };

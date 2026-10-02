@@ -36,13 +36,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       try {
         const response = await api.get('/auth/me');
         setUser(response.data.data);
-      } catch (error) {
+      } catch (_) {
         // Se a API rejeitar (ex: user deletado do DB), o cookie local ainda existe.
         // O middleware.ts veria o cookie e impediria o acesso à tela de login (loop infinito).
         // Então forçamos o logout para limpar o cookie antes de redirecionar.
         try {
           await api.post('/auth/logout', {});
-        } catch (e) {
+        } catch (__) {
           // ignora se falhar
         }
         
@@ -163,6 +163,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
               <div className="w-10 h-10 rounded-full bg-brand-10 flex items-center justify-center text-white font-bold uppercase overflow-hidden">
                 {user.avatarUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img src={user.avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   user.name.charAt(0)

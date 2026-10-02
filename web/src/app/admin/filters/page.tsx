@@ -56,7 +56,7 @@ export default function AdminFiltersPage() {
     try {
       await api.post('/admin/filters/options', { label: value, value, filterCategoryId: modalCategoryId });
       window.location.reload();
-    } catch (e) {
+    } catch (_) {
       alert('Erro ao adicionar opção');
       setIsSubmitting(false);
     }
@@ -80,7 +80,7 @@ export default function AdminFiltersPage() {
         )
       );
       window.location.reload();
-    } catch (e) {
+    } catch (_) {
       alert('Erro ao excluir opções');
       setIsSubmitting(false);
     }

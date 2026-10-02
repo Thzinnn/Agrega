@@ -132,7 +132,7 @@ export function JobFormModal({
         setSearchLocation('');
       }
     }
-  }, [isOpen, jobToEdit]);
+  }, [isOpen, jobToEdit, reset, setValue]);
 
   const fetchColumns = async () => {
     try {

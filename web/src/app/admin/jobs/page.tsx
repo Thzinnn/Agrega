@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { Trash2, ExternalLink, Briefcase, Plus, Loader2, Edit, Eye, X, CheckCircle2 } from 'lucide-react';
+import { Trash2, Plus, Loader2, Edit, Eye, X, CheckCircle2 } from 'lucide-react';
 import { JobFormModal, JobFormData } from '@/components/JobFormModal';
 
 interface Job {
@@ -67,7 +67,7 @@ export default function AdminJobsPage() {
       setActionLoading(id);
       await api.patch(`/admin/jobs/${id}/soft-delete`);
       await fetchJobs();
-    } catch (error) {
+    } catch (_) {
       alert('Erro ao inativar a vaga.');
     } finally {
       setActionLoading(null);
@@ -83,7 +83,7 @@ export default function AdminJobsPage() {
       setActionLoading(id);
       await api.patch(`/admin/jobs/${id}/activate`);
       await fetchJobs();
-    } catch (error) {
+    } catch (_) {
       alert('Erro ao ativar a vaga.');
     } finally {
       setActionLoading(null);

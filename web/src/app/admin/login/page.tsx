@@ -21,7 +21,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
-    resolver: zodResolver(loginSchema) as any, // Cast temporário devido ao conflito de tipos
+    resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginForm) => {
@@ -30,8 +30,9 @@ export default function LoginPage() {
       setError(null);
       await api.post('/auth/login', data);
       router.push('/admin');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao realizar login. Tente novamente.');
+    } catch (err: unknown) {
+      const axiosError = err as import('axios').AxiosError<{message: string}>;
+      setError(axiosError.response?.data?.message || 'Erro ao realizar login. Tente novamente.');
     } finally {
       setIsLoading(false);
     }
@@ -51,7 +52,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <form onSubmit={handleSubmit(onSubmit as any)} className="space-y-5">
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
             <label className="block text-sm font-medium text-brand-text mb-1">E-mail</label>
             <input

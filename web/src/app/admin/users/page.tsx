@@ -47,8 +47,9 @@ export default function AdminUsersPage() {
       setUserToEdit(null);
       setIsModalOpen(false);
       fetchUsers();
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao salvar usuário');
+    } catch (error: unknown) {
+      const axiosError = error as import('axios').AxiosError<{message: string}>;
+      alert(axiosError.response?.data?.message || 'Erro ao salvar usuário');
     } finally {
       setIsSubmitting(false);
     }
@@ -65,8 +66,9 @@ export default function AdminUsersPage() {
     try {
       await api.delete(`/admin/users/${id}`);
       fetchUsers();
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Erro ao excluir usuário');
+    } catch (error: unknown) {
+      const axiosError = error as import('axios').AxiosError<{message: string}>;
+      alert(axiosError.response?.data?.message || 'Erro ao excluir usuário');
     }
   };
 

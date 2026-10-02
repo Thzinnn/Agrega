@@ -13,13 +13,13 @@ vi.mock('recharts', async () => {
   const OriginalModule = await vi.importActual('recharts');
   return {
     ...OriginalModule,
-    ResponsiveContainer: ({ children }: any) => <div>{children}</div>,
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
   };
 });
 
 describe('DashboardPage', () => {
   it('renders loading state initially', () => {
-    (api.get as any).mockReturnValue(new Promise(() => {}));
+    (api.get as import('vitest').Mock).mockReturnValue(new Promise(() => {}));
     render(<DashboardPage />);
     expect(screen.getByText('Carregando métricas...')).toBeInTheDocument();
   });
@@ -39,7 +39,7 @@ describe('DashboardPage', () => {
       ]
     };
 
-    (api.get as any).mockResolvedValueOnce({ data: { data: mockMetrics } });
+    (api.get as import('vitest').Mock).mockResolvedValueOnce({ data: { data: mockMetrics } });
     
     render(<DashboardPage />);
     

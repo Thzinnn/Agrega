@@ -24,7 +24,7 @@ describe('LoginPage', () => {
   });
 
   it('shows error message on failed login', async () => {
-    (api.post as any).mockRejectedValueOnce({
+    (api.post as import('vitest').Mock).mockRejectedValueOnce({
       response: { data: { message: 'Credenciais inválidas' } },
     });
 
@@ -40,7 +40,7 @@ describe('LoginPage', () => {
   });
 
   it('calls api.post on valid submission', async () => {
-    (api.post as any).mockResolvedValueOnce({ data: { success: true } });
+    (api.post as import('vitest').Mock).mockResolvedValueOnce({ data: { success: true } });
 
     render(<LoginPage />);
     
