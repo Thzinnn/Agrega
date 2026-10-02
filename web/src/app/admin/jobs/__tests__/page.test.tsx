@@ -40,8 +40,6 @@ describe('AdminJobsPage', () => {
     ];
     (api.get as import('vitest').Mock).mockResolvedValue({ data: { data: mockJobs } });
     (api.patch as import('vitest').Mock).mockResolvedValue({ data: { success: true } });
-    
-    const confirmSpy = vi.spyOn(window, 'confirm').mockImplementation(() => true);
 
     render(<AdminJobsPage />);
     
@@ -52,11 +50,12 @@ describe('AdminJobsPage', () => {
     const deleteBtn = screen.getByTitle('Inativar Vaga');
     fireEvent.click(deleteBtn);
 
-    expect(confirmSpy).toHaveBeenCalled();
+    // Click confirm in ConfirmModal
+    const confirmBtn = await screen.findByText('Excluir');
+    fireEvent.click(confirmBtn);
+
     await waitFor(() => {
       expect(api.patch).toHaveBeenCalledWith('/admin/jobs/1/soft-delete');
     });
-
-    confirmSpy.mockRestore();
   });
 });

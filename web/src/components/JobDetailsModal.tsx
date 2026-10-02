@@ -87,12 +87,6 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                   )}
                 </div>
 
-                <div className="space-y-4 bg-brand-60/50 p-5 rounded-2xl">
-                  <h3 className="font-bold text-lg text-brand-text">Descrição da Vaga</h3>
-                  <div className="text-brand-muted whitespace-pre-wrap leading-relaxed text-sm font-medium">
-                    {job.description}
-                  </div>
-                </div>
 
                 <div className="space-y-4 bg-brand-60/50 p-5 rounded-2xl">
                   <h3 className="font-bold text-lg text-brand-text">Requisitos e Qualificações</h3>
@@ -136,6 +130,13 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                     )}
                   </div>
                 )}
+
+                <div className="space-y-4 bg-brand-60/50 p-5 rounded-2xl">
+                  <h3 className="font-bold text-lg text-brand-text">Descrição Completa</h3>
+                  <div className="text-brand-muted whitespace-pre-wrap leading-relaxed text-sm font-medium">
+                    {job.description}
+                  </div>
+                </div>
 
                 <div className="space-y-4 bg-brand-10/10 p-5 rounded-2xl border border-brand-10/20">
                   <h3 className="font-bold text-lg text-brand-text">Entre em Contato</h3>

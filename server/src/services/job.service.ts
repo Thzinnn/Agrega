@@ -237,14 +237,37 @@ export class JobService {
     // Process sequentially or in batches. We use a simple loop for upsert.
     for (const item of items) {
       let parsedSalary: number | null = null;
+      let parsedSalaryMin: number | null = null;
+      let parsedSalaryMax: number | null = null;
+
       if (item.salario) {
-        // Remove everything that is not a digit or comma (e.g. "R$ 2.500,00" -> "2500,00")
-        const cleanStr = item.salario.replace(/[^\d,]/g, '');
-        if (cleanStr) {
-          // Replace comma with dot for valid float parsing
-          const num = Number(cleanStr.replace(',', '.'));
-          if (!isNaN(num) && num > 0) {
-            parsedSalary = num;
+        // Encontra todos os blocos numéricos (ex: "2.500,00", "3000")
+        const numberMatches = item.salario.match(/[\d.,]+/g);
+        
+        if (numberMatches) {
+          const validNumbers: number[] = [];
+          
+          for (const match of numberMatches) {
+            // Se o match for só um ponto ou vírgula perdido, ignora
+            if (match === '.' || match === ',') continue;
+            
+            // No padrão BR (ex: 2.500,00) tiramos os pontos de milhar e trocamos a vírgula decimal
+            let normalized = match.replace(/\./g, '').replace(',', '.');
+            const num = Number(normalized);
+            
+            // Aceita números acima de 0 (ignora zeros ou parses inválidos)
+            if (!isNaN(num) && num > 0) {
+              validNumbers.push(num);
+            }
+          }
+          
+          if (validNumbers.length === 1) {
+            parsedSalary = validNumbers[0] ?? null;
+          } else if (validNumbers.length >= 2) {
+            // Garante que o menor número vai pro Min e o maior pro Max
+            validNumbers.sort((a, b) => a - b);
+            parsedSalaryMin = validNumbers[0] ?? null;
+            parsedSalaryMax = validNumbers[1] ?? null;
           }
         }
       }
@@ -294,6 +317,21 @@ export class JobService {
         }
       }
 
+      // Infer Education Level from description
+      let inferredEducation: string | null = null;
+      if (item.descricao) {
+        const descLower = item.descricao.toLowerCase();
+        if (descLower.includes('doutorado')) inferredEducation = 'DOUTORADO';
+        else if (descLower.includes('mestrado')) inferredEducation = 'MESTRADO';
+        else if (descLower.includes('pós-graduação') || descLower.includes('pos-graduacao') || descLower.includes('pós graduação')) inferredEducation = 'POS_GRADUACAO';
+        else if (descLower.includes('superior completo') || descLower.includes('graduação completa') || (descLower.includes('ensino superior') && !descLower.includes('cursando'))) inferredEducation = 'SUPERIOR_COMPLETE';
+        else if (descLower.includes('superior cursando') || descLower.includes('superior incompleto') || descLower.includes('graduação incompleta') || (descLower.includes('ensino superior') && descLower.includes('cursando'))) inferredEducation = 'SUPERIOR_INCOMPLETE';
+        else if (descLower.includes('ensino médio completo') || descLower.includes('ensino medio completo') || ((descLower.includes('ensino médio') || descLower.includes('ensino medio')) && !descLower.includes('incompleto') && !descLower.includes('cursando'))) inferredEducation = 'MEDIO_COMPLETE';
+        else if (descLower.includes('ensino médio incompleto') || descLower.includes('ensino medio incompleto') || descLower.includes('ensino médio cursando') || descLower.includes('ensino medio cursando')) inferredEducation = 'MEDIO_INCOMPLETE';
+        else if (descLower.includes('ensino fundamental completo') || (descLower.includes('ensino fundamental') && !descLower.includes('incompleto'))) inferredEducation = 'FUNDAMENTAL_COMPLETE';
+        else if (descLower.includes('ensino fundamental incompleto')) inferredEducation = 'FUNDAMENTAL_INCOMPLETE';
+      }
+
       // Extract Requirements from description using heuristics (Experience, tools, languages)
       let extractedRequirements: string[] = [];
       if (item.descricao) {
@@ -302,12 +340,11 @@ export class JobService {
         
         for (const line of lines) {
           const trimmed = line.trim();
-          // Filter out lines that are too long (probably a full paragraph) or too short
-          if (trimmed.length < 5 || trimmed.length > 200) continue;
+          // Filter out lines that are too long (probably a full paragraph), too short, or are section titles (ending in :)
+          if (trimmed.length < 5 || trimmed.length > 200 || trimmed.endsWith(':')) continue;
           
           const lower = trimmed.toLowerCase();
           const isRequirement = 
-            lower.includes('experiência') || lower.includes('experiencia') ||
             lower.includes('conhecimento') ||
             lower.includes('domínio') || lower.includes('dominio') ||
             lower.includes('noção') || lower.includes('noções') || lower.includes('nocao') || lower.includes('nocoes') ||
@@ -315,10 +352,6 @@ export class JobService {
             lower.includes('excel') ||
             lower.includes('pacote office') ||
             lower.includes('obrigatório') || lower.includes('obrigatorio') ||
-            lower.includes('formação') || lower.includes('formacao') ||
-            lower.includes('ensino superior') ||
-            lower.includes('superior completo') ||
-            lower.includes('cursando') ||
             lower.includes('habilidade');
 
           if (isRequirement) {
@@ -337,6 +370,9 @@ export class JobService {
         location: item.local,
         description: item.descricao,
         salary: parsedSalary,
+        salaryMin: parsedSalaryMin,
+        salaryMax: parsedSalaryMax,
+        education: inferredEducation,
         contractType: item.tipo_vaga || 'CLT',
         workSchedule: item.turno_horario || null,
         benefits: finalBenefitsString,
