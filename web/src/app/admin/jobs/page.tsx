@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { Trash2, Plus, Loader2, Edit, Eye, X, CheckCircle2 } from 'lucide-react';
+import { Trash2, Plus, Loader2, Edit, Eye, X, CheckCircle2, Search, Filter } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ConfirmModal } from '@/components/ConfirmModal';
 import { JobFormModal, JobFormData } from '@/components/JobFormModal';
@@ -45,6 +45,11 @@ export default function AdminJobsPage() {
   const [jobToView, setJobToView] = useState<JobFormData | null>(null);
   const [modalAction, setModalAction] = useState<{type: 'DELETE' | 'ACTIVATE', id: string} | null>(null);
 
+  // Filters
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterActive, setFilterActive] = useState('ALL');
+  const [filterSource, setFilterSource] = useState('ALL');
+
   const fetchJobs = async () => {
     try {
       setLoading(true);
@@ -84,6 +89,21 @@ export default function AdminJobsPage() {
     }
   };
 
+  const filteredJobs = jobs.filter(job => {
+    const searchMatch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                        job.company.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    let activeMatch = true;
+    if (filterActive === 'ACTIVE') activeMatch = job.isActive === true;
+    if (filterActive === 'INACTIVE') activeMatch = job.isActive === false;
+
+    let sourceMatch = true;
+    if (filterSource === 'MANUAL') sourceMatch = job.source === 'MANUAL';
+    if (filterSource === 'SCRAPER') sourceMatch = job.source === 'SCRAPER';
+
+    return searchMatch && activeMatch && sourceMatch;
+  });
+
   return (
     <div className="space-y-6">
       
@@ -94,11 +114,57 @@ export default function AdminJobsPage() {
         </div>
         <button 
           onClick={() => { setJobToEdit(null); setIsModalOpen(true); }}
-          className="bg-brand-10 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-brand-10/90 transition-colors flex items-center gap-2"
+          className="bg-brand-10 text-white px-5 py-2.5 rounded-xl font-bold hover:bg-brand-10/90 transition-colors flex items-center gap-2 shrink-0"
         >
           <Plus className="w-5 h-5" />
           Nova Vaga Manual
         </button>
+      </div>
+
+      {/* Bar of Filters */}
+      <div className="bg-brand-30 p-4 rounded-2xl border border-brand-60 flex flex-col md:flex-row gap-4">
+        <div className="flex-1 relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <Search className="h-5 w-5 text-brand-muted/70" />
+          </div>
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Buscar por cargo ou empresa..."
+            className="w-full bg-brand-60/50 border border-gray-300 text-brand-text rounded-xl pl-10 pr-4 py-2 focus:outline-none focus:ring-2 focus:ring-brand-10/50 transition-all placeholder:text-brand-muted"
+          />
+        </div>
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Filter className="h-4 w-4 text-brand-muted/70" />
+            </div>
+            <select
+              value={filterActive}
+              onChange={(e) => setFilterActive(e.target.value)}
+              className="w-full sm:w-auto bg-brand-60/50 border border-gray-300 text-brand-text rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-brand-10/50 appearance-none"
+            >
+              <option value="ALL">Todas as Vagas</option>
+              <option value="ACTIVE">Apenas Ativas</option>
+              <option value="INACTIVE">Apenas Inativas</option>
+            </select>
+          </div>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Filter className="h-4 w-4 text-brand-muted/70" />
+            </div>
+            <select
+              value={filterSource}
+              onChange={(e) => setFilterSource(e.target.value)}
+              className="w-full sm:w-auto bg-brand-60/50 border border-gray-300 text-brand-text rounded-xl pl-9 pr-8 py-2 focus:outline-none focus:ring-2 focus:ring-brand-10/50 appearance-none"
+            >
+              <option value="ALL">Todas as Origens</option>
+              <option value="MANUAL">Apenas Manuais</option>
+              <option value="SCRAPER">Apenas Robô (Scraper)</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <div className="bg-white border border-brand-30 rounded-3xl overflow-hidden shadow-sm">
@@ -123,14 +189,14 @@ export default function AdminJobsPage() {
                     Carregando vagas...
                   </td>
                 </tr>
-              ) : jobs.length === 0 ? (
+              ) : filteredJobs.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-brand-muted">
-                    Nenhuma vaga encontrada.
+                    Nenhuma vaga encontrada para os filtros selecionados.
                   </td>
                 </tr>
               ) : (
-                jobs.map((job) => (
+                filteredJobs.map((job) => (
                   <tr key={job.id} className="hover:bg-brand-60/30 transition-colors">
                     <td className="px-6 py-4 font-bold">{job.title}</td>
                     <td className="px-6 py-4 font-medium">{job.company}</td>

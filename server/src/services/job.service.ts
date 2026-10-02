@@ -238,10 +238,96 @@ export class JobService {
     for (const item of items) {
       let parsedSalary: number | null = null;
       if (item.salario) {
-        // Only parse if it's a clean number. Otherwise set to null as requested.
-        const num = Number(item.salario);
-        if (!isNaN(num)) {
-          parsedSalary = num;
+        // Remove everything that is not a digit or comma (e.g. "R$ 2.500,00" -> "2500,00")
+        const cleanStr = item.salario.replace(/[^\d,]/g, '');
+        if (cleanStr) {
+          // Replace comma with dot for valid float parsing
+          const num = Number(cleanStr.replace(',', '.'));
+          if (!isNaN(num) && num > 0) {
+            parsedSalary = num;
+          }
+        }
+      }
+
+      let hasVA = false;
+      let hasVR = false;
+      let hasVT = false;
+      let hasLifeInsurance = false;
+      let hasMedicalInsurance = false;
+      let hasDentalInsurance = false;
+      let otherBenefits: string[] = [];
+
+      if (item.beneficios) {
+        // Split by comma or semicolon, trim, and remove empty strings
+        const parts = item.beneficios.split(/[,;]/).map(b => b.trim()).filter(Boolean);
+        
+        for (const part of parts) {
+          const pLower = part.toLowerCase();
+          
+          if (pLower.includes('vale-alimentação') || pLower.includes('vale alimentação') || pLower === 'va' || pLower.includes('vale alimentação/refeição')) {
+            hasVA = true;
+          } else if (pLower.includes('vale-refeição') || pLower.includes('vale refeição') || pLower === 'vr') {
+            hasVR = true;
+          } else if (pLower.includes('vale-transporte') || pLower.includes('vale transporte') || pLower === 'vt' || pLower.includes('auxílio transporte') || pLower.includes('auxilio transporte')) {
+            hasVT = true;
+          } else if (pLower.includes('seguro de vida')) {
+            hasLifeInsurance = true;
+          } else if (pLower.includes('assistência médica') || pLower.includes('assistencia medica') || pLower.includes('plano de saúde') || pLower.includes('plano de saude') || pLower.includes('convênio médico') || pLower.includes('convenio medico')) {
+            hasMedicalInsurance = true;
+          } else if (pLower.includes('assistência odontológica') || pLower.includes('assistencia odontologica') || pLower.includes('plano odontológico') || pLower.includes('plano odontologico') || pLower.includes('convênio odontológico') || pLower.includes('convenio odontologico')) {
+            hasDentalInsurance = true;
+          } else {
+            otherBenefits.push(part);
+          }
+        }
+      }
+
+      const finalBenefitsString = otherBenefits.length > 0 ? otherBenefits.join(', ') : null;
+
+      let workplaceType = 'ON_SITE';
+      if (item.local) {
+        const localLower = item.local.toLowerCase();
+        if (localLower.includes('remoto')) {
+          workplaceType = 'REMOTE';
+        } else if (localLower.includes('híbrido') || localLower.includes('hibrido')) {
+          workplaceType = 'HYBRID';
+        }
+      }
+
+      // Extract Requirements from description using heuristics (Experience, tools, languages)
+      let extractedRequirements: string[] = [];
+      if (item.descricao) {
+        // Split text by new lines or common bullet points
+        const lines = item.descricao.split(/(?:\r?\n|•|- |\*)/);
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          // Filter out lines that are too long (probably a full paragraph) or too short
+          if (trimmed.length < 5 || trimmed.length > 200) continue;
+          
+          const lower = trimmed.toLowerCase();
+          const isRequirement = 
+            lower.includes('experiência') || lower.includes('experiencia') ||
+            lower.includes('conhecimento') ||
+            lower.includes('domínio') || lower.includes('dominio') ||
+            lower.includes('noção') || lower.includes('noções') || lower.includes('nocao') || lower.includes('nocoes') ||
+            lower.includes('inglês') || lower.includes('ingles') ||
+            lower.includes('excel') ||
+            lower.includes('pacote office') ||
+            lower.includes('obrigatório') || lower.includes('obrigatorio') ||
+            lower.includes('formação') || lower.includes('formacao') ||
+            lower.includes('ensino superior') ||
+            lower.includes('superior completo') ||
+            lower.includes('cursando') ||
+            lower.includes('habilidade');
+
+          if (isRequirement) {
+            // Capitalize first letter cleanly
+            const cleanReq = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+            if (!extractedRequirements.includes(cleanReq)) {
+              extractedRequirements.push(cleanReq);
+            }
+          }
         }
       }
 
@@ -253,8 +339,16 @@ export class JobService {
         salary: parsedSalary,
         contractType: item.tipo_vaga || 'CLT',
         workSchedule: item.turno_horario || null,
-        benefits: item.beneficios || null,
+        benefits: finalBenefitsString,
+        requirements: extractedRequirements,
+        hasVA,
+        hasVR,
+        hasVT,
+        hasLifeInsurance,
+        hasMedicalInsurance,
+        hasDentalInsurance,
         originalUrl: item.link || null,
+        applicationUrl: item.link || null, // Ensure the frontend "Entre em Contato" button works
       };
 
       await prisma.job.upsert({
@@ -268,7 +362,7 @@ export class JobService {
           source: 'SCRAPER',
           isActive: true,
           clicksCount: 0,
-          workplaceType: 'ON_SITE', // Fallback as the scraper doesn't provide it
+          workplaceType: workplaceType,
         }
       });
       processed++;
