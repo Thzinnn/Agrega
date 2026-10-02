@@ -58,6 +58,7 @@ authRoutes.post('/login', async (c) => {
     success: true,
     data: {
       user: userWithoutPassword,
+      token,
     },
   });
 });
@@ -74,7 +75,14 @@ authRoutes.post('/logout', (c) => {
 
 // Middleware to protect routes that require authentication
 export const authMiddleware = async (c: any, next: any) => {
-  const token = getCookie(c, 'auth_token');
+  let token = getCookie(c, 'auth_token');
+
+  if (!token) {
+    const authHeader = c.req.header('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      token = authHeader.split(' ')[1];
+    }
+  }
 
   if (!token) {
     throw new AppError('Não autenticado', 401);

@@ -45,6 +45,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         } catch (__) {
           // ignora se falhar
         }
+        localStorage.removeItem('auth_token');
         
         if (pathname !== '/admin/login') {
           window.location.href = '/admin/login';
@@ -59,7 +60,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }, [pathname, user, router]);
 
   const handleLogout = async () => {
-    await api.post('/auth/logout', {});
+    try {
+      await api.post('/auth/logout', {});
+    } catch (_) {}
+    localStorage.removeItem('auth_token');
     router.push('/admin/login');
   };
 
