@@ -1,5 +1,5 @@
 import { Prisma, PrismaClient } from '@prisma/client';
-import { CreateJobInput, JobQueryInput } from '../schemas/job.schema.js';
+import { CreateJobInput, JobQueryInput, IngestJobItem } from '../schemas/job.schema.js';
 import { AppError } from '../errors/AppError.js';
 
 export interface PaginatedResult<T> {
@@ -229,6 +229,52 @@ export class JobService {
       },
     });
     return job;
+  }
+
+  async ingestJobs(prisma: PrismaClient, items: IngestJobItem[]) {
+    let processed = 0;
+    
+    // Process sequentially or in batches. We use a simple loop for upsert.
+    for (const item of items) {
+      let parsedSalary: number | null = null;
+      if (item.salario) {
+        // Only parse if it's a clean number. Otherwise set to null as requested.
+        const num = Number(item.salario);
+        if (!isNaN(num)) {
+          parsedSalary = num;
+        }
+      }
+
+      const upsertData = {
+        title: item.titulo,
+        company: item.empresa,
+        location: item.local,
+        description: item.descricao,
+        salary: parsedSalary,
+        contractType: item.tipo_vaga || 'CLT',
+        workSchedule: item.turno_horario || null,
+        benefits: item.beneficios || null,
+        originalUrl: item.link || null,
+      };
+
+      await prisma.job.upsert({
+        where: { sourceJobId: item.id_vaga },
+        update: {
+          ...upsertData
+        },
+        create: {
+          ...upsertData,
+          sourceJobId: item.id_vaga,
+          source: 'SCRAPER',
+          isActive: true,
+          clicksCount: 0,
+          workplaceType: 'ON_SITE', // Fallback as the scraper doesn't provide it
+        }
+      });
+      processed++;
+    }
+    
+    return { success: true, processed };
   }
 }
 

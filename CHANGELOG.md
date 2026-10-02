@@ -2,6 +2,7 @@
 
 ## [Unreleased]
 ### [FEAT]
+- Infraestrutura de ingestão externa via API (`POST /api/v1/jobs/ingest`) para receber dados de vagas em lote por robô de web scraping em Python.
 - Painel Administrativo Completo (`/admin`) implementado com rotas protegidas e autenticação.
 - Dashboard analítico consolidando totais de cliques e separação de vagas por `MANUAL` ou `SCRAPER` utilizando Recharts.
 - CRUD completo de Vagas no Admin (Tabela) com funcionalidade de inativação controlada (Soft Delete).
@@ -11,7 +12,7 @@
 
 ### [SCHEMA]
 - Adição dos modelos `User`, `FilterCategory` e `FilterOption` no Prisma.
-- Novos campos no modelo `Job`: `isActive` (Boolean), `source` (String enum `MANUAL` / `SCRAPER`), e `clicksCount` (Int).
+- Novos campos no modelo `Job`: `isActive` (Boolean), `sourceJobId` (String unique), `originalUrl` (String), `workSchedule` (String), e mudança do campo `source` para tipo String nativo.
 
 ### [SECURITY]
 - Criação e validação do JWT com HTTP-Only cookies nas rotas do Hono.

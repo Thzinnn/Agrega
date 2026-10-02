@@ -45,7 +45,7 @@ export const createJobSchema = z
       .preprocess((val) => (val === '' ? undefined : val), z.string().email('E-mail inválido').optional()),
     contactPhone: z
       .preprocess((val) => (val === '' ? undefined : val), z.string().regex(/^[\d\s\-\+\(\)]+$/, 'Telefone inválido, use apenas números e os caracteres +, -, ()').optional()),
-    source: z.enum(['MANUAL', 'SCRAPER']).default('MANUAL').optional(),
+    source: z.string().default('MANUAL').optional(),
     isActive: z.boolean().default(true).optional(),
     customData: z.record(z.unknown()).optional(),
   })
@@ -139,3 +139,19 @@ export const jobIdParamSchema = z.object({
 });
 
 export type JobIdParam = z.infer<typeof jobIdParamSchema>;
+
+export const ingestJobItemSchema = z.object({
+  id_vaga: z.string(),
+  titulo: z.string(),
+  empresa: z.string(),
+  local: z.string(),
+  salario: z.string().optional().nullable(),
+  tipo_vaga: z.string().optional().nullable(),
+  turno_horario: z.string().optional().nullable(),
+  beneficios: z.string().optional().nullable(),
+  descricao: z.string(),
+  link: z.string().url().optional().nullable().or(z.literal('')),
+  data_coleta: z.string().optional().nullable(),
+}).catchall(z.unknown());
+
+export type IngestJobItem = z.infer<typeof ingestJobItemSchema>;

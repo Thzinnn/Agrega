@@ -29,6 +29,12 @@ jobRoutes.get(
   jobController.getJobById.bind(jobController)
 );
 
+// POST /api/v1/jobs/ingest - Ingest jobs from external scraper
+jobRoutes.post(
+  '/ingest',
+  jobController.ingestJobs.bind(jobController)
+);
+
 // POST /api/v1/jobs - Create a new job manually
 jobRoutes.post(
   '/',

@@ -9,6 +9,7 @@ type Bindings = {
   HYPERDRIVE?: { connectionString: string };
   DATABASE_URL?: string;
   JWT_SECRET?: string;
+  SCRAPER_API_KEY?: string;
 };
 
 type Variables = {

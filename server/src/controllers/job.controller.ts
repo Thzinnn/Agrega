@@ -1,6 +1,6 @@
 import { Context } from 'hono';
 import { jobService } from '../services/job.service.js';
-import { CreateJobInput, JobQueryInput, JobIdParam } from '../schemas/job.schema.js';
+import { CreateJobInput, JobQueryInput, JobIdParam, ingestJobItemSchema, IngestJobItem } from '../schemas/job.schema.js';
 import { PrismaClient } from '@prisma/client';
 
 export class JobController {
@@ -42,6 +42,55 @@ export class JobController {
       orderBy: { createdAt: 'asc' },
     });
     return c.json({ success: true, data: columns }, 200);
+  }
+  async ingestJobs(c: Context) {
+    const apiKey = c.req.header('x-api-key');
+    const expectedKey = c.env?.SCRAPER_API_KEY || process.env.SCRAPER_API_KEY;
+
+    if (!expectedKey || apiKey !== expectedKey) {
+      return c.json({ success: false, message: 'Unauthorized' }, 401);
+    }
+
+    const prisma = c.get('prisma') as PrismaClient;
+    let body;
+    try {
+      body = await c.req.json();
+    } catch {
+      return c.json({ success: false, message: 'Invalid JSON body' }, 400);
+    }
+
+    // Extract items whether it's an array, an object with 'jobs' array, or a single object
+    let rawItems: any[] = [];
+    if (Array.isArray(body)) {
+      rawItems = body;
+    } else if (body && Array.isArray(body.jobs)) {
+      rawItems = body.jobs;
+    } else if (body && typeof body === 'object') {
+      rawItems = [body];
+    } else {
+      return c.json({ success: false, message: 'Invalid payload format' }, 400);
+    }
+
+    const validItems: IngestJobItem[] = [];
+    
+    for (const item of rawItems) {
+      const parsed = ingestJobItemSchema.safeParse(item);
+      if (parsed.success) {
+        validItems.push(parsed.data);
+      }
+    }
+
+    if (validItems.length === 0) {
+      return c.json({ success: false, message: 'No valid jobs found in payload' }, 400);
+    }
+
+    try {
+      const result = await jobService.ingestJobs(prisma, validItems);
+      return c.json(result, 201);
+    } catch (error) {
+      console.error('Ingest error:', error);
+      return c.json({ success: false, message: 'Failed to process jobs' }, 500);
+    }
   }
 }
 
