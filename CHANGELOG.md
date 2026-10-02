@@ -5,7 +5,8 @@
 - Infraestrutura de ingestão externa via API (`POST /api/v1/jobs/ingest`) para receber dados de vagas em lote por robô de web scraping em Python.
 - Painel Administrativo Completo (`/admin`) implementado com rotas protegidas e autenticação.
 - Dashboard analítico consolidando totais de cliques e separação de vagas por `MANUAL` ou `SCRAPER` utilizando Recharts.
-- CRUD completo de Vagas no Admin (Tabela) com funcionalidade de inativação controlada (Soft Delete).
+- CRUD completo de Vagas no Admin (Tabela) com funcionalidade de inativação controlada (Soft Delete) e Atualização Otimista (Optimistic UI) sem latência de rede.
+- Implementação de `ConfirmModal` unificado e sistema de Toasts para feedback visual instantâneo de ações em todo o painel Admin.
 - Rotina automatizada de Cloudflare Cron Trigger (90 dias) adicionada no Hono para inativar vagas antigas.
 - API dinâmica de categorias e opções (`GET /api/v1/filters`) injetada na Sidebar do site principal.
 - Trackings atômicos de cliques configurados no botão de contato das vagas (`POST /api/v1/jobs/:id/click`).
@@ -19,10 +20,11 @@
 - Middleware de checagem RBAC `authMiddleware` garantindo apenas acesso a `Role.ADMIN` na API `/api/v1/admin/*` e nas telas frontend (`middleware.ts`).
 - Hash de senhas gerenciado via `bcryptjs`.
 
-### [TEST]
+### [TEST & FIXES]
 - TDD de rotas protegidas no Frontend (Next.js): Login protegido, Dashboards e Vagas implementados.
 - Testes unitários do Frontend (`vitest` + `react-testing-library`) atingindo aprovação completa de 100% cobrindo o Modal de Vagas, SidebarFilters e os estados de exclusão na Tabela de Vagas.
 - Validação estrita sem uso de tipagem genérica perigosa ou `any` não fundamentado (`npx tsc --noEmit` limpo em ambos `/server` e `/web`).
+- Bypass total de Cache (Cloudflare CDN e Hyperdrive) nas rotas privadas `/admin` garantindo leituras frescas do banco através da injeção de timestamps (Interactive Transactions Hack).
 
 ### [MODIFY]
 - Refatoração do `seed.ts` para prover dados massivos e espalhados temporalmente (90 dias) que sustentam o gráfico comparativo do Dashboard.
