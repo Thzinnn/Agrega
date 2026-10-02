@@ -25,13 +25,16 @@ function JobsContent() {
   const currentPage = parseInt(searchParams.get('page') || '1', 10);
 
   const initialFilters: FilterState = {
-    workplaceType: searchParams.getAll('workplaceType'),
     hasSalary: searchParams.get('hasSalary') === 'true',
-    education: searchParams.getAll('education'),
-    contractTypes: searchParams.getAll('contractType'),
     minSalary: searchParams.get('minSalary') || '',
     maxSalary: searchParams.get('maxSalary') || '',
   };
+
+  searchParams.forEach((value, key) => {
+    if (!['hasSalary', 'minSalary', 'maxSalary', 'q', 'location', 'page'].includes(key)) {
+      initialFilters[key] = searchParams.getAll(key);
+    }
+  });
 
   const initialTerm = searchParams.get('q') || '';
   const initialLocation = searchParams.get('location') || '';
@@ -56,15 +59,12 @@ function JobsContent() {
   }, [searchParams, pathname, router]);
 
   const handleFilterChange = (filters: FilterState) => {
-    updateUrl({
-      workplaceType: filters.workplaceType,
-      hasSalary: filters.hasSalary || undefined,
-      education: filters.education,
-      contractType: filters.contractTypes,
-      minSalary: filters.minSalary,
-      maxSalary: filters.maxSalary,
-      page: '1', // Reset to first page when filtering
-    });
+    const updatedFilters: Record<string, string | boolean | string[] | undefined> = { ...filters };
+    if (!updatedFilters.hasSalary) {
+      updatedFilters.hasSalary = undefined;
+    }
+    updatedFilters.page = '1'; // Reset to first page when filtering
+    updateUrl(updatedFilters);
   };
 
   const handleSearch = (term: string, location: string) => {

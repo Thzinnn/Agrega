@@ -10,6 +10,12 @@ import {
 export const jobRoutes = new Hono();
 
 // GET /api/v1/jobs - List jobs with dynamic filters and pagination
+// GET /api/v1/jobs/columns - Get active columns
+jobRoutes.get(
+  '/columns',
+  jobController.getColumns.bind(jobController)
+);
+
 jobRoutes.get(
   '/',
   validateRequest(jobQuerySchema, 'query'),
@@ -28,4 +34,11 @@ jobRoutes.post(
   '/',
   validateRequest(createJobSchema, 'body'),
   jobController.createJob.bind(jobController)
+);
+
+// POST /api/v1/jobs/:id/click - Increment click count
+jobRoutes.post(
+  '/:id/click',
+  validateRequest(jobIdParamSchema, 'param'),
+  jobController.incrementClick.bind(jobController)
 );

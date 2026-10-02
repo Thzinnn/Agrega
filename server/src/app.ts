@@ -6,8 +6,9 @@ import { initializePrisma } from './lib/prisma.js';
 import { PrismaClient } from '@prisma/client';
 
 type Bindings = {
-  HYPERDRIVE: any;
-  DATABASE_URL: string;
+  HYPERDRIVE?: { connectionString: string };
+  DATABASE_URL?: string;
+  JWT_SECRET?: string;
 };
 
 type Variables = {
@@ -31,17 +32,22 @@ app.use(
 );
 
 app.use('*', async (c, next) => {
-  // Inicializa o Prisma usando a connection string do Hyperdrive (se no Cloudflare)
-  const dbUrl = c.env?.HYPERDRIVE ? (c.env.HYPERDRIVE as { connectionString: string }).connectionString : (c.env?.DATABASE_URL as string | undefined);
+  const dbUrl = c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL || process.env.DATABASE_URL;
   
   if (dbUrl) {
     const { prisma, pool } = initializePrisma(dbUrl);
     c.set('prisma', prisma);
     
     await next();
-    
+
     if (pool) {
-      c.executionCtx.waitUntil(pool.end());
+      const execCtx = c.executionCtx || c.env as unknown as { waitUntil?: (p: Promise<unknown>) => void };
+      if (execCtx && 'waitUntil' in execCtx && typeof execCtx.waitUntil === 'function') {
+        execCtx.waitUntil(pool.end());
+      } else {
+        // Run asynchronously in Node
+        pool.end().catch(console.error);
+      }
     }
   } else {
     await next();
@@ -58,4 +64,34 @@ app.route('/', routes);
 // Central error handler
 app.onError(errorHandler);
 
-export default app;
+export default {
+  fetch: app.fetch,
+  async scheduled(_event: unknown, env: Bindings, ctx: { waitUntil: (p: Promise<unknown>) => void }) {
+    console.log('Running daily cron job for job expiration...');
+    const dbUrl = env?.HYPERDRIVE?.connectionString || env?.DATABASE_URL;
+    
+    if (dbUrl) {
+      const { prisma, pool } = initializePrisma(dbUrl);
+      
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      
+      try {
+        const result = await prisma.job.updateMany({
+          where: {
+            isActive: true,
+            createdAt: { lt: ninetyDaysAgo }
+          },
+          data: { isActive: false }
+        });
+        console.log(`Deactivated ${result.count} expired jobs.`);
+      } catch (error) {
+        console.error('Error running cron job:', error);
+      } finally {
+        if (pool) {
+          ctx.waitUntil(pool.end());
+        }
+      }
+    }
+  }
+};

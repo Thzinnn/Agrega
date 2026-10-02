@@ -1,18 +1,6 @@
 import { z } from 'zod';
 
-export const workplaceTypeEnum = z.enum(['REMOTE', 'HYBRID', 'ON_SITE']);
-export const educationLevelEnum = z.enum([
-  'FUNDAMENTAL_INCOMPLETE',
-  'FUNDAMENTAL_COMPLETE',
-  'MEDIO_INCOMPLETE',
-  'MEDIO_COMPLETE',
-  'SUPERIOR_INCOMPLETE',
-  'SUPERIOR_COMPLETE',
-  'POS_GRADUACAO',
-  'MESTRADO',
-  'DOUTORADO',
-]);
-export const contractTypeEnum = z.enum(['CLT', 'PJ', 'OTHER']);
+// Enums removed to allow dynamic values
 
 export const createJobSchema = z
   .object({
@@ -20,10 +8,10 @@ export const createJobSchema = z
     company: z.string({ required_error: 'Nome da empresa é obrigatório' }).min(2, 'Empresa deve ter pelo menos 2 caracteres').max(100),
     description: z.string({ required_error: 'Descrição é obrigatória' }).min(10, 'Descrição deve ter pelo menos 10 caracteres'),
     location: z.string({ required_error: 'Localização é obrigatória' }).min(2, 'Localização deve ter pelo menos 2 caracteres').max(100),
-    workplaceType: workplaceTypeEnum,
-    education: educationLevelEnum,
+    workplaceType: z.string(),
+    education: z.preprocess((val) => (val === '' ? null : val), z.string().nullable().optional()),
     requirements: z.array(z.string().min(1, 'Requisito não pode ser vazio')).default([]).optional(),
-    contractType: contractTypeEnum.default('CLT'),
+    contractType: z.string().default('CLT'),
     benefits: z
       .string()
       .trim()
@@ -57,8 +45,9 @@ export const createJobSchema = z
       .preprocess((val) => (val === '' ? undefined : val), z.string().email('E-mail inválido').optional()),
     contactPhone: z
       .preprocess((val) => (val === '' ? undefined : val), z.string().regex(/^[\d\s\-\+\(\)]+$/, 'Telefone inválido, use apenas números e os caracteres +, -, ()').optional()),
-    source: z.string().default('MANUAL').optional(),
+    source: z.enum(['MANUAL', 'SCRAPER']).default('MANUAL').optional(),
     isActive: z.boolean().default(true).optional(),
+    customData: z.record(z.unknown()).optional(),
   })
   .refine(
     (data) => {
@@ -113,7 +102,7 @@ export const jobQuerySchema = z.object({
       const arr = Array.isArray(val) ? val : val.split(',');
       return arr.map((item) => item.trim());
     })
-    .pipe(z.array(workplaceTypeEnum).optional()),
+    .pipe(z.array(z.string()).optional()),
   education: z
     .union([z.string(), z.array(z.string())])
     .optional()
@@ -122,7 +111,7 @@ export const jobQuerySchema = z.object({
       const arr = Array.isArray(val) ? val : val.split(',');
       return arr.map((item) => item.trim());
     })
-    .pipe(z.array(educationLevelEnum).optional()),
+    .pipe(z.array(z.string()).optional()),
   contractType: z
     .union([z.string(), z.array(z.string())])
     .optional()
@@ -131,7 +120,7 @@ export const jobQuerySchema = z.object({
       const arr = Array.isArray(val) ? val : val.split(',');
       return arr.map((item) => item.trim());
     })
-    .pipe(z.array(contractTypeEnum).optional()),
+    .pipe(z.array(z.string()).optional()),
   minSalary: z.coerce.number().nonnegative().optional(),
   maxSalary: z.coerce.number().nonnegative().optional(),
   hasSalary: z
@@ -141,7 +130,7 @@ export const jobQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(50).default(10),
   orderBy: z.enum(['recent', 'relevant']).default('recent'),
-});
+}).catchall(z.unknown());
 
 export type JobQueryInput = z.infer<typeof jobQuerySchema>;
 

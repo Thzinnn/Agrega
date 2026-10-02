@@ -3,6 +3,9 @@ main = "src/app.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
+[triggers]
+crons = ["0 0 * * *"]
+
 [[hyperdrive]]
 binding = "HYPERDRIVE"
 id = "860ba89398204814910a35015bc6c7de"

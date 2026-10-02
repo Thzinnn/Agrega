@@ -8,60 +8,107 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum WorkplaceType {
-  REMOTE
-  HYBRID
-  ON_SITE
+enum JobSource {
+  MANUAL
+  SCRAPER
 }
 
-enum EducationLevel {
-  FUNDAMENTAL_INCOMPLETE
-  FUNDAMENTAL_COMPLETE
-  MEDIO_INCOMPLETE
-  MEDIO_COMPLETE
-  SUPERIOR_INCOMPLETE
-  SUPERIOR_COMPLETE
-  POS_GRADUACAO
-  MESTRADO
-  DOUTORADO
+enum Role {
+  ADMIN
 }
 
-enum ContractType {
-  CLT
-  PJ
-  OTHER
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      Role     @default(ADMIN)
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FilterCategory {
+  id        String         @id @default(uuid())
+  name      String
+  slug      String         @unique
+  options   FilterOption[]
+  createdAt DateTime       @default(now())
+}
+
+model FilterOption {
+  id               String         @id @default(uuid())
+  label            String
+  value            String
+  filterCategoryId String
+  filterCategory   FilterCategory @relation(fields: [filterCategoryId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
 }
 
 model Job {
-  id                  String        @id @default(uuid())
+  id                  String         @id @default(uuid())
   title               String
   company             String
-  description         String        @db.Text
+  description         String         @db.Text
   location            String
-  workplaceType       WorkplaceType
-  education           EducationLevel
-  requirements        String[]      @default([])
-  contractType        ContractType  @default(CLT)
+  workplaceType       String
+  education           String?
+  requirements        String[]       @default([])
+  contractType        String   @default("CLT")
   benefits            String?
-  hasVA               Boolean       @default(false)
-  hasVR               Boolean       @default(false)
-  hasVT               Boolean       @default(false)
-  hasLifeInsurance    Boolean       @default(false)
-  hasMedicalInsurance Boolean       @default(false)
-  hasDentalInsurance  Boolean       @default(false)
+  hasVA               Boolean        @default(false)
+  hasVR               Boolean        @default(false)
+  hasVT               Boolean        @default(false)
+  hasLifeInsurance    Boolean        @default(false)
+  hasMedicalInsurance Boolean        @default(false)
+  hasDentalInsurance  Boolean        @default(false)
   salary              Float?
   salaryMin           Float?
   salaryMax           Float?
   applicationUrl      String?
   contactEmail        String?
   contactPhone        String?
-  source              String        @default("MANUAL")
-  isActive            Boolean       @default(true)
-  createdAt           DateTime      @default(now())
-  updatedAt           DateTime      @updatedAt
+  source              JobSource      @default(MANUAL)
+  clicksCount         Int            @default(0)
+  isActive            Boolean        @default(true)
+  customData          Json?          @default("{}")
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
 
   @@index([workplaceType])
   @@index([education])
   @@index([contractType])
   @@index([createdAt(sort: Desc)])
+}
+
+enum ColumnType {
+  STRING
+  NUMBER
+  BOOLEAN
+  DATE
+  LIST
+}
+
+enum ColumnSection {
+  BASIC
+  CONTACT
+  CLASSIFICATION
+  REMUNERATION
+  REQUIREMENTS
+  DESCRIPTION
+  ADDITIONAL
+}
+
+model JobCustomColumn {
+  id           String        @id @default(uuid())
+  name         String
+  slug         String        @unique
+  type         ColumnType    @default(STRING)
+  section      ColumnSection @default(ADDITIONAL)
+  isRequired   Boolean    @default(false)
+  isActive     Boolean    @default(true)
+  isNative     Boolean    @default(false)
+  isFilterable Boolean    @default(false)
+  options      String[]   @default([])
+  createdAt    DateTime   @default(now())
 }

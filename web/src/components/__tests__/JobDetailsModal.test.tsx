@@ -28,6 +28,8 @@ const mockJob: Job = {
   hasLifeInsurance: false,
   hasMedicalInsurance: false,
   hasDentalInsurance: false,
+  requirements: [],
+  clicksCount: 0,
   createdAt: '2023-10-01T00:00:00.000Z',
   updatedAt: '2023-10-01T00:00:00.000Z',
 };

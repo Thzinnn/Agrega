@@ -23,6 +23,7 @@ export interface Job {
   contactPhone: string | null;
   source: string;
   isActive: boolean;
+  clicksCount: number;
   createdAt: string;
   updatedAt: string;
 }
