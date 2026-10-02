@@ -27,6 +27,22 @@ export class JobController {
       data: createdJob,
     }, 201);
   }
+
+  async incrementClick(c: Context) {
+    const prisma = c.get('prisma') as PrismaClient;
+    const { id } = c.get('valid_param') as JobIdParam;
+    await jobService.incrementClick(prisma, id);
+    return c.json({ success: true }, 200);
+  }
+
+  async getColumns(c: Context) {
+    const prisma = c.get('prisma') as PrismaClient;
+    const columns = await prisma.jobCustomColumn.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'asc' },
+    });
+    return c.json({ success: true, data: columns }, 200);
+  }
 }
 
 export const jobController = new JobController();

@@ -1,11 +1,9 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useRouter } from 'next/navigation';
-import { MapPin, Building2, Briefcase, Link as LinkIcon, DollarSign, AlignLeft, Info, CheckCircle2, Phone, Mail, Contact, LayoutList } from 'lucide-react';
+import { Loader2, X, MapPin, Building2, Briefcase, Link as LinkIcon, DollarSign, AlignLeft, Info, CheckCircle2, Phone, Mail, Contact, LayoutList } from 'lucide-react';
 import { api } from '@/lib/api';
-import { JobFormData, CustomColumn } from '@/components/JobFormModal';
 
 const OPTION_LABELS: Record<string, string> = {
   REMOTE: 'Remoto',
@@ -25,44 +23,188 @@ const OPTION_LABELS: Record<string, string> = {
   OTHER: 'Outros'
 };
 
-export default function NewJobPage() {
-  const router = useRouter();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [success, setSuccess] = useState(false);
-  const [columns, setColumns] = useState<CustomColumn[]>([]);
+export interface JobFormData {
+  title?: string;
+  company?: string;
+  location?: string;
+  description?: string;
+  salary?: number | null;
+  salaryMin?: number | null;
+  salaryMax?: number | null;
+  benefits?: string | null;
+  applicationUrl?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  workplaceType?: string;
+  education?: string | null;
+  contractType?: string;
+  hasVA?: boolean;
+  hasVR?: boolean;
+  hasVT?: boolean;
+  hasLifeInsurance?: boolean;
+  hasMedicalInsurance?: boolean;
+  hasDentalInsurance?: boolean;
+  requirements?: string[];
+  customData?: Record<string, unknown>;
+  [key: string]: unknown;
+}
 
-  // Autocomplete Location State
+export interface CustomColumn {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+  section: string;
+  isRequired: boolean;
+  isActive: boolean;
+  isNative: boolean;
+  options?: string[];
+}
+
+export function JobFormModal({
+  isOpen,
+  onClose,
+  onSuccess,
+  jobToEdit = null,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  jobToEdit?: Record<string, unknown> | null;
+}) {
+  const [columns, setColumns] = useState<CustomColumn[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { register, handleSubmit, reset, setValue, watch } = useForm<JobFormData>();
+
+  // Location
   const [allLocations, setAllLocations] = useState<string[]>([]);
   const [searchLocation, setSearchLocation] = useState('');
   const [filteredLocations, setFilteredLocations] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Requirements State
+  // Requirements
   const [requirementsList, setRequirementsList] = useState<string[]>([]);
   const [newRequirement, setNewRequirement] = useState('');
   const [showRequirementInput, setShowRequirementInput] = useState(false);
-
-  const { register, handleSubmit, setValue, watch } = useForm<JobFormData>({
-    defaultValues: {
-      hasVA: false,
-      hasVR: false,
-      hasVT: false,
-      hasLifeInsurance: false,
-      hasMedicalInsurance: false,
-      hasDentalInsurance: false,
-      requirements: [],
-    }
-  });
 
   const watchSalary = watch('salary');
   const watchSalaryMin = watch('salaryMin');
   const watchSalaryMax = watch('salaryMax');
 
-  // Load Columns
   useEffect(() => {
-    api.get('/jobs/columns').then(res => setColumns(res.data.data)).catch(console.error);
+    if (isOpen) {
+      fetchColumns();
+      if (jobToEdit) {
+        Object.keys(jobToEdit).forEach((key) => {
+          if (key !== 'customData' && key !== 'requirements') {
+            setValue(key, jobToEdit[key]);
+          }
+        });
+        if (jobToEdit.requirements && Array.isArray(jobToEdit.requirements)) {
+           setRequirementsList(jobToEdit.requirements);
+           setValue('requirements', jobToEdit.requirements);
+        } else {
+           setRequirementsList([]);
+        }
+        if (jobToEdit.location) {
+           setSearchLocation(jobToEdit.location as string);
+        } else {
+           setSearchLocation('');
+        }
+        if (jobToEdit.customData && typeof jobToEdit.customData === 'object') {
+          const cData = jobToEdit.customData as Record<string, unknown>;
+          Object.keys(cData).forEach((key) => {
+            setValue(`customData.${key}`, cData[key]);
+          });
+        }
+      } else {
+        reset({
+          hasVA: false,
+          hasVR: false,
+          hasVT: false,
+          hasLifeInsurance: false,
+          hasMedicalInsurance: false,
+          hasDentalInsurance: false,
+          requirements: [],
+        });
+        setRequirementsList([]);
+        setSearchLocation('');
+      }
+    }
+  }, [isOpen, jobToEdit, reset, setValue]);
+
+  const fetchColumns = async () => {
+    try {
+      const res = await api.get('/admin/columns');
+      setColumns(res.data.data);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios');
+        const municipalities = await response.json();
+        
+        const formatted = [
+          'Remoto',
+          'Híbrido',
+          ...municipalities.map((m: { nome: string }) => `${m.nome}, SP`)
+        ];
+        setAllLocations(Array.from(new Set(formatted)));
+      } catch {
+        setAllLocations(['Remoto', 'Híbrido', 'São Paulo, SP', 'Campinas, SP', 'Ribeirão Preto, SP']);
+      }
+    };
+    fetchLocations();
   }, []);
+
+  useEffect(() => {
+    if (searchLocation.trim().length >= 1) {
+      const term = searchLocation.toLowerCase();
+      const filtered = allLocations
+        .filter(loc => loc.toLowerCase().includes(term))
+        .slice(0, 8);
+      setFilteredLocations(filtered);
+    } else {
+      setFilteredLocations([]);
+    }
+  }, [searchLocation, allLocations]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleSelectLocation = (loc: string) => {
+    setSearchLocation(loc);
+    setValue('location', loc, { shouldValidate: true });
+    setShowSuggestions(false);
+  };
+
+  const handleAddRequirement = () => {
+    if (newRequirement.trim().length > 0) {
+      const updatedList = [...requirementsList, newRequirement.trim()];
+      setRequirementsList(updatedList);
+      setValue('requirements', updatedList);
+      setNewRequirement('');
+      setShowRequirementInput(false);
+    }
+  };
+
+  const handleRemoveRequirement = (indexToRemove: number) => {
+    const updatedList = requirementsList.filter((_, idx) => idx !== indexToRemove);
+    setRequirementsList(updatedList);
+    setValue('requirements', updatedList);
+  };
 
   const getCol = (slug: string) => columns.find(c => c.slug === slug);
   const isReq = (slug: string) => getCol(slug)?.isRequired || false;
@@ -107,88 +249,22 @@ export default function NewJobPage() {
     );
   };
 
-  // Load IBGE Locations
-  useEffect(() => {
-    const fetchLocations = async () => {
-      try {
-        const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios');
-        const municipalities = await response.json();
-        
-        const formatted = [
-          'Remoto',
-          'Híbrido',
-          ...municipalities.map((m: { nome: string }) => `${m.nome}, SP`)
-        ];
-        setAllLocations(Array.from(new Set(formatted)));
-      } catch {
-        setAllLocations(['Remoto', 'Híbrido', 'São Paulo, SP', 'Campinas, SP', 'Ribeirão Preto, SP']);
-      }
-    };
-    fetchLocations();
-  }, []);
-
-  // Filter Locations
-  useEffect(() => {
-    if (searchLocation.trim().length >= 1) {
-      const term = searchLocation.toLowerCase();
-      const filtered = allLocations
-        .filter(loc => loc.toLowerCase().includes(term))
-        .slice(0, 8);
-      setFilteredLocations(filtered);
-    } else {
-      setFilteredLocations([]);
-    }
-  }, [searchLocation, allLocations]);
-
-  // Click Outside
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const handleSelectLocation = (loc: string) => {
-    setSearchLocation(loc);
-    setValue('location', loc, { shouldValidate: true });
-    setShowSuggestions(false);
-  };
-
-  const handleAddRequirement = () => {
-    if (newRequirement.trim().length > 0) {
-      const updatedList = [...requirementsList, newRequirement.trim()];
-      setRequirementsList(updatedList);
-      setValue('requirements', updatedList);
-      setNewRequirement('');
-      setShowRequirementInput(false);
-    }
-  };
-
-  const handleRemoveRequirement = (indexToRemove: number) => {
-    const updatedList = requirementsList.filter((_, idx) => idx !== indexToRemove);
-    setRequirementsList(updatedList);
-    setValue('requirements', updatedList);
-  };
-
   const onSubmit = async (data: JobFormData) => {
-    setIsSubmitting(true);
+    setLoading(true);
     try {
       const hasUrl = !!data.applicationUrl;
       const hasEmail = !!data.contactEmail;
       const hasPhone = !!data.contactPhone && typeof data.contactPhone === 'string' && data.contactPhone.trim() !== '';
       if (!hasUrl && !hasEmail && !hasPhone) {
         alert("Você deve informar pelo menos um meio de contato (Link, E-mail ou Telefone)");
-        setIsSubmitting(false);
+        setLoading(false);
         return;
       }
 
       if (data.salary) {
         if (data.salaryMin || data.salaryMax) {
           alert("Se informar valor fixo, limpe o piso e o teto.");
-          setIsSubmitting(false);
+          setLoading(false);
           return;
         }
       }
@@ -196,12 +272,11 @@ export default function NewJobPage() {
       if (data.salaryMin && data.salaryMax) {
         if (Number(data.salaryMax) < Number(data.salaryMin)) {
           alert("O teto salarial não pode ser menor que o mínimo");
-          setIsSubmitting(false);
+          setLoading(false);
           return;
         }
       }
 
-      // Clean up coercions
       if (data.salary) data.salary = Number(data.salary);
       if (data.salaryMin) data.salaryMin = Number(data.salaryMin);
       if (data.salaryMax) data.salaryMax = Number(data.salaryMax);
@@ -209,50 +284,37 @@ export default function NewJobPage() {
       if (!data.salaryMin) data.salaryMin = null;
       if (!data.salaryMax) data.salaryMax = null;
 
-      await api.post('/jobs', data);
-      setSuccess(true);
-      setTimeout(() => {
-        router.push('/');
-      }, 2500);
+      if (jobToEdit) {
+        await api.put(`/admin/jobs/${jobToEdit.id}`, data);
+      } else {
+        await api.post('/admin/jobs', data);
+      }
+      onSuccess();
+      onClose();
     } catch (error: unknown) {
       console.error(error);
       const axiosError = error as import('axios').AxiosError<{message: string}>;
-      alert(axiosError.response?.data?.message || 'Ocorreu um erro ao cadastrar a vaga. Verifique os campos.');
+      alert(axiosError.response?.data?.message || 'Erro ao salvar vaga');
     } finally {
-      setIsSubmitting(false);
+      setLoading(false);
     }
   };
 
-  if (success) {
-    return (
-      <div className="container mx-auto p-4 md:p-8 min-h-[80vh] flex items-center justify-center">
-        <div className="bg-brand-30 border border-brand-10/30 p-10 rounded-3xl flex flex-col items-center text-center max-w-lg shadow-2xl">
-          <div className="w-20 h-20 bg-brand-10/20 text-brand-10 rounded-full flex items-center justify-center mb-6">
-            <CheckCircle2 className="w-10 h-10" />
-          </div>
-          <h2 className="text-3xl font-bold text-brand-text mb-4">Vaga Publicada!</h2>
-          <p className="text-brand-muted text-lg mb-8">Sua oportunidade já está disponível para milhares de talentos na plataforma.</p>
-          <div className="w-8 h-8 border-4 border-brand-10 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-sm text-brand-muted mt-4">Redirecionando...</span>
-        </div>
-      </div>
-    );
-  }
-
+  if (!isOpen) return null;
 
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-4xl pt-24">
-      <div className="mb-10 text-center">
-        <h1 className="text-3xl md:text-5xl font-extrabold text-brand-text tracking-tight mb-4">
-          Divulgue uma <span className="text-brand-10">Oportunidade</span>
-        </h1>
-        <p className="text-brand-muted text-lg max-w-2xl mx-auto">
-          Encontre os melhores talentos de tecnologia do Brasil. O cadastro é rápido e gratuito.
-        </p>
-      </div>
+    <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-3xl w-full max-w-4xl shadow-xl overflow-hidden my-8 flex flex-col max-h-[90vh]">
+        <div className="flex justify-between items-center p-6 border-b border-brand-30 bg-brand-60/50 shrink-0">
+          <h2 className="text-xl font-bold text-brand-text">
+            {jobToEdit ? 'Editar Vaga' : 'Nova Vaga'}
+          </h2>
+          <button onClick={onClose} className="text-brand-muted hover:text-brand-text transition-colors">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
 
-      <div className="bg-brand-30 border border-gray-300 rounded-3xl p-6 md:p-10 shadow-xl">
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 overflow-y-auto space-y-8">
           
           {/* Informações Básicas */}
           <div className="space-y-6">
@@ -337,12 +399,11 @@ export default function NewJobPage() {
             </div>
           </div>
 
-          {/* Contato (Not part of CustomColumns currently, hardcoded) */}
+          {/* Contato */}
           <div className="space-y-6">
             <h3 className="text-xl font-bold text-brand-text flex items-center gap-2 border-b border-brand-60 pb-3">
               <Contact className="w-5 h-5 text-brand-10" /> Meios de Contato
             </h3>
-            <p className="text-sm text-brand-muted">Forneça pelo menos <strong>uma</strong> forma de os candidatos entrarem em contato (Link, E-mail ou Telefone).</p>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="space-y-2">
@@ -521,7 +582,6 @@ export default function NewJobPage() {
                       onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddRequirement())}
                       className="flex-1 bg-brand-60/50 border border-gray-300 text-brand-text rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-brand-10/50"
                       placeholder="Ex: Inglês Intermediário, Pacote Office..."
-                      autoFocus
                     />
                     <div className="flex gap-2">
                       <button
@@ -720,28 +780,13 @@ export default function NewJobPage() {
             </div>
           )}
 
-
-
-          {/* Actions */}
-          <div className="pt-6 border-t border-brand-60 flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8">
-            <button
-              type="button"
-              onClick={() => router.back()}
-              className="w-full sm:w-auto px-6 py-3 min-h-[48px] rounded-xl font-semibold text-brand-text bg-brand-60 hover:bg-brand-60/80 transition-colors cursor-pointer order-2 sm:order-1"
-            >
+          <div className="mt-8 flex justify-end gap-4 border-t border-brand-30 pt-6">
+            <button type="button" onClick={onClose} className="px-6 py-3 font-bold text-brand-muted hover:bg-brand-60 rounded-xl transition-colors">
               Cancelar
             </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full sm:w-auto px-8 py-3 min-h-[48px] rounded-xl font-bold text-white bg-brand-10 hover:bg-brand-10-hover transition-colors shadow-lg disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer order-1 sm:order-2"
-            >
-              {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Publicando...
-                </>
-              ) : 'Publicar Vaga'}
+            <button disabled={loading} type="submit" className="bg-brand-10 text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-10/90 transition-colors flex items-center gap-2 disabled:opacity-70">
+              {loading && <Loader2 className="w-5 h-5 animate-spin" />}
+              {jobToEdit ? 'Salvar Alterações' : 'Criar Vaga'}
             </button>
           </div>
         </form>

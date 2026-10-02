@@ -8,7 +8,18 @@ interface JobDetailsModalProps {
   onClose: () => void;
 }
 
+import { api } from '@/lib/api';
+
 export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) {
+  const handleContactClick = async () => {
+    if (!job) return;
+    try {
+      await api.post(`/jobs/${job.id}/click`);
+    } catch (error) {
+      console.error('Failed to track click', error);
+    }
+  };
+
   if (!job) return null;
 
   return (
@@ -130,19 +141,19 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
                   <h3 className="font-bold text-lg text-brand-text">Entre em Contato</h3>
                   <div className="flex flex-col gap-3">
                     {job.applicationUrl && (
-                      <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-brand-10 hover:underline font-medium break-all">
+                      <a href={job.applicationUrl} target="_blank" rel="noopener noreferrer" onClick={handleContactClick} className="flex items-center gap-2 text-brand-10 hover:underline font-medium break-all">
                         <ExternalLink className="w-5 h-5 shrink-0" />
                         Acessar Link da Vaga
                       </a>
                     )}
                     {job.contactEmail && (
-                      <a href={`mailto:${job.contactEmail}`} className="flex items-center gap-2 text-brand-10 hover:underline font-medium break-all">
+                      <a href={`mailto:${job.contactEmail}`} onClick={handleContactClick} className="flex items-center gap-2 text-brand-10 hover:underline font-medium break-all">
                         <Mail className="w-5 h-5 shrink-0" />
                         {job.contactEmail}
                       </a>
                     )}
                     {job.contactPhone && (
-                      <a href={`https://wa.me/${job.contactPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-brand-10 hover:underline font-medium">
+                      <a href={`https://wa.me/${job.contactPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer" onClick={handleContactClick} className="flex items-center gap-2 text-brand-10 hover:underline font-medium">
                         <Phone className="w-5 h-5 shrink-0" />
                         {job.contactPhone}
                       </a>

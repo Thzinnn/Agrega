@@ -1,6 +1,13 @@
-import { PrismaClient, WorkplaceType, EducationLevel, ContractType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+const generateDateInPast90Days = () => {
+  const date = new Date();
+  date.setDate(date.getDate() - Math.floor(Math.random() * 90));
+  return date;
+};
 
 const sampleJobs = [
   {
@@ -8,10 +15,10 @@ const sampleJobs = [
     company: 'TechFlow Brasil',
     description: 'Estamos em busca de um Analista de Logística Sênior para liderar otimizações de cadeia de suprimentos e fluxos de distribuição nacional. Responsável pelo gerenciamento de indicadores (KPIs), negociação de fretes e integração com sistemas ERP/WMS.',
     location: 'São José dos Campos, SP',
-    workplaceType: WorkplaceType.HYBRID,
-    education: EducationLevel.SUPERIOR_COMPLETE,
+    workplaceType: 'HYBRID',
+    education: 'SUPERIOR_COMPLETE',
     requirements: ['Excel Avançado', 'Inglês Fluente', 'Experiência com ERP (SAP)'],
-    contractType: ContractType.CLT,
+    contractType: 'CLT',
     benefits: 'Plano de Saúde, Gympass',
     hasVA: true,
     hasVR: true,
@@ -24,15 +31,17 @@ const sampleJobs = [
     contactEmail: 'vagas@techflow.example.com',
     source: 'MANUAL',
     isActive: true,
+    createdAt: generateDateInPast90Days(),
+    clicksCount: Math.floor(Math.random() * 150),
   },
   {
     title: 'Gerente de Projetos',
     company: 'Horizon Digital',
     description: 'Buscamos Gerente de Projetos com experiência comprovada em metodologias ágeis (Scrum/Kanban) para conduzir squads multidisciplinares de produtos digitais e desenvolvimento de software corporativo.',
     location: 'Belo Horizonte, MG',
-    workplaceType: WorkplaceType.REMOTE,
-    education: EducationLevel.POS_GRADUACAO,
-    contractType: ContractType.CLT,
+    workplaceType: 'REMOTE',
+    education: 'POS_GRADUACAO',
+    contractType: 'CLT',
     benefits: 'Bônus Anual',
     hasVR: true,
     hasMedicalInsurance: true,
@@ -43,17 +52,19 @@ const sampleJobs = [
     applicationUrl: null,
     contactEmail: 'talentos@horizondigital.com',
     contactPhone: '31999999999',
-    source: 'MANUAL',
+    source: 'SCRAPER',
     isActive: true,
+    createdAt: generateDateInPast90Days(),
+    clicksCount: Math.floor(Math.random() * 150),
   },
   {
     title: 'Desenvolvedor Front-end Pleno',
     company: 'Studio Alpha',
     description: 'Vaga para Desenvolvedor Front-end Pleno focado em interfaces de alto impacto e performance. Stack principal: React, Next.js (App Router), TypeScript, Tailwind CSS e integração com APIs REST e GraphQL.',
     location: 'São Paulo, SP',
-    workplaceType: WorkplaceType.HYBRID,
-    education: EducationLevel.SUPERIOR_INCOMPLETE,
-    contractType: ContractType.CLT,
+    workplaceType: 'HYBRID',
+    education: 'SUPERIOR_INCOMPLETE',
+    contractType: 'CLT',
     benefits: null,
     hasVR: true,
     hasVT: true,
@@ -65,15 +76,17 @@ const sampleJobs = [
     contactPhone: '11988887777',
     source: 'MANUAL',
     isActive: true,
+    createdAt: generateDateInPast90Days(),
+    clicksCount: Math.floor(Math.random() * 150),
   },
   {
     title: 'Assistente Administrativo',
     company: 'Norte & Sul Serviços',
     description: 'Apoio nas rotinas diárias do departamento financeiro e de compras, emissão de notas fiscais, atendimento a clientes e fornecedores e controle de planilhas operacionais.',
     location: 'Caraguatatuba, SP',
-    workplaceType: WorkplaceType.ON_SITE,
-    education: EducationLevel.MEDIO_COMPLETE,
-    contractType: ContractType.CLT,
+    workplaceType: 'ON_SITE',
+    education: 'MEDIO_COMPLETE',
+    contractType: 'CLT',
     benefits: null,
     hasVA: true,
     hasVT: true,
@@ -82,17 +95,19 @@ const sampleJobs = [
     salary: 2400,
     applicationUrl: null,
     contactEmail: 'rh@nortesul.com.br',
-    source: 'MANUAL',
+    source: 'SCRAPER',
     isActive: true,
+    createdAt: generateDateInPast90Days(),
+    clicksCount: Math.floor(Math.random() * 150),
   },
   {
     title: 'Engenheiro de Software Backend Sênior',
     company: 'FinTech Prime',
     description: 'Projetar, desenvolver e sustentar microsserviços escaláveis e tolerantes a falhas no setor financeiro. Experiência profunda com Node.js, TypeScript, PostgreSQL, Redis, filas/RabbitMQ e Docker.',
     location: 'Remoto (Brasil)',
-    workplaceType: WorkplaceType.REMOTE,
-    education: EducationLevel.SUPERIOR_COMPLETE,
-    contractType: ContractType.PJ,
+    workplaceType: 'REMOTE',
+    education: 'SUPERIOR_COMPLETE',
+    contractType: 'PJ',
     benefits: 'Licença maternidade/paternidade estendida',
     salaryMin: 15000,
     salaryMax: 18000,
@@ -101,15 +116,17 @@ const sampleJobs = [
     contactEmail: 'tech@fintechprime.com',
     source: 'MANUAL',
     isActive: true,
+    createdAt: generateDateInPast90Days(),
+    clicksCount: Math.floor(Math.random() * 150),
   },
   {
     title: 'Estágio em Desenvolvimento Web',
     company: 'InovaTech Soluções',
     description: 'Oportunidade para estudantes de Ciência da Computação, Engenharia de Software ou correlatas para atuar no desenvolvimento e manutenção de aplicações web modernas com mentoria contínua.',
     location: 'Campinas, SP',
-    workplaceType: WorkplaceType.HYBRID,
-    education: EducationLevel.SUPERIOR_INCOMPLETE,
-    contractType: ContractType.OTHER,
+    workplaceType: 'HYBRID',
+    education: 'SUPERIOR_INCOMPLETE',
+    contractType: 'OTHER',
     benefits: null,
     hasVR: true,
     hasVT: true,
@@ -118,17 +135,19 @@ const sampleJobs = [
     salary: 1800,
     applicationUrl: 'https://inovatech.example.com/vagas/estagio-web',
     contactPhone: '19977776666',
-    source: 'MANUAL',
+    source: 'SCRAPER',
     isActive: true,
+    createdAt: generateDateInPast90Days(),
+    clicksCount: Math.floor(Math.random() * 150),
   },
   {
     title: 'Designer UX/UI Pleno',
     company: 'Criativa Hub',
     description: 'Estamos procurando um Designer de Produto Pleno para atuar em nossos sistemas web e aplicativos móveis. Necessário portfólio e domínio do Figma.',
     location: 'Florianópolis, SC',
-    workplaceType: WorkplaceType.HYBRID,
-    education: EducationLevel.SUPERIOR_COMPLETE,
-    contractType: ContractType.CLT,
+    workplaceType: 'HYBRID',
+    education: 'SUPERIOR_COMPLETE',
+    contractType: 'CLT',
     benefits: 'Auxílio Home Office',
     hasVA: true,
     hasVR: true,
@@ -141,192 +160,93 @@ const sampleJobs = [
     contactEmail: 'ux@criativahub.com.br',
     source: 'MANUAL',
     isActive: true,
-  },
-  {
-    title: 'Recepcionista Bilíngue',
-    company: 'Global Corp',
-    description: 'Atendimento telefônico, recepção de executivos estrangeiros e controle de agendas. Inglês fluente é indispensável.',
-    location: 'São Paulo, SP',
-    workplaceType: WorkplaceType.ON_SITE,
-    education: EducationLevel.MEDIO_COMPLETE,
-    contractType: ContractType.CLT,
-    benefits: 'Bônus por metas globais',
-    hasVA: true,
-    hasVT: true,
-    hasLifeInsurance: true,
-    salaryMin: null,
-    salaryMax: null,
-    salary: 3500,
-    applicationUrl: null,
-    contactEmail: 'recrutamento@globalcorp.com',
-    contactPhone: '1133334444',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'Analista de Dados (Data Analyst)',
-    company: 'DataMinds',
-    description: 'Transformar dados brutos em insights usando SQL, Python e Power BI. O profissional atuará diretamente com a diretoria para tomada de decisão estratégica.',
-    location: 'Remoto',
-    workplaceType: WorkplaceType.REMOTE,
-    education: EducationLevel.SUPERIOR_COMPLETE,
-    contractType: ContractType.PJ,
-    benefits: 'Parcerias educacionais',
-    hasVR: false,
-    hasMedicalInsurance: false,
-    salaryMin: 8000,
-    salaryMax: 10000,
-    salary: null,
-    applicationUrl: 'https://dataminds.example.com/vagas/data-analyst',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'Operador de Telemarketing Ativo',
-    company: 'CallCenter Plus',
-    description: 'Realizar ligações ativas para venda de serviços de telecomunicações. Exige boa comunicação e foco em resultados.',
-    location: 'Osasco, SP',
-    workplaceType: WorkplaceType.ON_SITE,
-    education: EducationLevel.FUNDAMENTAL_COMPLETE,
-    contractType: ContractType.CLT,
-    benefits: 'Comissões Agressivas',
-    hasVT: true,
-    hasVA: true,
-    salaryMin: null,
-    salaryMax: null,
-    salary: 1500,
-    applicationUrl: null,
-    contactPhone: '11955554444',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'DevOps Engineer Pleno',
-    company: 'CloudOps',
-    description: 'Buscamos DevOps para gerenciar infraestrutura em AWS com Terraform, pipelines CI/CD no GitHub Actions e orquestração no Kubernetes.',
-    location: 'Remoto',
-    workplaceType: WorkplaceType.REMOTE,
-    education: EducationLevel.SUPERIOR_INCOMPLETE,
-    contractType: ContractType.PJ,
-    benefits: 'Verba para cursos e certificações',
-    hasMedicalInsurance: true,
-    salaryMin: null,
-    salaryMax: null,
-    salary: 13000,
-    applicationUrl: 'https://cloudops.com/jobs/devops',
-    contactEmail: 'join@cloudops.com',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'Professor(a) de Inglês',
-    company: 'SpeakUp Languages',
-    description: 'Ministrar aulas de inglês para turmas do nível básico ao avançado. Necessário certificação CELTA, TESOL ou experiência comprovada.',
-    location: 'Campinas, SP',
-    workplaceType: WorkplaceType.HYBRID,
-    education: EducationLevel.SUPERIOR_COMPLETE,
-    contractType: ContractType.OTHER,
-    benefits: null,
-    hasVT: true,
-    hasLifeInsurance: true,
-    salaryMin: 4000,
-    salaryMax: 6000,
-    salary: null,
-    applicationUrl: null,
-    contactEmail: 'rh@speakup.edu.br',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'Cientista de Dados',
-    company: 'AI Solutions',
-    description: 'Desenvolvimento de modelos preditivos, NLP e visão computacional usando PyTorch e TensorFlow. O candidato ideal possui mestrado ou doutorado na área.',
-    location: 'São Paulo, SP',
-    workplaceType: WorkplaceType.HYBRID,
-    education: EducationLevel.MESTRADO,
-    contractType: ContractType.CLT,
-    benefits: 'Participação nos Lucros, Gympass',
-    hasVR: true,
-    hasVA: true,
-    hasMedicalInsurance: true,
-    hasDentalInsurance: true,
-    salaryMin: 18000,
-    salaryMax: 22000,
-    salary: null,
-    applicationUrl: 'https://aisolutions.example.com/data-scientist',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'Social Media',
-    company: 'Agência Buzz',
-    description: 'Criação de conteúdo, gestão de comunidades e monitoramento de métricas em redes sociais (Instagram, TikTok, LinkedIn).',
-    location: 'Curitiba, PR',
-    workplaceType: WorkplaceType.HYBRID,
-    education: EducationLevel.SUPERIOR_INCOMPLETE,
-    contractType: ContractType.CLT,
-    benefits: 'Ambiente descontraído',
-    hasVT: true,
-    hasVR: true,
-    salaryMin: null,
-    salaryMax: null,
-    salary: 3000,
-    applicationUrl: null,
-    contactEmail: 'vagas@agenciabuzz.com',
-    contactPhone: '41988888888',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'Desenvolvedor Mobile (Flutter)',
-    company: 'AppMaker',
-    description: 'Atuar na construção de novos aplicativos e na manutenção de bases legadas. Conhecimento em publicação nas lojas (App Store e Google Play) é um diferencial.',
-    location: 'Remoto',
-    workplaceType: WorkplaceType.REMOTE,
-    education: EducationLevel.SUPERIOR_COMPLETE,
-    contractType: ContractType.PJ,
-    benefits: null,
-    salaryMin: 9000,
-    salaryMax: 11000,
-    salary: null,
-    applicationUrl: 'https://appmaker.example.com/carreiras',
-    contactEmail: 'devs@appmaker.com',
-    source: 'MANUAL',
-    isActive: true,
-  },
-  {
-    title: 'Analista de Suporte de TI',
-    company: 'HelpDesk SA',
-    description: 'Prestar suporte técnico a usuários de Nível 1 e 2, manutenção de hardware, formatação de máquinas e suporte a redes locais.',
-    location: 'Rio de Janeiro, RJ',
-    workplaceType: WorkplaceType.ON_SITE,
-    education: EducationLevel.MEDIO_COMPLETE,
-    contractType: ContractType.CLT,
-    benefits: null,
-    hasVR: true,
-    hasVT: true,
-    hasMedicalInsurance: true,
-    salaryMin: null,
-    salaryMax: null,
-    salary: 2800,
-    applicationUrl: null,
-    contactPhone: '21977777777',
-    source: 'MANUAL',
-    isActive: true,
+    createdAt: generateDateInPast90Days(),
+    clicksCount: Math.floor(Math.random() * 150),
   }
 ];
 
 async function main() {
   console.log('🌱 Iniciando seed do banco de dados...');
-  await prisma.job.deleteMany({});
   
+  // Limpar banco
+  await prisma.filterOption.deleteMany({});
+  await prisma.filterCategory.deleteMany({});
+  await prisma.job.deleteMany({});
+  await prisma.user.deleteMany({});
+  
+  // Seed User
+  const passwordHash = await bcrypt.hash('admin', 10);
+  await prisma.user.create({
+    data: {
+      email: 'admin@admin.com',
+      password: passwordHash,
+      name: 'Administrador',
+      role: 'ADMIN',
+    }
+  });
+
+  await prisma.jobCustomColumn.deleteMany({ where: { isNative: true } });
+  
+  await prisma.jobCustomColumn.create({
+    data: {
+      name: 'Modalidade',
+      slug: 'workplaceType',
+      type: 'LIST',
+      section: 'CLASSIFICATION',
+      isRequired: true,
+      isActive: true,
+      isNative: true,
+      isFilterable: true,
+      options: ['REMOTE', 'HYBRID', 'ON_SITE']
+    }
+  });
+
+  await prisma.jobCustomColumn.create({
+    data: {
+      name: 'Tipo de Contrato',
+      slug: 'contractType',
+      type: 'LIST',
+      section: 'CLASSIFICATION',
+      isRequired: true,
+      isActive: true,
+      isNative: true,
+      isFilterable: true,
+      options: ['CLT', 'PJ', 'OTHER']
+    }
+  });
+
+  await prisma.jobCustomColumn.create({
+    data: {
+      name: 'Escolaridade',
+      slug: 'education',
+      type: 'LIST',
+      section: 'CLASSIFICATION',
+      isRequired: true,
+      isActive: true,
+      isNative: true,
+      isFilterable: true,
+      options: [
+        'FUNDAMENTAL_INCOMPLETE',
+        'FUNDAMENTAL_COMPLETE',
+        'MEDIO_INCOMPLETE',
+        'MEDIO_COMPLETE',
+        'SUPERIOR_INCOMPLETE',
+        'SUPERIOR_COMPLETE',
+        'POS_GRADUACAO',
+        'MESTRADO',
+        'DOUTORADO',
+      ]
+    }
+  });
+
+  // Seed Jobs
   for (const job of sampleJobs) {
     await prisma.job.create({
       data: job,
     });
   }
 
-  console.log(`✅ Seed concluído! ${sampleJobs.length} vagas cadastradas com sucesso.`);
+  console.log(`✅ Seed concluído! Admin, Filtros e ${sampleJobs.length} vagas cadastradas com sucesso.`);
 }
 
 main()

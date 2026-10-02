@@ -26,10 +26,17 @@ export class JobService {
       page = 1,
       limit = 10,
       orderBy = 'recent',
+      ...dynamicParams
     } = query;
+
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
     const where: Prisma.JobWhereInput = {
       isActive: true,
+      createdAt: {
+        gte: ninetyDaysAgo,
+      }
     };
 
     const andConditions: Prisma.JobWhereInput[] = [];
@@ -112,6 +119,28 @@ export class JobService {
       });
     }
 
+    Object.entries(dynamicParams).forEach(([key, val]) => {
+      if (val === undefined || val === '') return;
+      // split commas just in case, but validateRequest already handles array if passed as ?key=a&key=b
+      let valuesArray: string[] = [];
+      if (Array.isArray(val)) {
+        valuesArray = val;
+      } else if (typeof val === 'string') {
+        valuesArray = val.split(',');
+      }
+      
+      if (valuesArray.length > 0) {
+        andConditions.push({
+          OR: valuesArray.map(v => ({
+            customData: {
+              path: [key],
+              equals: v
+            }
+          }))
+        });
+      }
+    });
+
     if (andConditions.length > 0) {
       where.AND = andConditions;
     }
@@ -181,10 +210,24 @@ export class JobService {
         contactPhone: data.contactPhone ?? null,
         source: data.source ?? 'MANUAL',
         isActive: data.isActive ?? true,
+        customData: (data.customData ?? {}) as import('@prisma/client').Prisma.InputJsonValue,
       },
     });
 
     return createdJob;
+  }
+
+  async incrementClick(prisma: PrismaClient, id: string) {
+    // Increment atomically
+    const job = await prisma.job.update({
+      where: { id },
+      data: {
+        clicksCount: {
+          increment: 1,
+        },
+      },
+    });
+    return job;
   }
 }
 

@@ -10,7 +10,13 @@ export const validateRequest = (schema: ZodSchema, location: RequestLocation = '
       if (location === 'body') {
         data = await c.req.json();
       } else if (location === 'query') {
-        data = c.req.query();
+        const queries = c.req.queries();
+        data = {} as Record<string, string | string[]>;
+        for (const [key, val] of Object.entries(queries)) {
+           if (val !== undefined) {
+             data[key] = (val.length === 1 ? val[0] : val) as string | string[];
+           }
+        }
       } else if (location === 'param') {
         data = c.req.param();
       }

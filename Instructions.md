@@ -61,7 +61,7 @@ UX do Frontend:
 
 Mobile-first e responsivo.
 
-Sincronização dos filtros de busca diretamente na URL (?q=...&level=...&workplace=...).
+Sincronização dos filtros de busca diretamente na URL (?q=...&education=...&workplaceType=...&page=...).
 
 Estados explícitos de carregamento (Skeletons), estado vazio (nenhuma vaga encontrada) e tratamento de erros.
 
@@ -79,7 +79,7 @@ Coluna Esquerda (Sidebar de Filtros estilo Mercado Livre):
 
 Toggles rápidos (ex.: "Apenas Remoto", "Com salário informado").
 
-Filtros colapsáveis com checkboxes ou links de seleção: Tipo de Contrato (CLT, PJ, Estágio), Nível (Júnior, Pleno, Sênior, etc.) e Faixa Salarial (inputs de mínimo e máximo com botão de confirmação).
+Filtros colapsáveis com checkboxes ou links de seleção: Tipo de Contrato (CLT, PJ, Estágio), Escolaridade (Fundamental a Doutorado) e Faixa Salarial (inputs de mínimo e máximo com botão de confirmação).
 
 No Mobile: Esta barra lateral deve ser recolhida em um botão "Filtros" que aciona uma gaveta deslizante (Drawer / Sheet).
 
@@ -205,7 +205,7 @@ Executar migration inicial com Prisma (npx prisma migrate dev --name init).
 
 Implementar rotas e validações Zod:
 
-GET /api/v1/jobs: Listagem com filtros dinâmicos (q, location, workplaceType, level, contractType, minSalary, maxSalary) e paginação (page, limit).
+GET /api/v1/jobs: Listagem com filtros dinâmicos (q, location, workplaceType, education, contractType, minSalary, maxSalary) e paginação (page, limit).
 
 GET /api/v1/jobs/:id: Detalhes completos da vaga para o modal/página.
 
@@ -226,7 +226,7 @@ JobCard: Card fechado conforme especificações visuais.
 
 JobCardSkeleton: Carregamento esqueleto com efeito shimmer.
 
-SidebarFilters: Filtros verticais com toggles e seletores de contrato, modalidade e nível.
+SidebarFilters: Filtros verticais com toggles e seletores de contrato, modalidade e escolaridade.
 
 JobDetailsModal: Modal de visualização expandida animado via framer-motion.
 
