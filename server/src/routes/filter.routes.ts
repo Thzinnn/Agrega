@@ -4,6 +4,12 @@ import { PrismaClient } from '@prisma/client';
 export const filterRoutes = new Hono<{ Variables: { prisma: PrismaClient } }>();
 
 // GET /api/v1/filters - Get all active filter categories and options
+/**
+ * Hub Dinâmico de Filtros (Polimorfismo Frontend)
+ * Por que foi feito: O painel de vagas do Agrega é 100% customizável pelo cliente. 
+ * Esta rota puxa todas as colunas "Filtraveis" (isFilterable: true) do Prisma e injeta opções 
+ * de dicionário nativo e opções de tabela dinâmica, mesclando tudo num Payload que a Sidebar (Frontend) consome.
+ */
 filterRoutes.get('/', async (c) => {
   const prisma = c.get('prisma');
   

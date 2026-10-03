@@ -15,6 +15,13 @@ export function HeroSearch({ onSearch, defaultTerm = '', defaultLocation = '' }:
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    /**
+     * Autocomplete de Localização Dinâmico (Integração IBGE)
+     * Por que foi feito: Reduz o erro de digitação de candidatos buscando cidades,
+     * garantindo que a filtragem bata 1:1 com o que está cadastrado no Banco.
+     * Como funciona: Faz cacheamento na montagem chamando a API gratuita do IBGE
+     * e mescla com as flags padrões de "Remoto" e "Híbrido".
+     */
     const fetchLocations = async () => {
       try {
         const response = await fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados/SP/municipios');

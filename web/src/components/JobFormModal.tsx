@@ -74,6 +74,14 @@ export function JobFormModal({
 }) {
   const [columns, setColumns] = useState<CustomColumn[]>([]);
   const [loading, setLoading] = useState(false);
+  
+  /**
+   * Formulário Estrito via React Hook Form
+   * Por que foi feito: Permite que o Next.js gerencie centenas de inputs dinâmicos 
+   * (criados pelos admins) sem causar re-renders da tela a cada tecla digitada.
+   * O Zod (no Backend) e as regras HTML5 nativas garantem que as validações brutas 
+   * (como teto vs piso salarial) não explodam na cara do usuário.
+   */
   const { register, handleSubmit, reset, setValue, watch } = useForm<JobFormData>();
 
   // Location

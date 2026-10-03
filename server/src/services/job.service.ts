@@ -13,6 +13,12 @@ export interface PaginatedResult<T> {
 }
 
 export class JobService {
+  /**
+   * Motor Principal de Pesquisa de Vagas (Filtros e Paginação)
+   * Por que foi feito: Concentra a lógica de query pesada (Full Text Search, buscas combinadas JSON)
+   * em uma função unificada que atende tanto à barra de busca principal quanto aos filtros laterais.
+   * A paginação aqui evita que respostas enormes causem memory leak ou Timeout no Serverless Edge.
+   */
   async listJobs(prisma: PrismaClient, query: JobQueryInput): Promise<PaginatedResult<Prisma.JobGetPayload<object>>> {
     const {
       q,
@@ -218,6 +224,13 @@ export class JobService {
     return createdJob;
   }
 
+  /**
+   * Operação Atômica de Incrementar Cliques
+   * Por que foi feito: O painel visualiza quais vagas retêm a atenção dos usuários.
+   * Como mitiga concorrência: A cláusula `{ increment: 1 }` é enviada diretamente 
+   * ao motor do PostgreSQL. Isso garante consistência transacional mesmo se 1.000 usuários
+   * clicarem na mesma vaga simultaneamente, evitando corrupção de valores.
+   */
   async incrementClick(prisma: PrismaClient, id: string) {
     // Increment atomically
     const job = await prisma.job.update({

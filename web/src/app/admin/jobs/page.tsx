@@ -82,7 +82,7 @@ export default function AdminJobsPage() {
         setJobs(prev => prev.map(j => j.id === id ? { ...j, isActive: true } : j));
       }
       setModalAction(null);
-    } catch (_) {
+    } catch {
       toast.error(`Erro ao ${type === 'DELETE' ? 'inativar' : 'ativar'} a vaga.`);
     } finally {
       setActionLoading(null);

@@ -39,6 +39,15 @@ function JobsContent() {
   const initialTerm = searchParams.get('q') || '';
   const initialLocation = searchParams.get('location') || '';
 
+  /**
+   * Arquitetura URL-Driven
+   * Por que foi feito: Em vez de armazenar o estado do filtro em variáveis locais (`useState`), 
+   * sincronizamos tudo com a Query String da URL (`?q=dev&page=2`).
+   * Vantagens:
+   * 1. Permite que o usuário copie e cole o link para um amigo e os filtros continuem aplicados.
+   * 2. SEO Friendly (Motores de busca conseguem mapear /?location=São+Paulo).
+   * 3. O botão de "Voltar" do navegador funciona como um "Desfazer Filtro".
+   */
   const updateUrl = useCallback((newParams: Record<string, string | string[] | boolean | undefined>) => {
     const params = new URLSearchParams(searchParams.toString());
     

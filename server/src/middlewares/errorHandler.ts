@@ -2,7 +2,13 @@ import { Context } from 'hono';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../errors/AppError.js';
+import { logger } from '../utils/logger.js';
 
+/**
+ * Central de Interceptação de Erros (Error Boundary do Backend)
+ * Por que foi feito: Impedir vazamento de Stack Traces (que revelam detalhes do ambiente 
+ * ou da estrutura do banco de dados para atacantes) e padronizar o payload de retorno para o Front-end.
+ */
 export const errorHandler = (
   error: Error,
   c: Context
@@ -55,12 +61,22 @@ export const errorHandler = (
     }
   }
 
-  console.error('Unhandled Error:', error);
+  if (error instanceof SyntaxError && error.message.includes('JSON')) {
+    return c.json({
+      success: false,
+      error: 'Corpo da requisição inválido. Envie um JSON bem formatado.'
+    }, 400);
+  }
+
+  // SEGURANÇA: O erro interno NÃO é repassado ao cliente.
+  // Em vez disso, registramos de forma anônima e segura no logger estruturado
+  logger.error('Unhandled Error', error, {
+    path: c.req.path,
+    method: c.req.method,
+  });
 
   return c.json({
     success: false,
-    message: 'Erro interno no servidor',
-    error: error.message,
-    stack: error.stack
+    message: 'Erro interno no servidor' // Mascaração de erro para o Front-end
   }, 500);
 };

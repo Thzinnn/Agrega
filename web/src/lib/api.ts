@@ -5,17 +5,23 @@ const baseURL = process.env.NEXT_PUBLIC_API_URL ||
 
 export const api = axios.create({
   baseURL,
+  /**
+   * SEGURANÇA (Session Hijacking): 
+   * `withCredentials: true` é obrigatório porque não trafegamos mais o JWT livremente. 
+   * Essa flag força o Axios a embutir o cookie de sessão (HttpOnly) em todas as requisições 
+   * cross-origin para a API.
+   */
   withCredentials: true,
 });
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    // Prevent caching ONLY for Admin routes by appending a unique timestamp.
-    // Public routes MUST BE cached to handle traffic.
+    /**
+     * ESTRATÉGIA DE CACHE NO EDGE:
+     * Rotas públicas precisam ser cacheadas (Hit) nos CDNs do Cloudflare para aguentar tráfego.
+     * Mas rotas administrativas não podem ter "Stale Data". Este interceptador injeta
+     * um Timestamp falso na URL só para rotas de `/admin/`, furando (Bypass) o Cache do Cloudflare.
+     */
     if (config.method?.toLowerCase() === 'get' && config.url?.includes('/admin/')) {
       config.params = {
         ...config.params,

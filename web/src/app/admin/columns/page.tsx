@@ -133,7 +133,7 @@ export default function AdminColumnsPage() {
       
       setIsDeleteModalOpen(false);
       setColumnToDelete(null);
-    } catch (_) {
+    } catch {
       toast.error('Erro ao excluir coluna.');
     } finally {
       setIsDeleting(false);
@@ -373,6 +373,17 @@ export default function AdminColumnsPage() {
         </div>
       )}
 
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title="Excluir Coluna?"
+        description="Esta ação removerá a coluna. Vagas já criadas com esta coluna não perderão o dado (permanece no JSON), mas a coluna deixará de aparecer para novas vagas. Esta ação não pode ser desfeita."
+        onConfirm={handleDelete}
+        onCancel={() => {
+          setIsDeleteModalOpen(false);
+          setColumnToDelete(null);
+        }}
+        isLoading={isDeleting}
+      />
     </div>
   );
 }

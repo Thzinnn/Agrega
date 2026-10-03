@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from './auth.routes.js';
 import { AppError } from '../errors/AppError.js';
+import { logger } from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 
 export const adminRoutes = new Hono<{ Variables: { prisma: PrismaClient; user: any } }>();
@@ -168,7 +169,7 @@ adminRoutes.post('/filters/options', async (c) => {
     c.executionCtx.waitUntil(syncPromise);
   } else {
     // Fallback para Node.js puro sem waitUntil
-    syncPromise.catch(console.error);
+    syncPromise.catch((err) => logger.error('Sync promise error', err));
   }
 
   return c.json({ success: true, data: col }, 201);
@@ -178,6 +179,14 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Processamento Retroativo Assíncrono (Sync Job)
+ * Por que foi feito: Quando um Admin cria uma nova "Opção" em uma categoria de Filtro dinâmico
+ * e associa ela a uma string ou regex (ex: Mapear a palavra 'Pleno' para a opção 'Mid-Level'), 
+ * as vagas antigas no banco precisam ser reclassificadas sem travar a requisição HTTP do Admin.
+ * Como funciona: A função varre o banco em lotes (skip/take) no background do Cloudflare (via ctx.waitUntil), 
+ * aplicando a nova flag/tag dentro do JSON 'customData' das vagas antigas que batem com a nova regra.
+ */
 async function syncJobCustomColumnOption(prisma: any, column: any, optionValue: string) {
   try {
     let skip = 0;
@@ -239,7 +248,7 @@ async function syncJobCustomColumnOption(prisma: any, column: any, optionValue: 
       skip += take;
     }
   } catch (err) {
-    console.error('Retroactive sync failed:', err);
+    logger.error('Retroactive sync failed:', err);
   }
 }
 

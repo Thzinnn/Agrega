@@ -43,46 +43,42 @@ authRoutes.post('/login', async (c) => {
   const secret = getJwtSecret(c);
   const token = await sign(payload, secret, 'HS256');
 
-  const isProd = process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development';
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'None' : 'Lax',
+    secure: true,
+    sameSite: 'Lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   });
 
   const { password: _, ...userWithoutPassword } = user;
 
+  // NOTA DE SEGURANÇA: Não retornamos o token JWT no body da resposta para o Frontend.
+  // Isso força o uso de cookies HttpOnly (configurado acima) e previne ataques de Session Hijacking 
+  // onde scripts maliciosos (XSS) tentariam capturar o token via localStorage.
   return c.json({
     success: true,
     data: {
       user: userWithoutPassword,
-      token,
     },
   });
 });
 
 authRoutes.post('/logout', (c) => {
-  const isProd = process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development';
   deleteCookie(c, 'auth_token', {
     path: '/',
-    secure: isProd,
-    sameSite: isProd ? 'None' : 'Lax',
+    secure: true,
+    sameSite: 'Lax',
+    httpOnly: true,
   });
   return c.json({ success: true });
 });
 
 // Middleware to protect routes that require authentication
 export const authMiddleware = async (c: any, next: any) => {
+  // SEGURANÇA: Lê o JWT exclusivamente do cookie gerenciado pelo browser.
+  // Isso garante que extensões maliciosas ou código XSS não consigam forjar requisições.
   let token = getCookie(c, 'auth_token');
-
-  if (!token) {
-    const authHeader = c.req.header('Authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    }
-  }
 
   if (!token) {
     throw new AppError('Não autenticado', 401);

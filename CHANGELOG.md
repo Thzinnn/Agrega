@@ -2,6 +2,26 @@
 
 ## [Unreleased]
 
+### [FEAT] - 2026-10-02
+- **Páginas Institucionais:** Adicionadas páginas estáticas de Política de Privacidade (`/privacidade`) e Termos de Uso (`/termos`) com diretrizes transparentes sobre coleta de dados e takes de responsabilidade de scrape e agregação.
+- **Error Boundaries:** Criados `error.tsx` e `global-error.tsx` no Next.js App Router para captura graciosa de falhas, com botões de fallback ('Tentar Novamente' e 'Voltar para Início').
+- **Página 404 Customizada:** Criado `not-found.tsx` alinhado ao Design System do projeto para melhorar a experiência do usuário ao acessar links quebrados.
+
+### [MODIFY] - 2026-10-02
+- **Logs Estruturados:** Refatorado o uso disperso de `console.log` e `console.error` no back-end para utilizar um utilitário próprio de logging estruturado (JSON, levels INFO/WARN/ERROR), garantindo anonimização e melhoria para ingestão no Cloudflare/Datadog.
+
+### [DOCS] - 2026-10-02
+- **Guias Operacionais Avançados:** Documentadas no `README.md` estratégias de Point-in-Time Recovery (PITR) para o Neon, rollback de deploys em 1 clique via Wrangler CLI/Pages e fluxo de reset de senha (recuperação de acesso hardcoded).
+
+### [SECURITY] - 2026-10-02
+- **Prevenção de Session Hijacking e CSRF (TEST 1)**: Removida qualquer utilização de `localStorage` para tokens JWT no front-end. Toda a autenticação agora utiliza Cookies de Sessão estritos (`HttpOnly: true`, `Secure: true`, `SameSite: Lax`). Implementado o `csrfMiddleware` no back-end para proteger rotas de mutação (`POST`, `PUT`, `PATCH`, `DELETE`) validando rigorosamente as origens (Origin/Referer).
+- **Cabeçalhos de Segurança HTTP (TEST 3)**: Injetados cabeçalhos de defesa na resposta do Next.js via `next.config.ts`, incluindo `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy` e `Permissions-Policy`.
+- **Mitigação de Abuso de Uploads e Magic Bytes (TEST 4)**: Desenvolvido `uploadValidationMiddleware` para interceptar requisições `multipart/form-data`. O middleware impõe tamanho máximo de 5MB por arquivo e inspeciona os Magic Bytes (assinatura binária) para garantir que apenas arquivos reais JPEG, PNG ou WebP sejam aceitos.
+- **Mass Assignment Mitigado (TEST-01)**: Definido schema `createPublicJobSchema` e payload interno padronizado para criação de vagas na rota pública, forçando valores seguros (`source: MANUAL`, `isActive: true`, etc).
+- **Proteção contra Abuso (TEST-02)**: Implementado `rateLimiter` (máx. 5 req/min por IP) e verificação do Cloudflare Turnstile no payload público.
+- **Vazamento de Stack Trace (TEST-03)**: Handler de erros globais atualizado para retornar 400 sem stack trace interno em casos de JSON malformado e não expor o stack trace em erros 500.
+- **Injeção de Protocolo URI (TEST-04)**: Aplicada validação Zod strict via `regex(/^https?:\/\//i)` na propriedade `applicationUrl`, rejeitando protocolos perigosos como `javascript:`.
+
 ### [BUGFIX] - 2026-10-02
 - **Descrição:** Correção no algoritmo de parsing de salários na API de Ingestão para extrair faixas salariais (min e max) e evitar concatenação de valores. Ajuste na heurística de extração de requisitos para ignorar títulos de seções e evitar sobreposição com campos nativos. Implementação de uma heurística inteligente que rastreia todo o texto da descrição da vaga procurando termos como "ensino superior", "médio completo", etc, e preenche nativamente a coluna `education` do banco de dados na inserção via Scraper. Realocação do bloco "Descrição Completa" no `JobDetailsModal` para aparecer logo acima dos contatos.
 - **Escopo:** `/server` e `/web`

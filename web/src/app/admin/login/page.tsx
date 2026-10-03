@@ -28,12 +28,7 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await api.post('/auth/login', data);
-      
-      // Salva o token no localStorage como fallback para ambientes cross-origin (ex: .pages.dev -> .workers.dev)
-      if (res.data?.data?.token) {
-        localStorage.setItem('auth_token', res.data.data.token);
-      }
+      await api.post('/auth/login', data);
       
       router.push('/admin');
     } catch (err: unknown) {

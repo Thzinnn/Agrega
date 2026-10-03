@@ -3,6 +3,15 @@ import { ZodSchema, ZodError } from 'zod';
 
 type RequestLocation = 'body' | 'query' | 'param';
 
+/**
+ * Interceptador de Validação (Zod Middleware)
+ * Arquitetura Defensiva: Em vez de espalhar verificações 'if (!body.title)' por todos os Controllers,
+ * criamos este Middleware. Ele intercepta a requisição na Borda (antes de chegar na lógica de negócio),
+ * submete o JSON/Query ao schema do Zod (que fará o parse matemático e tipagem estrita).
+ * 
+ * Se o dado for inválido, ele dispara um 'ZodError' que é pego pelo 'errorHandler.ts',
+ * abortando a requisição imediatamente (Fail Fast). Se passar, injeta o objeto limpo no Context ('c.set').
+ */
 export const validateRequest = (schema: ZodSchema, location: RequestLocation = 'body') => {
   return async (c: Context, next: Next) => {
     try {
