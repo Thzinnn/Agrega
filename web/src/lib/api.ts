@@ -16,7 +16,6 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-  if (typeof window !== 'undefined') {
     /**
      * ESTRATÉGIA DE CACHE NO EDGE:
      * Rotas públicas precisam ser cacheadas (Hit) nos CDNs do Cloudflare para aguentar tráfego.
