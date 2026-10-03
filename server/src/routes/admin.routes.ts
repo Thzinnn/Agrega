@@ -179,6 +179,14 @@ function escapeRegExp(string: string) {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/**
+ * Processamento Retroativo Assíncrono (Sync Job)
+ * Por que foi feito: Quando um Admin cria uma nova "Opção" em uma categoria de Filtro dinâmico
+ * e associa ela a uma string ou regex (ex: Mapear a palavra 'Pleno' para a opção 'Mid-Level'), 
+ * as vagas antigas no banco precisam ser reclassificadas sem travar a requisição HTTP do Admin.
+ * Como funciona: A função varre o banco em lotes (skip/take) no background do Cloudflare (via ctx.waitUntil), 
+ * aplicando a nova flag/tag dentro do JSON 'customData' das vagas antigas que batem com a nova regra.
+ */
 async function syncJobCustomColumnOption(prisma: any, column: any, optionValue: string) {
   try {
     let skip = 0;

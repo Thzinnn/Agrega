@@ -2,6 +2,13 @@ import { Context, Next } from 'hono';
 
 const requestCounts = new Map<string, { count: number; resetTime: number }>();
 
+/**
+ * Limitador de Requisições (Rate Limiter)
+ * Por que foi feito: Impede ataques de Brute-Force (força bruta de senhas) no painel Admin,
+ * e protege contra Scrapers agressivos que poderiam derrubar o banco ou gerar custos.
+ * Como funciona: Ele intercepta o IP do cliente (inclusive extraindo dos cabeçalhos reais do Cloudflare)
+ * e barra conexões que excedam um limite X por janela de tempo.
+ */
 export const rateLimiter = (options: { limit: number; windowMs: number }) => {
   return async (c: Context, next: Next) => {
     // Get IP from Cloudflare or fallback

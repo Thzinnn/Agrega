@@ -1,5 +1,11 @@
 'use client';
 
+/**
+ * Error Boundary Global (Root Level)
+ * Por que foi feito: Este componente entra em cena quando um erro catastrófico acontece 
+ * dentro do próprio `layout.tsx` (RootLayout), onde o `error.tsx` comum não alcançaria.
+ * Como ele substitui toda a árvore DOM, ele deve conter suas próprias tags `<html>` e `<body>`.
+ */
 export default function GlobalError({
   error,
   reset,

@@ -11,6 +11,12 @@ interface JobDetailsModalProps {
 import { api } from '@/lib/api';
 
 export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) {
+  /**
+   * Analytics de Engajamento
+   * Por que foi feito: Permite que os administradores saibam quais vagas estão 
+   * gerando real conversão (pessoas que clicam para enviar o currículo).
+   * O trigger ocorre de forma 'fire-and-forget' antes do redirecionamento.
+   */
   const handleContactClick = async () => {
     if (!job) return;
     try {
@@ -26,6 +32,7 @@ export function JobDetailsModal({ job, isOpen, onClose }: JobDetailsModalProps) 
     <AnimatePresence>
       {isOpen && (
         <>
+          {/* Fundo escuro (Backdrop) */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -2,8 +2,11 @@ import { z } from 'zod';
 
 // Enums removed to allow dynamic values
 
+// Base schema para validação de Vagas.
+// IMPORTANTE: Todas as validações visuais do Frontend e sanitizações do Backend derivam deste núcleo (Zod).
 export const baseJobSchema = z
   .object({
+    // Regra de Negócio: O título não pode ser malicioso ou vazio
     title: z.string({ required_error: 'Título da vaga é obrigatório' }).min(3, 'Título deve ter pelo menos 3 caracteres').max(120),
     company: z.string({ required_error: 'Nome da empresa é obrigatório' }).min(2, 'Empresa deve ter pelo menos 2 caracteres').max(100),
     description: z.string({ required_error: 'Descrição é obrigatória' }).min(10, 'Descrição deve ter pelo menos 10 caracteres'),
@@ -39,6 +42,7 @@ export const baseJobSchema = z
         (val) => (val === '' || val === null || val === undefined ? null : Number(val)),
         z.number({ invalid_type_error: 'Salário máximo deve ser um número' }).nonnegative('Salário máximo não pode ser negativo').nullable().optional()
       ),
+    // Segurança: Regex força links de candidatura legítimos, evitando injeções javascript:alert()
     applicationUrl: z
       .preprocess((val) => (val === '' ? undefined : val), z.string().url('Link de candidatura deve ser uma URL válida').regex(/^https?:\/\//i, 'O link deve obrigatoriamente iniciar com http:// ou https://').optional()),
     contactEmail: z
@@ -50,6 +54,13 @@ export const baseJobSchema = z
     customData: z.record(z.unknown()).optional(),
   });
 
+/**
+ * Validação de Submissão de Vaga (Core)
+ * Mitiga:
+ * 1. "Vagas Fantasma": Força a exigência de que ao menos 1 meio de contato (URL, Email ou Telefone) exista.
+ * 2. "Inconsistência Salarial": Proíbe a submissão matemática impossível onde Teto < Piso.
+ * 3. "Conflito de Remuneração": Proíbe fixar um salário E ao mesmo tempo uma faixa salarial.
+ */
 export const createJobSchema = baseJobSchema
   .refine(
     (data) => {
@@ -93,6 +104,15 @@ export const createJobSchema = baseJobSchema
 
 export type CreateJobInput = z.infer<typeof createJobSchema>;
 
+/**
+ * Filtro de Vagas Públicas (Prevenção contra Mass Assignment)
+ * Por que foi feito: Se deixássemos a rota pública salvar dados brutos, 
+ * um hacker enviaria no JSON o campo `isActive: true` (aprovando a própria vaga)
+ * ou `source: 'LINKEDIN'`, além de poluir o banco.
+ * Como mitiga: O `.omit()` do Zod arranca esses atributos da requisição 
+ * mesmo que o usuário os envie, garantindo aprovação manual obrigatória.
+ * O `.extend` força a presença obrigatória do token do Cloudflare Turnstile (Anti-Bot).
+ */
 export const createPublicJobSchema = baseJobSchema
   .omit({
     source: true,

@@ -28,6 +28,14 @@ export class JobController {
     const token = body.turnstileToken;
     const secretKey = c.env?.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET_KEY || 'dummy-secret-for-tests';
     
+    /**
+     * Validação contra Botnets (Cloudflare Turnstile)
+     * Por que foi feito: O formulário de "Nova Vaga" é público. Isso permite que bots de spam
+     * saturem o banco de dados com lixo eletrônico rapidamente se automatizados (DDoS L7).
+     * Como mitiga: O Front-end gera um token usando hardware telemetrics/PoW (sem CAPTCHA visual). 
+     * O Back-end, de forma assíncrona, faz uma chamada server-to-server até o Cloudflare 
+     * verificando se aquele token é autêntico, garantindo que foi um humano que preencheu.
+     */
     // Skip verification ONLY if we are in testing mode and there is a specific test secret, 
     // or properly test against Cloudflare if real token is provided.
     // For local tests where we don't hit Cloudflare, we can mock it by accepting a dummy token.
@@ -51,7 +59,11 @@ export class JobController {
       }
     }
 
-    // Force secure default values (TEST-01 Fix)
+    /**
+     * Sanitização Forte (Remediação TEST-01)
+     * Além da validação via Zod (`createPublicJobSchema`), explicitamente forçamos valores 
+     * internos (MANUAL) antes de salvar no prisma, blindando 100% contra Mass Assignment.
+     */
     const { turnstileToken, ...jobData } = body;
     
     const finalJobData: CreateJobInput = {

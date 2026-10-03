@@ -36,7 +36,12 @@ jobRoutes.post(
   jobController.ingestJobs.bind(jobController)
 );
 
-// POST /api/v1/jobs - Create a new job manually (Public API)
+/**
+ * POST /api/v1/jobs - Rota Pública de Submissão de Vagas
+ * SEGURANÇA: Esta é a rota mais sensível do sistema (Formulário Aberto).
+ * 1. `rateLimiter(5 requisições / minuto)`: Previne Scripts que disparam requisições infinitas e estourariam o BD.
+ * 2. `validateRequest(createPublicJobSchema)`: O Zod bloqueia Mass Assignment (como `isActive: true`) e injeta Turnstile (Anti-Bot).
+ */
 jobRoutes.post(
   '/',
   rateLimiter({ limit: 5, windowMs: 60 * 1000 }), // 5 requests per minute per IP

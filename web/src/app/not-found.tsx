@@ -1,5 +1,11 @@
 import Link from 'next/link';
 
+/**
+ * Custom 404 Page (Not Found)
+ * Por que foi feito: O Next.js exibe uma página de 404 muito técnica e padrão. 
+ * Esta página sobrepõe isso para manter o usuário no ecossistema (Design System do Agrega), 
+ * evitando frustração ao buscar vagas que já expiraram ou foram deletadas.
+ */
 export default function NotFound() {
   return (
     <div className="min-h-[70vh] flex flex-col items-center justify-center p-8 text-center">

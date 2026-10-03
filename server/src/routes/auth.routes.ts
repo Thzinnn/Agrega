@@ -53,6 +53,9 @@ authRoutes.post('/login', async (c) => {
 
   const { password: _, ...userWithoutPassword } = user;
 
+  // NOTA DE SEGURANÇA: Não retornamos o token JWT no body da resposta para o Frontend.
+  // Isso força o uso de cookies HttpOnly (configurado acima) e previne ataques de Session Hijacking 
+  // onde scripts maliciosos (XSS) tentariam capturar o token via localStorage.
   return c.json({
     success: true,
     data: {
@@ -73,6 +76,8 @@ authRoutes.post('/logout', (c) => {
 
 // Middleware to protect routes that require authentication
 export const authMiddleware = async (c: any, next: any) => {
+  // SEGURANÇA: Lê o JWT exclusivamente do cookie gerenciado pelo browser.
+  // Isso garante que extensões maliciosas ou código XSS não consigam forjar requisições.
   let token = getCookie(c, 'auth_token');
 
   if (!token) {

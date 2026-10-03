@@ -2,6 +2,13 @@
 
 import { useEffect } from 'react';
 
+/**
+ * Error Boundary Local (Next.js App Router)
+ * Por que foi feito: Quando um Server Component (ou Client Component) abaixo desta rota lança uma exceção não tratada,
+ * o Next.js normalmente mostraria a tela branca de erro do React ou do Next. 
+ * Com isso, isolamos o crash, mantemos a navegação ativa (Header/Footer continuam) e mostramos 
+ * um fallback amigável ao usuário.
+ */
 export default function ErrorBoundary({
   error,
   reset,

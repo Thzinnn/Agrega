@@ -6,6 +6,13 @@ const ALLOWED_ORIGINS = [
   'http://localhost:3333',
 ];
 
+/**
+ * Middleware anti-CSRF (Cross-Site Request Forgery)
+ * Por que foi feito: Como utilizamos cookies (HttpOnly) para a sessão, o navegador enviará 
+ * o cookie automaticamente para a API, mesmo se um site malicioso tentar forjar um formulário 
+ * apontando para a nossa rota POST.
+ * Como mitiga: Exigimos que o Header 'Origin' ou 'Referer' venha expressamente do nosso próprio Front-end.
+ */
 export const csrfMiddleware = async (c: Context, next: Next) => {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(c.req.method)) {
     const origin = c.req.header('Origin');

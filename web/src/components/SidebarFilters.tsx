@@ -25,6 +25,13 @@ export function SidebarFilters({ filters, onChange }: SidebarFiltersProps) {
   const [isOpenMobile, setIsOpenMobile] = useState(false);
   const [dbFilters, setDbFilters] = useState<DbFilter[]>([]);
 
+  /**
+   * Renderização Orientada pelo Back-end (Server-Driven UI)
+   * Por que foi feito: Em vez de codificarmos as categorias de filtros (Contrato, Senioridade) 
+   * fixas no Frontend, nós lemos dinamicamente as colunas/opções ativas da API (`/filters`).
+   * Isso permite que o Administrador crie novos blocos de filtros (Ex: Nível de Inglês)
+   * através do painel, e a barra lateral do site público se adapte automaticamente sem deploy.
+   */
   useEffect(() => {
     const fetchFilters = async () => {
       try {

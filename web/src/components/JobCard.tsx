@@ -30,6 +30,13 @@ export function JobCard({ job, onClick }: JobCardProps) {
   const salaryText = renderSalary();
 
   return (
+    /**
+     * UI Dinâmica (Framer Motion)
+     * Por que foi feito: Melhora drasticamente a percepção de performance.
+     * Como funciona: O atributo 'layoutId' informa ao Framer Motion que este componente 
+     * e o Modal compartilham a mesma identidade visual. Quando clicado, o card fisicamente 
+     * flutua e se expande na tela até virar o Modal, sem recarregar a página.
+     */
     <motion.div
       layoutId={`job-card-${job.id}`}
       onClick={onClick}

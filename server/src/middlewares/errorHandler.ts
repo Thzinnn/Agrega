@@ -4,6 +4,11 @@ import { Prisma } from '@prisma/client';
 import { AppError } from '../errors/AppError.js';
 import { logger } from '../utils/logger.js';
 
+/**
+ * Central de Interceptação de Erros (Error Boundary do Backend)
+ * Por que foi feito: Impedir vazamento de Stack Traces (que revelam detalhes do ambiente 
+ * ou da estrutura do banco de dados para atacantes) e padronizar o payload de retorno para o Front-end.
+ */
 export const errorHandler = (
   error: Error,
   c: Context
@@ -63,6 +68,8 @@ export const errorHandler = (
     }, 400);
   }
 
+  // SEGURANÇA: O erro interno NÃO é repassado ao cliente.
+  // Em vez disso, registramos de forma anônima e segura no logger estruturado
   logger.error('Unhandled Error', error, {
     path: c.req.path,
     method: c.req.method,
@@ -70,6 +77,6 @@ export const errorHandler = (
 
   return c.json({
     success: false,
-    message: 'Erro interno no servidor'
+    message: 'Erro interno no servidor' // Mascaração de erro para o Front-end
   }, 500);
 };

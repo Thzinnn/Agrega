@@ -39,9 +39,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         const response = await api.get('/auth/me');
         setUser(response.data.data);
       } catch (_) {
-        // Se a API rejeitar (ex: user deletado do DB), o cookie local ainda existe.
-        // O middleware.ts veria o cookie e impediria o acesso à tela de login (loop infinito).
-        // Então forçamos o logout para limpar o cookie antes de redirecionar.
+        /**
+         * LÓGICA DE DEFESA (Anti-Loop):
+         * Se a API rejeitar (ex: cookie expirou no back-end ou o usuário foi deletado), 
+         * o Front-end não pode simplesmente redirecionar para `/admin/login`, pois o `middleware.ts` 
+         * do Next.js veria que o cookie físico ainda existe e te jogaria de volta pra cá, 
+         * criando um Loop Infinito (Redirect Loop). 
+         * Solução: Acionamos a rota de `/logout` para invalidar fisicamente o cookie 
+         * antes de redirecionar para o login.
+         */
         try {
           await api.post('/auth/logout', {});
         } catch (__) {

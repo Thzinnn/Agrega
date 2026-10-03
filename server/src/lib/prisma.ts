@@ -2,7 +2,14 @@ import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { logger } from '../utils/logger.js';
-
+/**
+ * Gerenciador de Conexão (DB Pool) para Cloudflare Workers / Serverless
+ * Por que foi feito: Bancos relacionais tradicionais (PostgreSQL) morrem se receberem
+ * milhares de conexões diretas (ex: uma conexão por request no Cloudflare).
+ * Como mitiga: Instanciamos um Connection Pooler (`pg`) associado ao adaptador `@prisma/adapter-pg`.
+ * Isso reaproveita conexões abertas no ciclo de vida do Worker, 
+ * diminuindo drasticamente a latência TCP/SSL Handshake.
+ */
 export function initializePrisma(connectionString?: string): { prisma: PrismaClient, pool: Pool } {
   const dbUrl = connectionString || (typeof process !== 'undefined' ? process.env.DATABASE_URL : undefined);
 

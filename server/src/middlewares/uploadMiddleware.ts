@@ -9,6 +9,14 @@ const MAGIC_BYTES = {
   WEBP: [0x52, 0x49, 0x46, 0x46], // "RIFF", followed by size, then "WEBP"
 };
 
+/**
+ * Validação profunda de Arquivos (Magic Bytes)
+ * Por que foi feito: Atacantes renomeiam scripts (.php, .exe, .sh) para .png para 
+ * realizar bypass em verificações simples de extensão.
+ * Como mitiga: O código lê os primeiros bytes binários do arquivo carregado na memória
+ * e atesta se a assinatura intrínseca do arquivo bate matematicamente com os padrões universais
+ * de imagem (JPEG, PNG, WEBP).
+ */
 const checkMagicBytes = async (file: File): Promise<boolean> => {
   const buffer = await file.slice(0, 12).arrayBuffer();
   const bytes = new Uint8Array(buffer);
@@ -45,6 +53,11 @@ const checkMagicBytes = async (file: File): Promise<boolean> => {
   return false;
 };
 
+/**
+ * Middleware para validar o tamanho e tipo dos formulários multipart/form-data.
+ * Previne ataques de negação de serviço (DoS) impedindo payloads absurdos que encham o disco
+ * ou esgotem a memória da Edge Network.
+ */
 export const uploadValidationMiddleware = async (c: Context, next: Next) => {
   const contentType = c.req.header('Content-Type') || '';
   if (contentType.includes('multipart/form-data')) {
