@@ -7,7 +7,7 @@
  * Como ele substitui toda a árvore DOM, ele deve conter suas próprias tags `<html>` e `<body>`.
  */
 export default function GlobalError({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };

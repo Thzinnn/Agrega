@@ -28,7 +28,7 @@ export default function LoginPage() {
     try {
       setIsLoading(true);
       setError(null);
-      const res = await api.post('/auth/login', data);
+      await api.post('/auth/login', data);
       
       router.push('/admin');
     } catch (err: unknown) {

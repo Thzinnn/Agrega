@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import Link from 'next/link';
 
 /**
  * Error Boundary Local (Next.js App Router)
@@ -35,12 +36,12 @@ export default function ErrorBoundary({
         >
           Tentar Novamente
         </button>
-        <a
+        <Link
           href="/"
           className="px-6 py-3 bg-white text-gray-700 border border-gray-300 rounded-full font-medium hover:bg-gray-50 transition-colors shadow-sm"
         >
           Voltar ao Início
-        </a>
+        </Link>
       </div>
     </div>
   );

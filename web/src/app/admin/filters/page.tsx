@@ -58,8 +58,7 @@ export default function AdminFiltersPage() {
     const value = newOptionLabel.trim();
     
     try {
-      const response = await api.post('/admin/filters/options', { label: value, value, filterCategoryId: modalCategoryId });
-      const updatedCol = response.data.data;
+      await api.post('/admin/filters/options', { label: value, value, filterCategoryId: modalCategoryId });
       
       // Atualiza o estado local imediatamente sem precisar refetch
       setCategories(prev => prev.map(cat => {
@@ -79,7 +78,7 @@ export default function AdminFiltersPage() {
       toast.success('Opção adicionada com sucesso!');
       setIsModalOpen(false);
       setNewOptionLabel('');
-    } catch (_) {
+    } catch {
       toast.error('Erro ao adicionar opção');
     } finally {
       setIsSubmitting(false);
@@ -119,7 +118,7 @@ export default function AdminFiltersPage() {
       setIsDeleteMode(false);
       setSelectedToDelete([]);
       setIsDeleteModalOpen(false);
-    } catch (_) {
+    } catch {
       toast.error('Erro ao excluir opções');
     } finally {
       setIsSubmitting(false);

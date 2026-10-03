@@ -14,8 +14,8 @@ describe('Frontend Security Headers Test', () => {
 
       const allHeaders = headersRules[0].headers;
       
-      const headerKeys = allHeaders.map((h: any) => h.key);
-      const headerValues = allHeaders.map((h: any) => h.value);
+      const headerKeys = allHeaders.map((h: Record<string, string>) => h.key);
+      const headerValues = allHeaders.map((h: Record<string, string>) => h.value);
 
       expect(headerKeys).toContain('X-Frame-Options');
       expect(headerValues).toContain('DENY');

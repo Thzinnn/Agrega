@@ -38,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       try {
         const response = await api.get('/auth/me');
         setUser(response.data.data);
-      } catch (_) {
+      } catch {
         /**
          * LÓGICA DE DEFESA (Anti-Loop):
          * Se a API rejeitar (ex: cookie expirou no back-end ou o usuário foi deletado), 
@@ -50,7 +50,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
          */
         try {
           await api.post('/auth/logout', {});
-        } catch (__) {
+        } catch {
           // ignora se falhar
         }
         
@@ -69,7 +69,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const handleLogout = async () => {
     try {
       await api.post('/auth/logout', {});
-    } catch (_) {}
+    } catch {}
     router.push('/admin/login');
   };
 
