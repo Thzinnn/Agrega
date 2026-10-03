@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { PrismaClient } from '@prisma/client';
 import { authMiddleware } from './auth.routes.js';
 import { AppError } from '../errors/AppError.js';
+import { logger } from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 
 export const adminRoutes = new Hono<{ Variables: { prisma: PrismaClient; user: any } }>();
@@ -168,7 +169,7 @@ adminRoutes.post('/filters/options', async (c) => {
     c.executionCtx.waitUntil(syncPromise);
   } else {
     // Fallback para Node.js puro sem waitUntil
-    syncPromise.catch(console.error);
+    syncPromise.catch((err) => logger.error('Sync promise error', err));
   }
 
   return c.json({ success: true, data: col }, 201);
@@ -239,7 +240,7 @@ async function syncJobCustomColumnOption(prisma: any, column: any, optionValue: 
       skip += take;
     }
   } catch (err) {
-    console.error('Retroactive sync failed:', err);
+    logger.error('Retroactive sync failed:', err);
   }
 }
 

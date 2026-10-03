@@ -10,10 +10,6 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
-    const token = localStorage.getItem('auth_token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
     // Prevent caching ONLY for Admin routes by appending a unique timestamp.
     // Public routes MUST BE cached to handle traffic.
     if (config.method?.toLowerCase() === 'get' && config.url?.includes('/admin/')) {

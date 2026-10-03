@@ -1,6 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
+import { logger } from '../utils/logger.js';
 
 export function initializePrisma(connectionString?: string): { prisma: PrismaClient, pool: Pool } {
   const dbUrl = connectionString || (typeof process !== 'undefined' ? process.env.DATABASE_URL : undefined);
@@ -16,7 +17,7 @@ export function initializePrisma(connectionString?: string): { prisma: PrismaCli
 
   // PREVINE CRASHES se a conexão ociosa for derrubada antes do término
   pool.on('error', (err) => {
-    console.error('Ignored pool error:', err.message);
+    logger.error('Ignored pool error:', err.message);
   });
 
   const adapter = new PrismaPg(pool);

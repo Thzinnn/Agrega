@@ -2,6 +2,7 @@ import { Context } from 'hono';
 import { ZodError } from 'zod';
 import { Prisma } from '@prisma/client';
 import { AppError } from '../errors/AppError.js';
+import { logger } from '../utils/logger.js';
 
 export const errorHandler = (
   error: Error,
@@ -55,12 +56,20 @@ export const errorHandler = (
     }
   }
 
-  console.error('Unhandled Error:', error);
+  if (error instanceof SyntaxError && error.message.includes('JSON')) {
+    return c.json({
+      success: false,
+      error: 'Corpo da requisição inválido. Envie um JSON bem formatado.'
+    }, 400);
+  }
+
+  logger.error('Unhandled Error', error, {
+    path: c.req.path,
+    method: c.req.method,
+  });
 
   return c.json({
     success: false,
-    message: 'Erro interno no servidor',
-    error: error.message,
-    stack: error.stack
+    message: 'Erro interno no servidor'
   }, 500);
 };

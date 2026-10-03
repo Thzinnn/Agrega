@@ -30,11 +30,6 @@ export default function LoginPage() {
       setError(null);
       const res = await api.post('/auth/login', data);
       
-      // Salva o token no localStorage como fallback para ambientes cross-origin (ex: .pages.dev -> .workers.dev)
-      if (res.data?.data?.token) {
-        localStorage.setItem('auth_token', res.data.data.token);
-      }
-      
       router.push('/admin');
     } catch (err: unknown) {
       const axiosError = err as import('axios').AxiosError<{message: string}>;

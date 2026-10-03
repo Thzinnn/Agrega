@@ -2,7 +2,10 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { routes } from './routes/index.js';
 import { errorHandler } from './middlewares/errorHandler.js';
+import { csrfMiddleware } from './middlewares/csrfMiddleware.js';
+import { uploadValidationMiddleware } from './middlewares/uploadMiddleware.js';
 import { initializePrisma } from './lib/prisma.js';
+import { logger } from './utils/logger.js';
 import { PrismaClient } from '@prisma/client';
 
 type Bindings = {
@@ -32,6 +35,9 @@ app.use(
   })
 );
 
+app.use('*', csrfMiddleware);
+app.use('*', uploadValidationMiddleware);
+
 app.use('*', async (c, next) => {
   c.header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
   c.header('Pragma', 'no-cache');
@@ -49,12 +55,26 @@ app.use('*', async (c, next) => {
     await next();
 
     if (pool) {
-      const execCtx = c.executionCtx || c.env as unknown as { waitUntil?: (p: Promise<unknown>) => void };
-      if (execCtx && 'waitUntil' in execCtx && typeof execCtx.waitUntil === 'function') {
-        execCtx.waitUntil(pool.end());
+      let waitUntilFn: ((p: Promise<unknown>) => void) | undefined = undefined;
+      
+      try {
+        const execCtx = c.executionCtx;
+        if (execCtx && typeof execCtx.waitUntil === 'function') {
+          waitUntilFn = execCtx.waitUntil;
+        }
+      } catch (e) {
+        // ignore ExecutionContext error in test environment
+      }
+
+      if (!waitUntilFn && c.env && typeof (c.env as any).waitUntil === 'function') {
+        waitUntilFn = (c.env as any).waitUntil;
+      }
+
+      if (waitUntilFn) {
+        waitUntilFn(pool.end());
       } else {
         // Run asynchronously in Node
-        pool.end().catch(console.error);
+        pool.end().catch((err) => logger.error('Error closing pool', err));
       }
     }
   } else {
@@ -75,7 +95,7 @@ app.onError(errorHandler);
 export default {
   fetch: app.fetch,
   async scheduled(_event: unknown, env: Bindings, ctx: { waitUntil: (p: Promise<unknown>) => void }) {
-    console.log('Running daily cron job for job expiration...');
+    logger.info('Running daily cron job for job expiration...');
     const dbUrl = env?.HYPERDRIVE?.connectionString || env?.DATABASE_URL;
     
     if (dbUrl) {
@@ -92,9 +112,9 @@ export default {
           },
           data: { isActive: false }
         });
-        console.log(`Deactivated ${result.count} expired jobs.`);
+        logger.info(`Deactivated ${result.count} expired jobs.`);
       } catch (error) {
-        console.error('Error running cron job:', error);
+        logger.error('Error running cron job:', error);
       } finally {
         if (pool) {
           ctx.waitUntil(pool.end());

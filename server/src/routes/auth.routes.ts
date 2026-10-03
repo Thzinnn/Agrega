@@ -43,11 +43,10 @@ authRoutes.post('/login', async (c) => {
   const secret = getJwtSecret(c);
   const token = await sign(payload, secret, 'HS256');
 
-  const isProd = process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development';
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
-    secure: isProd,
-    sameSite: isProd ? 'None' : 'Lax',
+    secure: true,
+    sameSite: 'Lax',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   });
@@ -58,17 +57,16 @@ authRoutes.post('/login', async (c) => {
     success: true,
     data: {
       user: userWithoutPassword,
-      token,
     },
   });
 });
 
 authRoutes.post('/logout', (c) => {
-  const isProd = process.env.NODE_ENV === 'production' || process.env.NODE_ENV !== 'development';
   deleteCookie(c, 'auth_token', {
     path: '/',
-    secure: isProd,
-    sameSite: isProd ? 'None' : 'Lax',
+    secure: true,
+    sameSite: 'Lax',
+    httpOnly: true,
   });
   return c.json({ success: true });
 });
@@ -76,13 +74,6 @@ authRoutes.post('/logout', (c) => {
 // Middleware to protect routes that require authentication
 export const authMiddleware = async (c: any, next: any) => {
   let token = getCookie(c, 'auth_token');
-
-  if (!token) {
-    const authHeader = c.req.header('Authorization');
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      token = authHeader.split(' ')[1];
-    }
-  }
 
   if (!token) {
     throw new AppError('Não autenticado', 401);

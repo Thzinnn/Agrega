@@ -1,8 +1,9 @@
 import { Hono } from 'hono';
 import { jobController } from '../controllers/job.controller.js';
 import { validateRequest } from '../middlewares/validateRequest.js';
+import { rateLimiter } from '../middlewares/rateLimiter.js';
 import {
-  createJobSchema,
+  createPublicJobSchema,
   jobQuerySchema,
   jobIdParamSchema,
 } from '../schemas/job.schema.js';
@@ -35,10 +36,11 @@ jobRoutes.post(
   jobController.ingestJobs.bind(jobController)
 );
 
-// POST /api/v1/jobs - Create a new job manually
+// POST /api/v1/jobs - Create a new job manually (Public API)
 jobRoutes.post(
   '/',
-  validateRequest(createJobSchema, 'body'),
+  rateLimiter({ limit: 5, windowMs: 60 * 1000 }), // 5 requests per minute per IP
+  validateRequest(createPublicJobSchema, 'body'),
   jobController.createJob.bind(jobController)
 );
 

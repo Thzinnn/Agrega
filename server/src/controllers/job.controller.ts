@@ -1,6 +1,7 @@
 import { Context } from 'hono';
 import { jobService } from '../services/job.service.js';
-import { CreateJobInput, JobQueryInput, JobIdParam, ingestJobItemSchema, IngestJobItem } from '../schemas/job.schema.js';
+import { logger } from '../utils/logger.js';
+import { CreateJobInput, CreatePublicJobInput, JobQueryInput, JobIdParam, ingestJobItemSchema, IngestJobItem } from '../schemas/job.schema.js';
 import { PrismaClient } from '@prisma/client';
 
 export class JobController {
@@ -20,8 +21,46 @@ export class JobController {
 
   async createJob(c: Context) {
     const prisma = c.get('prisma') as PrismaClient;
-    const body = c.get('valid_body') as CreateJobInput;
-    const createdJob = await jobService.createJob(prisma, body);
+    const rawBody = c.get('valid_body');
+    const body = rawBody as CreatePublicJobInput;
+
+    // Validate Turnstile Token
+    const token = body.turnstileToken;
+    const secretKey = c.env?.TURNSTILE_SECRET_KEY || process.env.TURNSTILE_SECRET_KEY || 'dummy-secret-for-tests';
+    
+    // Skip verification ONLY if we are in testing mode and there is a specific test secret, 
+    // or properly test against Cloudflare if real token is provided.
+    // For local tests where we don't hit Cloudflare, we can mock it by accepting a dummy token.
+    if (process.env.NODE_ENV !== 'test' || token !== 'test-valid-token') {
+      try {
+        const formData = new URLSearchParams();
+        formData.append('secret', secretKey);
+        formData.append('response', token);
+        
+        const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          body: formData,
+        });
+        
+        const verifyData = await verifyRes.json() as { success: boolean };
+        if (!verifyData.success) {
+          return c.json({ success: false, message: 'Falha na verificação de segurança' }, 403);
+        }
+      } catch (err) {
+        return c.json({ success: false, message: 'Erro ao validar token de segurança' }, 500);
+      }
+    }
+
+    // Force secure default values (TEST-01 Fix)
+    const { turnstileToken, ...jobData } = body;
+    
+    const finalJobData: CreateJobInput = {
+      ...jobData,
+      source: 'MANUAL',
+      isActive: true,
+    };
+
+    const createdJob = await jobService.createJob(prisma, finalJobData);
     return c.json({
       success: true,
       data: createdJob,
@@ -88,7 +127,7 @@ export class JobController {
       const result = await jobService.ingestJobs(prisma, validItems);
       return c.json(result, 201);
     } catch (error) {
-      console.error('Ingest error:', error);
+      logger.error('Ingest error:', error);
       return c.json({ success: false, message: 'Failed to process jobs' }, 500);
     }
   }

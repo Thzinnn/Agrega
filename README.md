@@ -1,122 +1,108 @@
-# Agrega - Agregador de Vagas
+# Agrega - Plataforma de Agregação de Vagas
 
-Um agregador de vagas moderno e escalável, desenvolvido em formato de monorepo. O projeto foi construído seguindo rigorosos padrões de arquitetura e Desenvolvimento Orientado a Testes (TDD), separando as responsabilidades entre um backend ágil (Express + Prisma) e um frontend interativo e performático (Next.js App Router).
+O **Agrega** é um buscador avançado de vagas e talentos desenhado para escalar no *Edge*. Construído sob uma arquitetura de monorepo, o projeto separa rigidamente as responsabilidades entre uma API serverless de ultra-baixa latência e uma interface client-side dinâmica, reativa e Otimizada para SEO.
 
----
-
-## 🚀 Tecnologias e Stack
-
-O projeto utiliza tecnologias modernas divididas em dois pacotes principais dentro de um monorepo:
-
-### **Backend (`/server`)**
-- **Node.js** com **Express**
-- **TypeScript**
-- **Prisma ORM** (conectado a um PostgreSQL Serverless no **Neon.tech**)
-- **Zod** para validação estrita de esquemas
-- Padrão arquitetural em camadas (`Controllers`, `Services`, `Middlewares`, `Schemas`)
-
-### **Frontend (`/web`)**
-- **Next.js** (App Router)
-- **React** e **TypeScript**
-- **Tailwind CSS** para estilização utilitária e responsiva
-- **Framer Motion** para microinterações e animações complexas (ex: modais de vagas com `layoutId`)
-- **Lucide React** para ícones
-- **Axios** para comunicação com a API
+Projetado do zero para ser "Production-Ready", o Agrega vai além de um simples CRUD, incorporando defesa em profundidade, resiliência de dados e automação de operações de infraestrutura.
 
 ---
 
-## 🛠️ Arquitetura e Regras de Desenvolvimento
+## 🚀 Visão Geral e Stack Tecnológico
 
-O desenvolvimento deste projeto é estritamente governado pelo arquivo [`Constitution.md`](./Constitution.md), que define as seguintes regras (invariantes):
+A plataforma roda majoritariamente no ecossistema da **Cloudflare** (Pages & Workers) e no banco de dados Serverless **Neon PostgreSQL**.
 
-1. **Desenvolvimento Orientado a Testes (TDD)**: O fluxo obedece o ciclo _Red-Green-Refactor_. Todo código possui cobertura em `/server/src/__tests__`.
-2. **Registro Contínuo (CHANGELOG)**: Toda modificação no sistema é versionada no [`CHANGELOG.md`](./CHANGELOG.md) seguindo uma taxonomia precisa (`[FACT]`, `[BUGFIX]`, `[MODIFY]`, `[TEST]`, `[DOCS]`).
-3. **Proibição de Tipos Implícitos/`any`**: Todo o código TypeScript é tipado estritamente, sendo terminantemente proibido o uso do tipo `any`.
-4. **Tratamento de Erros e Banco de Dados**: Proteções nativas foram adicionadas (ex: falhas de conexão de DB retornam status `503 Service Unavailable`).
+### 💻 Frontend Corporativo (`/web`)
+- **Framework:** Next.js (App Router) otimizado para SSR e SEO.
+- **Linguagem:** TypeScript estrito.
+- **Interface e UI:** Tailwind CSS, Radix UI e Framer Motion para microinterações (modais com `layoutId`).
+- **Resiliência:** Skeletons globais, Boundaries de Erro defensivos (`global-error.tsx`, `error.tsx`) e página `not-found.tsx` alinhados com a marca.
+- **Validação Isolada:** Zod + React Hook Form garantem que payloads incorretos sequer batam na rede.
+
+### ⚙️ Engine da API (`/server`)
+- **Runtime:** Hono (desenhado para Cloudflare Workers, suportando Web Standards puros).
+- **ORM & DB:** Prisma conectado via Edge Adapter ao PostgreSQL do Neon.
+- **Validação Nativa:** Esquemas Zod validam rigorosamente inserções massivas, regras lógicas (ex: `salario_min` < `salario_max`) e bloqueiam "Mass Assignments".
+- **Logs:** Utilitário interno de logs padronizados em JSON estruturado para fácil ingestão via DataDog/Cloudflare.
 
 ---
 
-## 📦 Como Instalar e Rodar Localmente
+## 🛡️ Defesa e Segurança (Hardening)
 
-Siga os passos abaixo para configurar o ambiente de desenvolvimento local:
+O Agrega possui camadas estritas de mitigação contra vulnerabilidades Top 10 OWASP:
+- **Zero LocalStorage (Anti-XSS/Hijacking):** Autenticação trafega exclusivamente em sessões via **Cookies HTTP-Only**, `Secure` e `SameSite=Lax`.
+- **Prevenção de CSRF:** Middleware de servidor que impõe a presença cruzada dos cabeçalhos `Origin` e `Referer` em rotas de mutação (`POST`, `PUT`, `DELETE`).
+- **Isolamento de Uploads:** Arquivos passando pela API são escaneados por "Magic Bytes" reais, limitados a 5MB, blindando a hospedagem de execução de malware disfarçados de imagem.
+- **Headers Blindados:** Injeção via `next.config.ts` mitigando iframing abusivo (`X-Frame-Options: DENY`), mime sniffing (`nosniff`) e políticas rigorosas de referência.
+- **Rate Limiting:** Contenção de requisições maliciosas utilizando identificadores de IP, impedindo brute-forces em endpoints sensíveis e no login do administrador.
 
-### 1. Pré-requisitos
-- [Node.js](https://nodejs.org/en/) (Versão 20 ou 22 recomendada)
-- Instância PostgreSQL (Recomendado: Neon.tech)
+---
 
-### 2. Configuração do Banco de Dados
-Na pasta do servidor, crie o arquivo `.env` para apontar para o seu banco de dados:
+## ☁️ Deploy e Operação (Production-Grade)
 
+Sendo concebido para rodar no Edge, a gerência é atômica:
+
+### 1. Staging e Ambientes (CI/CD)
+Toda PR gera uma URL única de Preview via Cloudflare Pages.
+O gerenciamento de segredos para a API no Cloudflare Worker é feito via CLI:
 ```bash
-cd server
-cp .env.example .env
-# Adicione a variável DATABASE_URL="postgresql://user:pass@host/db?sslmode=require"
+npx wrangler secret put DATABASE_URL
 ```
 
-### 3. Instalação de Dependências
-Na raiz do monorepo, instale todas as dependências:
-```bash
-npm install
+### 2. Recuperação de Desastres (PITR)
+Nenhum script frágil de `pg_dump` é utilizado. O Neon gerencia **Point-In-Time Recovery (PITR)**. Se o banco de dados for corrompido, a equipe de operações consegue restaurar o DB para qualquer milissegundo do passado usando a aba "Restore" no painel.
+
+### 3. Estratégia de Rollback
+As regressões de software são mitigadas com reversão instantânea:
+- **Frontend:** Acesse o painel do Cloudflare Pages e promova a build anterior com "Retry deployment".
+- **Backend:** Retrações na API são atômicas e demoram milissegundos via:
+  ```bash
+  npx wrangler rollback <DEPLOY_ID>
+  ```
+
+### 4. Gestão Administrativa
+O painel (`/admin`) suporta operações retroativas assíncronas (via `ctx.waitUntil` do Cloudflare).
+*Nota:* Por segurança, **não existe** "Esqueci minha senha" por e-mail para o administrador master. Em caso de bloqueio, o DB Admin deve se conectar ao Neon e atualizar o Hash via bcrypt, ou usar o script restrito via CLI local: `npx tsx src/scripts/seed.ts`.
+
+---
+
+## 🧪 Suíte de Testes (TDD Rigoroso)
+
+O Agrega obedece um fluxo contínuo de **Red-Green-Refactor**. O deploy na main é atrelado ao sucesso de três frentes de testes (Vitest):
+1. **Regras de Negócio e Parser (`verify.ts`):** Garante a pureza e precisão dos parsers (ex: busca com filtragem multi-variáveis ou rejeição de URLs inválidas de candidaturas).
+2. **Segurança Ofensiva (`security.test.ts`):** Tenta invadir ativamente a API (Mass assignment, bypasses de upload, injeções `javascript:`) para confirmar que os middlewares barram o tráfego.
+3. **Frontend (Componentes e UI):** Afere a renderização fiel do Tailwind e do Radix sem comprometer interatividade.
+
+---
+
+## 🛠️ Executando Localmente (Para Desenvolvedores)
+
+Se precisar testar a aplicação em um ambiente de desenvolvimento isolado:
+
+**1. Dependências Iniciais**
+- Node.js (V20+) e npm install.
+- String de conexão PostgreSQL (Crie uma branch gratuita no Neon.tech).
+
+**2. Setup de Variáveis**
+Crie um `.env` dentro da pasta `/server`:
+```env
+DATABASE_URL="postgresql://user:pass@host/dev-branch?sslmode=require"
+JWT_SECRET="segredo_super_seguro_dev"
 ```
 
-### 4. Setup do Prisma e Seed (Popular o banco)
-Prepare o banco de dados com a estrutura de tabelas e alimente-o com algumas vagas iniciais:
+**3. Migrations e Seed**
+Sincronize o banco local e crie os dados base do projeto (inclui o usuário admin e colunas dinâmicas):
 ```bash
 cd server
 npx prisma db push
 npm run seed
 ```
 
-### 5. Execução do Projeto
-O projeto utiliza a biblioteca `concurrently` configurada na raiz do monorepo para iniciar os dois pacotes em um único comando sem conflitos de portas.
-
-Suba o backend e o frontend simultaneamente:
+**4. Subindo o Monorepo**
+Na raiz do repositório, rode o comando abaixo. Ele subirá o Front e a API simulando o *Cloudflare Workers* através do Wrangler local.
 ```bash
-# Na raiz do repositório (d:\Nova pasta\Agrega)
 npm run dev
 ```
 
-- O **Frontend** iniciará na porta `3000`: [http://localhost:3000](http://localhost:3000)
-- O **Backend** iniciará na porta `3333`: [http://localhost:3333](http://localhost:3333)
+- **Frontend (Next):** [http://localhost:3000](http://localhost:3000)
+- **Backend (Hono):** [http://localhost:3333](http://localhost:3333)
 
-> **Nota:** Certifique-se de não possuir outros processos ativos nestas portas para evitar o erro `EADDRINUSE`.
-
----
-
-## 🗂️ Estrutura de Diretórios (Resumo)
-
-```text
-/
-├── server/                   # API Rest (Backend)
-│   ├── prisma/               # Schemas e Seeds do ORM
-│   ├── src/
-│   │   ├── controllers/      # Roteamento lógico
-│   │   ├── services/         # Regras de negócio principais
-│   │   ├── schemas/          # Validações Zod estritas (Ex: Regras de contato e faixas salariais)
-│   │   ├── middlewares/      # Tratamento de Erros (Ex: 503 db disconnect)
-│   │   └── __tests__/        # Suítes de validações de regras de negócio
-│   └── package.json
-│
-├── web/                      # Frontend Next.js
-│   ├── src/
-│   │   ├── app/              # Estrutura do App Router (Home, Jobs/New)
-│   │   ├── components/       # Componentes React
-│   │   ├── lib/              # Utilitários globais (Axios, API IBGE)
-│   │   └── types/            # Interfaces (Totalmente sincronizadas com o backend)
-│   └── package.json
-│
-├── Constitution.md           # Regras do projeto
-├── CHANGELOG.md              # Log de progressões estruturadas
-└── package.json              # Orquestração do Monorepo
-```
-
----
-
-## 🧩 Componentes e Funcionalidades Core
-
-A aplicação possui validação fim-a-fim, formulários dinâmicos e UI reativa:
-- **Dark Mode**: Suporte nativo a temas Claro/Escuro usando `next-themes` na regra de proporção visual 60/30/10 com o Primary Azul (`#2563EB`).
-- **Formulários Estritos**: Implementados usando `react-hook-form` + `@hookform/resolvers/zod` para inferência exata e validações visuais antes de acionar a API (como o Regex de telefone, validação condicional de salários exatos vs. piso/teto).
-- **Autocomplete IBGE**: Os formulários buscam cidades do estado de São Paulo de forma dinâmica da API pública de localidades do IBGE.
-- **Microinterações**: O projeto utiliza **Framer Motion** (`layoutId`) para transição de Cards para Modais animados de Vagas, gerando fluidez nas interações.
-- **Benefícios e Contato Condicional**: As listagens das vagas apresentam sub-emblemas para cada benefício habilitado (VA, VR, VT) e geram automações no "Entre em Contato" (como `mailto:` no e-mail e `wa.me/` no telefone).
+> O monitoramento de estado de sistema e todas as atualizações sistêmicas de engenharia seguem o documento de registro [CHANGELOG.md](./CHANGELOG.md).
