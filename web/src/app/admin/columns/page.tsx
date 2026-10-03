@@ -377,8 +377,6 @@ export default function AdminColumnsPage() {
         isOpen={isDeleteModalOpen}
         title="Excluir Coluna?"
         description="Esta ação removerá a coluna. Vagas já criadas com esta coluna não perderão o dado (permanece no JSON), mas a coluna deixará de aparecer para novas vagas. Esta ação não pode ser desfeita."
-        confirmText="Sim, Excluir Coluna"
-        cancelText="Cancelar"
         onConfirm={handleDelete}
         onCancel={() => {
           setIsDeleteModalOpen(false);
