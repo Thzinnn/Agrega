@@ -125,6 +125,8 @@ export default function WebhooksPage() {
     }
   };
 
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://sua-api.com/api/v1';
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -165,7 +167,7 @@ export default function WebhooksPage() {
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Como Integrar (Python / Scraper)</h3>
         <p className="text-sm text-gray-700 dark:text-gray-300 mb-4">
-          O Webhook espera um <strong>POST</strong> na rota <code>/api/v1/webhooks/receive/:webhookId</code> assinado via HMAC-SHA256 usando o Secret que você recebeu na criação.
+          O Webhook espera um <strong>POST</strong> na rota <code>/webhooks/receive/:webhookId</code> assinado via HMAC-SHA256 usando o Secret que você recebeu na criação.
         </p>
         <div className="bg-gray-50 dark:bg-gray-900 p-4 rounded-md overflow-x-auto text-sm font-mono text-gray-800 dark:text-green-400 border border-gray-200 dark:border-gray-700">
 <pre>{`import time
@@ -177,16 +179,25 @@ import json
 
 WEBHOOK_ID = "SEU_WEBHOOK_ID"
 SECRET = "whsec_..."
-URL = f"https://sua-api.com/api/v1/webhooks/receive/{WEBHOOK_ID}"
+URL = f"${apiUrl}/webhooks/receive/{WEBHOOK_ID}"
 
 payload = {
     "event": "job.upsert",
     "jobs": [
         {
-            "id_vaga": "py-123",
-            "titulo": "Dev Python",
-            "empresa": "Tech"
-            # ... mesmos campos de sempre
+            "id_vaga": "py-123",            # (Obrigatório) ID único da vaga na fonte
+            "titulo": "Dev Python",         # (Obrigatório) Título da vaga
+            "empresa": "Tech Solutions",    # (Obrigatório) Nome da empresa
+            "local": "Remoto",              # (Obrigatório) Local de trabalho
+            "descricao": "Descrição...",    # (Obrigatório) Descrição completa da vaga
+            
+            # Campos Opcionais
+            "salario": "R$ 5.000,00",
+            "tipo_vaga": "CLT",             # Ex: CLT, PJ, Estágio
+            "turno_horario": "Integral",    # Ex: Integral, Meio período
+            "beneficios": "VR, VA, Plano",  # Lista ou string de benefícios
+            "link": "https://...",          # Link original para candidatura
+            "data_coleta": "2026-10-05"     # Data em que o scraper capturou a vaga
         }
     ]
 }
@@ -195,7 +206,7 @@ raw_body = json.dumps(payload, separators=(',', ':'))
 timestamp = str(int(time.time()))
 delivery_id = str(uuid.uuid4())
 
-# Cálculo da assinatura HMAC
+# Cálculo da assinatura HMAC (Autenticação de Segurança)
 message = f"{timestamp}.{raw_body}".encode('utf-8')
 signature = hmac.new(SECRET.encode('utf-8'), message, hashlib.sha256).hexdigest()
 
@@ -207,6 +218,7 @@ headers = {
 }
 
 resp = requests.post(URL, data=raw_body, headers=headers)
+print(resp.status_code)
 print(resp.json())`}</pre>
         </div>
       </div>
