@@ -37,7 +37,12 @@ app.use(
 
 // Defesas de Segurança Globais (OWASP)
 // 1. Previne Cross-Site Request Forgery validando Origens (CSRF)
-app.use('*', csrfMiddleware);
+app.use('*', async (c, next) => {
+  if (c.req.path.startsWith('/api/v1/webhooks/receive/')) {
+    return next();
+  }
+  return csrfMiddleware(c, next);
+});
 // 2. Previne DoS via uploads imensos e bypasses de arquivos executáveis disfarçados (Magic Bytes)
 app.use('*', uploadValidationMiddleware);
 

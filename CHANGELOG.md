@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### [FEAT] - 2026-10-05
+- **Webhooks de Entrada Configuráveis**: Substituído o robô Python hardcoded (com API Key) por um sistema de Webhooks dinâmicos no Painel Admin. Permite criar conexões de entrada com autenticação baseada em assinatura de payloads via Web Crypto API (HMAC-SHA256).
+- **Trilha de Auditoria (Logs) e Idempotência**: Adicionado armazenamento das últimas 50 entregas de cada webhook no painel (`WebhookDelivery`), rastreando status de sucesso e falhas unitárias no lote (`ingestJobs`). Webhooks agora possuem proteção nativa contra Replay Attacks e bloqueio dinâmico para webhooks inativos.
+- **CSRF Bypass Seletivo**: Adicionado bypass explícito no `csrfMiddleware` estritamente para a rota `/api/v1/webhooks/receive/*`, para permitir a comunicação Server-to-Server com origens desnecessárias, enquanto o restante da API mutável continua protegida pelo OWASP CSRF Defense.
+
 ### [FEAT] - 2026-10-02
 - **Páginas Institucionais:** Adicionadas páginas estáticas de Política de Privacidade (`/privacidade`) e Termos de Uso (`/termos`) com diretrizes transparentes sobre coleta de dados e takes de responsabilidade de scrape e agregação.
 - **Error Boundaries:** Criados `error.tsx` e `global-error.tsx` no Next.js App Router para captura graciosa de falhas, com botões de fallback ('Tentar Novamente' e 'Voltar para Início').

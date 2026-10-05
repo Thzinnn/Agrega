@@ -110,3 +110,30 @@ model JobCustomColumn {
   options      String[]   @default([])
   createdAt    DateTime   @default(now())
 }
+
+model Webhook {
+  id             String            @id @default(uuid())
+  name           String
+  secret         String
+  event          String            @default("job.upsert")
+  isActive       Boolean           @default(true)
+  totalReceived  Int               @default(0)
+  lastReceivedAt DateTime?
+  lastStatus     String?           // SUCCESS, FAILED, REJECTED
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  deliveries     WebhookDelivery[]
+}
+
+model WebhookDelivery {
+  id         String   @id @default(uuid())
+  webhookId  String
+  webhook    Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  deliveryId String
+  status     String   // SUCCESS, FAILED, REJECTED
+  processed  Int      @default(0)
+  error      String?  @db.Text
+  createdAt  DateTime @default(now())
+
+  @@unique([webhookId, deliveryId])
+}

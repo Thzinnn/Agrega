@@ -106,3 +106,67 @@ npm run dev
 - **Backend (Hono):** [http://localhost:3333](http://localhost:3333)
 
 > O monitoramento de estado de sistema e todas as atualizações sistêmicas de engenharia seguem o documento de registro [CHANGELOG.md](./CHANGELOG.md).
+
+## 🪝 Integração via Webhooks (Scrapers e Sistemas Externos)
+
+A partir da V1, a ingestão de vagas por scrapers Python (ou qualquer outro sistema) deve ser feita via **Webhooks de Entrada**.
+
+### Como Integrar
+1. Acesse o Painel Admin > **Webhooks**.
+2. Clique em **+ Novo Webhook**. Preencha o nome (ex: "Scraper Python").
+3. Salve o **Secret HMAC** exibido. Ele é exibido *apenas uma vez*.
+4. No seu Scraper, você enviará um `POST` para `/api/v1/webhooks/receive/:webhookId` assinando a carga útil (`body`) usando HMAC-SHA256 e a sua chave secreta.
+
+### Exemplo em Python
+
+```python
+import time
+import hmac
+import hashlib
+import uuid
+import requests
+import json
+
+WEBHOOK_ID = "SEU_WEBHOOK_ID"
+SECRET = "whsec_SUA_CHAVE_AQUI"
+URL = f"https://sua-api.com/api/v1/webhooks/receive/{WEBHOOK_ID}"
+
+payload = {
+    "event": "job.upsert",
+    "jobs": [
+        {
+            "id_vaga": "py-123",
+            "titulo": "Desenvolvedor Python",
+            "empresa": "Tech Solutions",
+            "link_vaga": "https://tech.com/vagas/123",
+            "descricao": "Vaga para atuar com Python e Django."
+        }
+    ]
+}
+
+# 1. Serializar JSON minimizado (sem espaços)
+raw_body = json.dumps(payload, separators=(',', ':'))
+
+# 2. Gerar Headers de Segurança
+timestamp = str(int(time.time()))
+delivery_id = str(uuid.uuid4())
+
+# 3. Assinar o payload: timestamp + raw_body
+message = f"{timestamp}.{raw_body}".encode('utf-8')
+signature = hmac.new(SECRET.encode('utf-8'), message, hashlib.sha256).hexdigest()
+
+headers = {
+    "Content-Type": "application/json",
+    "X-Agrega-Timestamp": timestamp,
+    "X-Agrega-Signature": f"sha256={signature}",
+    "X-Agrega-Delivery": delivery_id
+}
+
+resp = requests.post(URL, data=raw_body, headers=headers)
+print(resp.status_code, resp.json())
+```
+
+Isso garante que:
+- Replay Attacks são prevenidos através do bloqueio de `delivery_id` repetido e limite de relógio (±5 min).
+- Apenas sistemas com a posse do segredo podem adicionar vagas (HMAC Signature Check).
+- O CSRF é contornado de maneira controlada, sem abrir a API pública para vulnerabilidades web.

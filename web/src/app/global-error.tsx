@@ -13,6 +13,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  console.error('Global Error Caught:', _error);
   return (
     <html lang="pt-BR">
       <body>

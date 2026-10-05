@@ -14,7 +14,8 @@ import {
   LogOut, 
   Menu,
   X,
-  Database
+  Database,
+  Webhook as WebhookIcon
 } from 'lucide-react';
 
 interface User {
@@ -78,6 +79,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Vagas', path: '/admin/jobs', icon: <Briefcase className="w-5 h-5" /> },
     { name: 'Colunas Dinâmicas', path: '/admin/columns', icon: <Database className="w-5 h-5" /> },
     { name: 'Filtros', path: '/admin/filters', icon: <Filter className="w-5 h-5" /> },
+    { name: 'Webhooks', path: '/admin/webhooks', icon: <WebhookIcon className="w-5 h-5" /> },
     { name: 'Usuários', path: '/admin/users', icon: <Users className="w-5 h-5" /> },
   ];
 
