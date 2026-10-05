@@ -22,6 +22,7 @@ export class WebhookService {
 
   async listWebhooks(prisma: PrismaClient) {
     const webhooks = await prisma.webhook.findMany({
+      where: { id: { not: Date.now().toString() } }, // Bypass Hyperdrive cache para Admins
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -105,7 +106,7 @@ export class WebhookService {
 
   async getDeliveries(prisma: PrismaClient, webhookId: string) {
     const deliveries = await prisma.webhookDelivery.findMany({
-      where: { webhookId },
+      where: { webhookId, id: { not: Date.now().toString() } }, // Bypass Hyperdrive cache
       orderBy: { createdAt: 'desc' },
       take: 50,
     });
