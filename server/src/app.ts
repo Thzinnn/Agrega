@@ -55,6 +55,7 @@ app.use('*', async (c, next) => {
 
 app.use('*', async (c, next) => {
   const dbUrl = c.env?.HYPERDRIVE?.connectionString || c.env?.DATABASE_URL || process.env.DATABASE_URL;
+  console.log('DEBUG_ENV:', Object.keys(c.env || {}), 'dbUrl exists:', !!dbUrl, 'DATABASE_URL:', !!c.env?.DATABASE_URL, 'HYPERDRIVE:', !!c.env?.HYPERDRIVE);
   
   if (dbUrl) {
     const { prisma, pool } = initializePrisma(dbUrl);
@@ -68,14 +69,14 @@ app.use('*', async (c, next) => {
       try {
         const execCtx = c.executionCtx;
         if (execCtx && typeof execCtx.waitUntil === 'function') {
-          waitUntilFn = execCtx.waitUntil;
+          waitUntilFn = execCtx.waitUntil.bind(execCtx);
         }
       } catch (e) {
         // ignore ExecutionContext error in test environment
       }
 
       if (!waitUntilFn && c.env && typeof (c.env as any).waitUntil === 'function') {
-        waitUntilFn = (c.env as any).waitUntil;
+        waitUntilFn = (c.env as any).waitUntil.bind(c.env);
       }
 
       if (waitUntilFn) {

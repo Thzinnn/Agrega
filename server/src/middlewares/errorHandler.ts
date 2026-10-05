@@ -1,6 +1,6 @@
 import { Context } from 'hono';
+import type { ContentfulStatusCode } from 'hono/utils/http-status';
 import { ZodError } from 'zod';
-import { Prisma } from '@prisma/client';
 import { AppError } from '../errors/AppError.js';
 import { logger } from '../utils/logger.js';
 
@@ -31,10 +31,12 @@ export const errorHandler = (
       success: false,
       message: error.message,
       ...(error.errors && error.errors.length > 0 ? { errors: error.errors } : {}),
-    }, error.statusCode as any);
+    }, error.statusCode as ContentfulStatusCode);
   }
 
-  if (error instanceof Prisma.PrismaClientInitializationError) {
+  // Cloudflare Workers (Edge) não exportam as classes de Erro na raiz do Prisma.
+  // Usamos verificação estrutural (duck typing) via `.name` para compatibilidade.
+  if (error.name === 'PrismaClientInitializationError') {
     return c.json({
       success: false,
       message: 'Não foi possível conectar ao banco de dados PostgreSQL.',
@@ -45,15 +47,16 @@ export const errorHandler = (
     }, 503);
   }
 
-  if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === 'P2025') {
+  if (error.name === 'PrismaClientKnownRequestError') {
+    const code = (error as { code?: string }).code;
+    if (code === 'P2025') {
       return c.json({
         success: false,
         message: 'Registro não encontrado no banco de dados',
       }, 404);
     }
 
-    if (error.code === 'P2002') {
+    if (code === 'P2002') {
       return c.json({
         success: false,
         message: 'Já existe um registro com os valores informados',
