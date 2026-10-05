@@ -34,7 +34,8 @@ export const csrfMiddleware = async (c: Context, next: Next) => {
     }
 
     if (!isAllowed) {
-      if (originOrReferer.match(/^https:\/\/.*\.pages\.dev$/)) {
+      // Regex corrigido para permitir o Referer que contém subcaminhos (ex: /admin/login)
+      if (originOrReferer.match(/^https:\/\/.*\.pages\.dev/)) {
         isAllowed = true;
       }
     }
