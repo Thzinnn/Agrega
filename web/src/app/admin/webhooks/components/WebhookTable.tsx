@@ -1,6 +1,7 @@
 'use client';
 
 import { Webhook } from '@/types/webhook';
+import toast from 'react-hot-toast';
 
 interface WebhookTableProps {
   data: Webhook[];
@@ -73,6 +74,16 @@ export function WebhookTable({ data, actions }: WebhookTableProps) {
                 <div className="text-xs mt-1">Total: {wh.totalReceived} reqs</div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(wh.id);
+                    toast.success('ID copiado!');
+                  }}
+                  className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 mr-4"
+                  title="Copiar ID do Webhook"
+                >
+                  Copiar ID
+                </button>
                 <button
                   onClick={() => actions.onViewLogs(wh)}
                   className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 mr-4"
