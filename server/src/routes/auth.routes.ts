@@ -46,7 +46,7 @@ authRoutes.post('/login', async (c) => {
   setCookie(c, 'auth_token', token, {
     httpOnly: true,
     secure: true,
-    sameSite: 'Lax',
+    sameSite: 'None',
     path: '/',
     maxAge: 60 * 60 * 24 * 7,
   });
@@ -68,7 +68,7 @@ authRoutes.post('/logout', (c) => {
   deleteCookie(c, 'auth_token', {
     path: '/',
     secure: true,
-    sameSite: 'Lax',
+    sameSite: 'None',
     httpOnly: true,
   });
   return c.json({ success: true });

@@ -3,6 +3,7 @@ import { jobRoutes } from './job.routes.js';
 import { authRoutes } from './auth.routes.js';
 import { adminRoutes } from './admin.routes.js';
 import { filterRoutes } from './filter.routes.js';
+import { webhookRoutes } from './webhook.routes.js';
 
 export const routes = new Hono();
 
@@ -16,3 +17,4 @@ routes.route('/api/v1/auth', authRoutes);
 routes.route('/api/v1/admin', adminRoutes);
 routes.route('/api/v1/jobs', jobRoutes);
 routes.route('/api/v1/filters', filterRoutes);
+routes.route('/api/v1/webhooks', webhookRoutes);

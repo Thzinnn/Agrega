@@ -492,3 +492,53 @@ adminRoutes.delete('/columns/:id', async (c) => {
   return c.json({ success: true });
 });
 
+// ==========================================
+// WEBHOOKS CRUD
+// ==========================================
+import { webhookService } from '../services/webhook.service.js';
+import { webhookCreateSchema, webhookUpdateSchema } from '../schemas/webhook.schema.js';
+
+adminRoutes.get('/webhooks', async (c) => {
+  const prisma = c.get('prisma');
+  const items = await webhookService.listWebhooks(prisma);
+  return c.json({ success: true, data: items });
+});
+
+adminRoutes.post('/webhooks', async (c) => {
+  const prisma = c.get('prisma');
+  const body = await c.req.json();
+  const data = webhookCreateSchema.parse(body);
+  const webhook = await webhookService.createWebhook(prisma, data);
+  // Returns secret once!
+  return c.json({ success: true, data: webhook }, 201);
+});
+
+adminRoutes.put('/webhooks/:id', async (c) => {
+  const prisma = c.get('prisma');
+  const id = c.req.param('id');
+  const body = await c.req.json();
+  const data = webhookUpdateSchema.parse(body);
+  const webhook = await webhookService.updateWebhook(prisma, id, data);
+  return c.json({ success: true, data: webhook });
+});
+
+adminRoutes.post('/webhooks/:id/rotate-secret', async (c) => {
+  const prisma = c.get('prisma');
+  const id = c.req.param('id');
+  const webhook = await webhookService.rotateSecret(prisma, id);
+  return c.json({ success: true, data: webhook });
+});
+
+adminRoutes.delete('/webhooks/:id', async (c) => {
+  const prisma = c.get('prisma');
+  const id = c.req.param('id');
+  await webhookService.deleteWebhook(prisma, id);
+  return c.json({ success: true });
+});
+
+adminRoutes.get('/webhooks/:id/deliveries', async (c) => {
+  const prisma = c.get('prisma');
+  const id = c.req.param('id');
+  const deliveries = await webhookService.getDeliveries(prisma, id);
+  return c.json({ success: true, data: deliveries });
+});

@@ -9,6 +9,7 @@ crons = ["0 0 * * *"]
 [[hyperdrive]]
 binding = "HYPERDRIVE"
 id = "860ba89398204814910a35015bc6c7de"
+localConnectionString = "postgresql://neondb_owner:npg_7abZ3tAuIiFm@ep-restless-grass-b5ytfykm-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require"
 
 [env.preview]
 name = "jobs-api-preview"

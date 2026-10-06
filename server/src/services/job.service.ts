@@ -246,10 +246,13 @@ export class JobService {
 
   async ingestJobs(prisma: PrismaClient, items: IngestJobItem[]) {
     let processed = 0;
+    const rejected: Array<{ index: number; reason: string }> = [];
     
     // Process sequentially or in batches. We use a simple loop for upsert.
+    let idx = 0;
     for (const item of items) {
-      let parsedSalary: number | null = null;
+      try {
+        let parsedSalary: number | null = null;
       let parsedSalaryMin: number | null = null;
       let parsedSalaryMax: number | null = null;
 
@@ -415,9 +418,13 @@ export class JobService {
         }
       });
       processed++;
+      } catch (err: any) {
+        rejected.push({ index: idx, reason: err.message || 'Error processing item' });
+      }
+      idx++;
     }
     
-    return { success: true, processed };
+    return { success: true, processed, rejected };
   }
 }
 
