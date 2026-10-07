@@ -13,6 +13,29 @@ export interface PaginatedResult<T> {
 }
 
 export class JobService {
+  async getSchema(prisma: PrismaClient) {
+    const jobModel = Prisma.dmmf.datamodel.models.find((m) => m.name === 'Job');
+    if (!jobModel) {
+      throw new AppError('Job schema not found', 404);
+    }
+
+    const customColumns = await prisma.jobCustomColumn.findMany({
+      where: { isActive: true },
+      select: {
+        slug: true,
+        name: true,
+        type: true,
+        isRequired: true,
+        options: true,
+      }
+    });
+
+    return {
+      ...jobModel,
+      customColumns
+    };
+  }
+
   /**
    * Motor Principal de Pesquisa de Vagas (Filtros e Paginação)
    * Por que foi feito: Concentra a lógica de query pesada (Full Text Search, buscas combinadas JSON)

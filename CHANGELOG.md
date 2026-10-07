@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### [FACT] - 2026-10-06
+- **Descrição:** Rota auxiliar `GET /api/v1/jobs/schema` implementada para expor o DMMF do modelo `Job` do Prisma (nomes, tipos e obrigatoriedade dos campos). Permite que agentes de IA leiam a estrutura da tabela dinamicamente antes de enviar o payload de ingestão.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/controllers/job.controller.ts`, `server/src/routes/job.routes.ts`, `server/src/__tests__/schema.test.ts`
+
 ### [FEAT] - 2026-10-05
 - **Webhooks de Entrada Configuráveis**: Substituído o robô Python hardcoded (com API Key) por um sistema de Webhooks dinâmicos no Painel Admin. Permite criar conexões de entrada com autenticação baseada em assinatura de payloads via Web Crypto API (HMAC-SHA256).
 - **Trilha de Auditoria (Logs) e Idempotência**: Adicionado armazenamento das últimas 50 entregas de cada webhook no painel (`WebhookDelivery`), rastreando status de sucesso e falhas unitárias no lote (`ingestJobs`). Webhooks agora possuem proteção nativa contra Replay Attacks e bloqueio dinâmico para webhooks inativos.

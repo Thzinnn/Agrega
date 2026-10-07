@@ -2,9 +2,23 @@ import { Context } from 'hono';
 import { jobService } from '../services/job.service.js';
 import { logger } from '../utils/logger.js';
 import { CreateJobInput, CreatePublicJobInput, JobQueryInput, JobIdParam, ingestJobItemSchema, IngestJobItem } from '../schemas/job.schema.js';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 
 export class JobController {
+  async getSchema(c: Context) {
+    try {
+      const prisma = c.get('prisma') as PrismaClient;
+      const schema = await jobService.getSchema(prisma);
+      return c.json({ success: true, data: schema }, 200);
+    } catch (error) {
+      if (error instanceof Error && 'statusCode' in error) {
+        return c.json({ success: false, message: error.message }, (error as any).statusCode);
+      }
+      logger.error('Error fetching schema:', error);
+      return c.json({ success: false, message: 'Failed to fetch schema' }, 500);
+    }
+  }
+
   async listJobs(c: Context) {
     const prisma = c.get('prisma') as PrismaClient;
     const query = c.get('valid_query') as JobQueryInput;

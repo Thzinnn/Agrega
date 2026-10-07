@@ -10,6 +10,12 @@ import {
 
 export const jobRoutes = new Hono();
 
+// GET /api/v1/jobs/schema - Expose Job table structure for AI agents
+jobRoutes.get(
+  '/schema',
+  jobController.getSchema.bind(jobController)
+);
+
 // GET /api/v1/jobs - List jobs with dynamic filters and pagination
 // GET /api/v1/jobs/columns - Get active columns
 jobRoutes.get(
