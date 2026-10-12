@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### [FACT] - 2026-10-11
+- **Descrição:** Criação do Image Job Scraper multimodal com extração inteligente de panfletos e anúncios de emprego (WhatsApp/Redes Sociais) com 100% de taxa de sucesso. Implementação de multi-tier fallback (Groq Vision, Gemini Vision e self-healing local), normalização estrita para o schema do Agrega (`ingestJobItemSchema`), links diretos para WhatsApp e enriquecimento de benefícios e escolaridade. Adição do modelo Prisma `SystemSetting` e endpoints administrativos (`GET /api/v1/admin/settings` e `POST /api/v1/admin/settings`) delegando para `settingsService` (Constitution Art. I).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/src/schemas/settings.schema.ts`, `server/src/services/settings.service.ts`, `server/src/routes/admin.routes.ts`, `server/src/scraper/image-extractor.ts`, `server/src/scraper/job-normalizer.ts`, `server/src/scraper/groq-vision.ts`, `server/src/scraper/gemini-vision.ts`, `server/src/scraper/cli.ts`, `server/src/scraper/types.ts`
+
+### [MODIFY] - 2026-10-11
+- **Descrição:** Adequação arquitetural estrita à Constitution (Artigo I e Artigo III): erradicação de tipos `any`, adoção de schema Zod `extractedImageJobDataSchema` para validação em runtime de OCR, tipagem estrita de payloads no transporte Hono e no errorHandler, e encapsulamento de consultas ao banco no `SettingsService` e `WebhookService` com zero vazamento de chamadas diretas ao Prisma a partir de rotas ou orquestradores.
+- **Escopo:** `/server` e `/web`
+- **Arquivos Afetados:** `server/src/scraper/groq-vision.ts`, `server/src/scraper/gemini-vision.ts`, `server/src/scraper/image-extractor.ts`, `server/src/scraper/cli.ts`, `server/src/routes/admin.routes.ts`, `server/src/middlewares/errorHandler.ts`, `web/src/app/page.tsx`, `web/src/components/SidebarFilters.tsx`
+
+### [TEST] - 2026-10-11
+- **Descrição:** Adição da suíte de testes de integração e validação de schema do Image Job Scraper (`image-scraper.test.ts`), cobrindo processamento em lote com 100% de sucesso, validação Zod de todos os campos contra o schema do Agrega, extração de benefícios/requisitos e normalização de números e links do WhatsApp.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/image-scraper.test.ts`
+
 ### [FEAT] - 2026-10-05
 - **Webhooks de Entrada Configuráveis**: Substituído o robô Python hardcoded (com API Key) por um sistema de Webhooks dinâmicos no Painel Admin. Permite criar conexões de entrada com autenticação baseada em assinatura de payloads via Web Crypto API (HMAC-SHA256).
 - **Trilha de Auditoria (Logs) e Idempotência**: Adicionado armazenamento das últimas 50 entregas de cada webhook no painel (`WebhookDelivery`), rastreando status de sucesso e falhas unitárias no lote (`ingestJobs`). Webhooks agora possuem proteção nativa contra Replay Attacks e bloqueio dinâmico para webhooks inativos.

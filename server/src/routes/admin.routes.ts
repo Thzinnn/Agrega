@@ -5,8 +5,16 @@ import { authMiddleware } from './auth.routes.js';
 import { AppError } from '../errors/AppError.js';
 import { logger } from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
+import { settingsService } from '../services/settings.service.js';
+import { upsertSettingSchema } from '../schemas/settings.schema.js';
 
-export const adminRoutes = new Hono<{ Variables: { prisma: PrismaClient; user: any } }>();
+interface AdminUserPayload {
+  sub: string;
+  email?: string;
+  role: string;
+}
+
+export const adminRoutes = new Hono<{ Variables: { prisma: PrismaClient; user: AdminUserPayload } }>();
 
 adminRoutes.use('*', authMiddleware);
 
@@ -541,4 +549,21 @@ adminRoutes.get('/webhooks/:id/deliveries', async (c) => {
   const id = c.req.param('id');
   const deliveries = await webhookService.getDeliveries(prisma, id);
   return c.json({ success: true, data: deliveries });
+});
+
+// ==========================================
+// SYSTEM SETTINGS & CHAVES DE IA (CONSTITUTION ARTIGO I)
+// ==========================================
+adminRoutes.get('/settings', async (c) => {
+  const prisma = c.get('prisma');
+  const items = await settingsService.listSettings(prisma);
+  return c.json({ success: true, data: items });
+});
+
+adminRoutes.post('/settings', async (c) => {
+  const prisma = c.get('prisma');
+  const body = await c.req.json();
+  const data = upsertSettingSchema.parse(body);
+  const updated = await settingsService.upsertSetting(prisma, data);
+  return c.json({ success: true, data: { id: updated.id, key: updated.key } });
 });

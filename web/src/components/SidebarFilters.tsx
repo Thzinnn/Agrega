@@ -37,8 +37,9 @@ export function SidebarFilters({ filters, onChange }: SidebarFiltersProps) {
       try {
         const response = await api.get('/filters');
         setDbFilters(response.data.data || []);
-      } catch (error) {
-        console.error('Failed to load filters', error);
+      } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.warn('Could not load dynamic filters:', msg);
       }
     };
     fetchFilters();
