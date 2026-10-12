@@ -1,7 +1,19 @@
 import { z } from 'zod';
 import { ingestJobItemSchema } from '../schemas/job.schema.js';
 
+export const contentTypeEnum = z.enum([
+  'VAGA_DIRETA',
+  'PROGRAMA_EMPREGABILIDADE',
+  'CURSO_CAPACITACAO',
+  'NAO_E_VAGA',
+]);
+
+export type ContentType = z.infer<typeof contentTypeEnum>;
+
 export const extractedImageJobDataSchema = z.object({
+  is_job_or_opportunity: z.boolean().default(true),
+  content_type: contentTypeEnum.default('VAGA_DIRETA'),
+  discard_reason: z.string().nullable().optional(),
   titulo: z.string(),
   empresa: z.string(),
   local: z.string(),
@@ -37,12 +49,20 @@ export type AgregaIngestPayload = z.infer<typeof ingestJobItemSchema> & {
   contactPhone?: string | null;
   originalImageHash?: string;
   originalImagePath?: string;
+  contentType?: ContentType;
 };
+
+export type ImageExtractionOutcome =
+  | { status: 'PROCESSED'; job: AgregaIngestPayload; contentType: ContentType; traceId: string }
+  | { status: 'DISCARDED'; reason: string; contentType: ContentType; file: string; traceId: string }
+  | { status: 'ERROR'; error: string; file: string; traceId: string };
 
 export interface ScraperExecutionResult {
   totalFiles: number;
   successCount: number;
   failureCount: number;
+  discardedCount: number;
   jobs: AgregaIngestPayload[];
+  discarded: Array<{ file: string; reason: string; contentType?: ContentType }>;
   errors: Array<{ file: string; error: string }>;
 }

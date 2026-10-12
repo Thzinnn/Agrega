@@ -193,6 +193,7 @@ export function normalizeImageJobToAgrega(
     contactPhone: phoneFormatted,
     originalImageHash: imageHash,
     originalImagePath: imagePath,
+    contentType: raw.content_type || 'VAGA_DIRETA',
   };
 
   // 8. Validação garantida

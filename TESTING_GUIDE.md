@@ -206,26 +206,143 @@ curl http://localhost:3333/api/v1/admin/settings/ai-pool
 
 ---
 
+---
+
+## 🚀 7. Ingestão de Dados Brutos por Parceiros (API Externa)
+
+Para que parceiros externos enviem imagens brutas diretamente ao pipeline do Agrega (com publicação automática ou rascunho):
+
+### Endpoint 1: Envio JSON com Imagem em Base64 ou URL Externa
+- **Método / URL:** `POST /api/v1/scraper/raw/analyze`
+- **Header:** `Content-Type: application/json`, `x-api-key: <SCRAPER_API_KEY>` (opcional em dev)
+- **Payload:**
+```json
+{
+  "imageUrl": "https://exemplo.com/panfleto-vaga.jpg",
+  "imageBase64": "data:image/jpeg;base64,...",
+  "fileName": "anuncio_emprego.jpg",
+  "directPublish": true,
+  "metadata": {
+    "origem": "bot_whatsapp_parceiro"
+  }
+}
+```
+
+#### Exemplo cURL:
+```bash
+curl -X POST http://localhost:3333/api/v1/scraper/raw/analyze \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: your-secret-api-key-here" \
+  -d '{
+    "imageUrl": "https://exemplo.com/vaga.jpg",
+    "directPublish": true
+  }'
+```
+
+#### Resposta de Sucesso (`200 OK` para vaga processada):
+```json
+{
+  "success": true,
+  "status": "PROCESSED",
+  "traceId": "trc_api_1791773969404_a1b2c3",
+  "contentType": "VAGA_DIRETA",
+  "job": {
+    "id_vaga": "img-sha256-a1b2c3d4...",
+    "titulo": "Promotor de Vendas",
+    "empresa": "Z&Z Distribuidora",
+    "local": "Caraguatatuba, SP",
+    "salario": "Compatível com o mercado",
+    "tipo_vaga": "CLT"
+  },
+  "discardReason": null,
+  "directPublished": true
+}
+```
+
+### Endpoint 2: Upload Multipart Form-Data (Arquivo Binário)
+- **Método / URL:** `POST /api/v1/scraper/raw/upload`
+- **Header:** `x-api-key: <SCRAPER_API_KEY>`
+- **Form Field:** `file` (arquivo de imagem)
+
+#### Exemplo cURL:
+```bash
+curl -X POST http://localhost:3333/api/v1/scraper/raw/upload \
+  -H "x-api-key: your-secret-api-key-here" \
+  -F "file=@/caminho/para/imagem.jpg"
+```
+
+---
+
+## 🛡️ 8. Smart Relevance Guard (Detecção e Descarte Inteligente)
+
+O motor conta com um filtro semântico de duas etapas que protege o banco de dados contra lixo eletrônico:
+
+1. **`VAGA_DIRETA`**: Vagas de emprego tradicionais CLT/PJ/Freelancer (ex: Promotor, Cozinheira, Pizzaiolo). -> **Publicado**.
+2. **`PROGRAMA_EMPREGABILIDADE`**: Oportunidades sociais, programas de inserção e aprendizagem de instituições como o Instituto Inaee. -> **Publicado**.
+3. **`CURSO_CAPACITACAO`**: Cursos profissionalizantes com direcionamento de currículos. -> **Publicado ou marcado para triagem**.
+4. **`NAO_E_VAGA`**: Imagens sem relação com emprego (cardápios, comprovantes bancários Pix, memes, fotos pessoais, produtos à venda). -> **Descartado com status `DISCARDED` (`HTTP 202 Accepted`) e `discardReason` preenchido, sem poluir a base de vagas do site**.
+
+#### Exemplo de Resposta para Conteúdo Descartado:
+```json
+{
+  "success": true,
+  "status": "DISCARDED",
+  "traceId": "trc_api_1791774000000_d4e5f6",
+  "contentType": "NAO_E_VAGA",
+  "job": null,
+  "discardReason": "Comprovante de pagamento bancário sem relação com anúncios de emprego",
+  "directPublished": false
+}
+```
+
+---
+
+## 🤖 9. Trilha de Auditoria para Supervisores (Bots, IA e Humanos)
+
+Qualquer bot supervisor ou administrador pode inspecionar o fluxo de execução em tempo real:
+
+- **Logs Detalhados:** `GET /api/v1/scraper/raw/audit-logs?limit=50&status=ALL` (ou `GET /api/v1/admin/scraper/audit-logs`)
+- **Métricas Agregadas:** `GET /api/v1/scraper/raw/metrics` (ou `GET /api/v1/admin/scraper/metrics`)
+
+#### Estrutura do Item de Auditoria:
+```json
+{
+  "id": "aud_1791773969404_0",
+  "traceId": "trc_api_1791773969404_a1b2c3",
+  "timestamp": "2026-10-12T03:00:00.000Z",
+  "stage": "INGEST",
+  "status": "PROCESSED",
+  "fileName": "WhatsApp Image 2026-10-07 at 13.39.58.jpeg",
+  "contentType": "VAGA_DIRETA",
+  "details": "Vaga convertida com sucesso: Promotor de Vendas | Z&Z Distribuidora",
+  "latencyMs": 145,
+  "providerUsed": "gemini"
+}
+```
+
+---
+
 ## 📋 Matriz de Validação das Imagens de Teste
 
-| Arquivo de Imagem | Cargo Extraído | Empresa | Localidade | Contato WhatsApp | Validação Schema |
-| :--- | :--- | :--- | :--- | :--- | :---: |
-| `13.39.58.jpeg` | Promotor de Vendas | Z&Z Distribuidora | Caraguatatuba, SP | (12) 99658-2121 | ✅ 100% |
-| `13.40.40.jpeg` | Cozinheira | Lar Vicentino de Ubatuba | Ubatuba, SP | (12) 3832-1532 | ✅ 100% |
-| `13.40.44.jpeg` | Doméstica | Particular / Residencial | Ubatuba, SP | (12) 99775-4016 | ✅ 100% |
-| `13.40.49.jpeg` | Garçonete | Condessa Caiçara | Litoral Norte, SP | (11) 98419-6338 | ✅ 100% |
-| `13.41.11.jpeg` | Bargirl | Condessa Caiçara | Litoral Norte, SP | (11) 98419-6338 | ✅ 100% |
-| `13.41.30.jpeg` | Caseiro(a) | Pousada | Litoral Norte, SP | (12) 98821-5129 | ✅ 100% |
-| `Nova pasta/10.09.34.jpeg` | Emprego CLT / Projeto Social | Instituto Inaee | Jacareí, SP | (12) 2101-0606 | ✅ 100% |
-| `Nova pasta/10.09.35.jpeg` | Supervisor de Armazém | Imediato Nexway | Jacareí, SP | (11) 94456-9159 | ✅ 100% |
-| `Nova pasta/10.09.36.jpeg` | Pizzaiolo ou Esfiheiro | SamPa Esfiharia | São Sebastião, SP | (12) 98868-7905 | ✅ 100% |
+| Arquivo de Imagem | Tipo Classificado | Cargo Extraído | Empresa | Localidade | Contato WhatsApp | Validação Schema |
+| :--- | :--- | :--- | :--- | :--- | :--- | :---: |
+| `13.39.58.jpeg` | `VAGA_DIRETA` | Promotor de Vendas | Z&Z Distribuidora | Caraguatatuba, SP | (12) 99658-2121 | ✅ 100% |
+| `13.40.40.jpeg` | `VAGA_DIRETA` | Cozinheira | Lar Vicentino de Ubatuba | Ubatuba, SP | (12) 3832-1532 | ✅ 100% |
+| `13.40.44.jpeg` | `VAGA_DIRETA` | Doméstica | Particular / Residencial | Ubatuba, SP | (12) 99775-4016 | ✅ 100% |
+| `13.40.49.jpeg` | `VAGA_DIRETA` | Garçonete | Condessa Caiçara | Litoral Norte, SP | (11) 98419-6338 | ✅ 100% |
+| `13.41.11.jpeg` | `VAGA_DIRETA` | Bargirl | Condessa Caiçara | Litoral Norte, SP | (11) 98419-6338 | ✅ 100% |
+| `13.41.30.jpeg` | `VAGA_DIRETA` | Caseiro(a) | Pousada | Litoral Norte, SP | (12) 98821-5129 | ✅ 100% |
+| `Nova pasta/10.09.34.jpeg` | `PROGRAMA_EMPREGABILIDADE` | Emprego CLT / Projeto Social | Instituto Inaee | Jacareí, SP | (12) 2101-0606 | ✅ 100% |
+| `Nova pasta/10.09.35.jpeg` | `VAGA_DIRETA` | Supervisor de Armazém | Imediato Nexway | Jacareí, SP | (11) 94456-9159 | ✅ 100% |
+| `Nova pasta/10.09.36.jpeg` | `VAGA_DIRETA` | Pizzaiolo ou Esfiheiro | SamPa Esfiharia | São Sebastião, SP | (12) 98868-7905 | ✅ 100% |
+| `comprovante_pix.jpg` | `NAO_E_VAGA` | Descartado | N/A | N/A | N/A | 🛡️ Descartado |
 
 ---
 
 ## 🛡️ Checklist de Conformidade com a Constitution
 
-- [x] **Artigo I (Isolamento de Camadas):** Rotas HTTP apenas delegam aos Services (`SettingsService`, `JobService`). Zero chamadas diretas ao Prisma a partir de controladores ou rotas.
-- [x] **Artigo III (Tipagem Estrita):** Zero uso de `any`, `@ts-ignore` ou coerções forçadas (`as unknown as Type`). `npm run build` e `tsc --noEmit` passam sem nenhum aviso.
-- [x] **Artigo V (TDD Red-Green):** 19 testes automatizados cobrindo balanceamento, resiliência e validação de dados.
+- [x] **Artigo I (Isolamento de Camadas):** Rotas HTTP apenas delegam aos Controllers e Services (`JobService`, `ScraperAuditService`). Zero chamadas diretas ao Prisma a partir de controladores ou rotas.
+- [x] **Artigo III (Tipagem Estrita):** Zero uso de `any`, `@ts-ignore` ou coerções forçadas. Tipagem estrita completa e `npm run build` / `npx tsc --noEmit` passam sem nenhum erro.
+- [x] **Artigo V (TDD Red-Green):** 27 testes automatizados cobrindo balanceamento, resiliência, descarte inteligente, API de parceiro e trilha de auditoria.
 - [x] **Artigo VI & VII (Changelog):** Todas as mudanças registradas sob `[Unreleased]` com as tags canônicas `[FACT]`, `[MODIFY]`, `[TEST]` e `[BUGFIX]`.
 - [x] **Infraestrutura Cloudflare Preservada:** Build do Cloudflare Pages e Workers 100% intactos.

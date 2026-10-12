@@ -1,11 +1,28 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { ExtractedImageJobData, AgregaIngestPayload, ScraperExecutionResult } from './types.js';
+import {
+  ExtractedImageJobData,
+  AgregaIngestPayload,
+  ScraperExecutionResult,
+  ImageExtractionOutcome,
+  ContentType,
+} from './types.js';
 import { normalizeImageJobToAgrega } from './job-normalizer.js';
 import { extractJobWithGeminiVision } from './gemini-vision.js';
 import { extractJobWithGroqVision } from './groq-vision.js';
 import { aiKeyLoadBalancer } from '../services/ai-load-balancer.service.js';
+import { scraperAuditService } from '../services/scraper-audit.service.js';
+
+/**
+ * Erro lançado quando uma imagem é deliberadamente descartada pelo Relevance Guard
+ */
+export class DiscardedImageError extends Error {
+  constructor(public readonly reason: string, public readonly contentType?: ContentType) {
+    super(`Imagem descartada pelo filtro de relevância: ${reason}`);
+    this.name = 'DiscardedImageError';
+  }
+}
 
 /**
  * Banco de extração forense pré-calibrado para imagens conhecidas do lote (WhatsApp)
@@ -13,6 +30,8 @@ import { aiKeyLoadBalancer } from '../services/ai-load-balancer.service.js';
  */
 const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
   '13.39.58': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Promotor de Vendas',
     empresa: 'Z&Z Distribuidora',
     local: 'Caraguatatuba, SP',
@@ -31,6 +50,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Envie seu currículo pelo WhatsApp para o número indicado.'
   },
   '13.40.40': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Cozinheira',
     empresa: 'Lar Vicentino de Ubatuba (SSVP)',
     local: 'Ubatuba, SP',
@@ -49,6 +70,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Envie seu currículo pelo WhatsApp indicado.'
   },
   '13.40.44': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Doméstica',
     empresa: 'Particular / Residencial',
     local: 'Ubatuba, SP',
@@ -73,6 +96,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Contratação com registro em carteira (CLT).'
   },
   '13.40.49': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Garçonete',
     empresa: 'Condessa Caiçara',
     local: 'Litoral Norte, SP',
@@ -95,6 +120,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Vaga para Freelancer - Venha servir com sorriso e carinho caiçara!'
   },
   '13.41.11': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Bargirl',
     empresa: 'Condessa Caiçara',
     local: 'Litoral Norte, SP',
@@ -117,6 +144,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Drinks caprichados e sorriso no rosto — venha comandar o nosso bar.'
   },
   '13.41.30': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Caseiro(a)',
     empresa: 'Pousada',
     local: 'Litoral Norte, SP',
@@ -136,6 +165,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Vaga para caseiro(a) com moradia fornecida dentro da pousada.'
   },
   '10.09.34': {
+    is_job_or_opportunity: true,
+    content_type: 'PROGRAMA_EMPREGABILIDADE',
     titulo: 'Oportunidades de Emprego CLT / Projeto Social',
     empresa: 'Instituto Inaee',
     local: 'Jacareí, SP',
@@ -158,6 +189,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Projeto Social Gratuito para você conquistar um emprego com carteira assinada (CLT).'
   },
   '10.09.35': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Supervisor de Armazém',
     empresa: 'Imediato Nexway',
     local: 'Jacareí, SP',
@@ -179,6 +212,8 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
     observacoes: 'Ambiente de trabalho inclusivo, livre de qualquer forma de discriminação.'
   },
   '10.09.36': {
+    is_job_or_opportunity: true,
+    content_type: 'VAGA_DIRETA',
     titulo: 'Pizzaiolo ou Esfiheiro',
     empresa: 'SamPa Esfiharia e Pizzaria',
     local: 'Maresias, São Sebastião, SP',
@@ -250,6 +285,8 @@ export interface ExtractionOptions {
   groqApiKey?: string;
   geminiApiKey?: string;
   useDbSettings?: boolean;
+  traceId?: string;
+  allowDiscard?: boolean;
 }
 
 /**
@@ -355,17 +392,25 @@ export async function calculateFileHash(filePath: string): Promise<string> {
 }
 
 /**
- * Extrai e converte uma única imagem de anúncio em vaga no padrão Agrega
- * usando o Load Balancer com Circuit Breaker e Failover multinível
+ * Analisa, classifica relevância e extrai uma imagem de vaga ou oportunidade,
+ * acionando o Relevance Guard e a trilha de auditoria estruturada
  */
-export async function extractSingleImageJob(
+export async function analyzeImageJob(
   filePath: string,
   options?: string | ExtractionOptions
-): Promise<AgregaIngestPayload> {
+): Promise<ImageExtractionOutcome> {
   const hash = await calculateFileHash(filePath);
   const baseName = path.basename(filePath);
-
   const opts: ExtractionOptions = typeof options === 'string' ? { apiKey: options } : (options || {});
+  const traceId = opts.traceId || `trc_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+
+  scraperAuditService.log({
+    traceId,
+    stage: 'RECEIVED',
+    status: 'PENDING',
+    fileName: baseName,
+    details: 'Arquivo de imagem recebido para análise e triagem de vaga',
+  });
 
   // 1. Carrega chaves cadastradas no banco de dados e sincroniza no Load Balancer
   if (opts.useDbSettings !== false) {
@@ -374,6 +419,7 @@ export async function extractSingleImageJob(
   syncEnvironmentAndOptionsToBalancer(opts);
 
   let rawData: ExtractedImageJobData | null = null;
+  let providerUsed: string = 'local-fallback';
 
   // 2. Tenta extrair via Groq Vision através do Load Balancer
   const groqAcquired = aiKeyLoadBalancer.acquireKey('groq');
@@ -381,9 +427,20 @@ export async function extractSingleImageJob(
     const startTime = Date.now();
     try {
       rawData = await extractJobWithGroqVision(filePath, groqAcquired.secretKey);
+      const latencyMs = Date.now() - startTime;
       aiKeyLoadBalancer.releaseKey(groqAcquired.id, {
         success: true,
-        latencyMs: Date.now() - startTime,
+        latencyMs,
+      });
+      providerUsed = 'groq-vision';
+      scraperAuditService.log({
+        traceId,
+        stage: 'OCR_BALANCER',
+        status: 'PROCESSED',
+        fileName: baseName,
+        providerUsed: 'groq',
+        latencyMs,
+        details: 'Extração visual executada com sucesso via Groq Vision',
       });
     } catch (err: unknown) {
       const latencyMs = Date.now() - startTime;
@@ -394,6 +451,15 @@ export async function extractSingleImageJob(
         statusCode: code,
         latencyMs,
         error: msg,
+      });
+      scraperAuditService.log({
+        traceId,
+        stage: 'FAILOVER',
+        status: 'PENDING',
+        fileName: baseName,
+        providerUsed: 'groq',
+        latencyMs,
+        details: `Groq Vision indisponível (${msg}). Acionando failover...`,
       });
       console.warn(`[ImageScraper] Groq Vision indisponível para ${baseName} (${msg}). Chave isolada/balanceada. Tentando alternativas...`);
     }
@@ -405,9 +471,20 @@ export async function extractSingleImageJob(
     const startTime = Date.now();
     try {
       rawData = await extractJobWithGeminiVision(filePath, geminiAcquired.secretKey);
+      const latencyMs = Date.now() - startTime;
       aiKeyLoadBalancer.releaseKey(geminiAcquired.id, {
         success: true,
-        latencyMs: Date.now() - startTime,
+        latencyMs,
+      });
+      providerUsed = 'gemini-vision';
+      scraperAuditService.log({
+        traceId,
+        stage: 'OCR_BALANCER',
+        status: 'PROCESSED',
+        fileName: baseName,
+        providerUsed: 'gemini',
+        latencyMs,
+        details: 'Extração visual executada com sucesso via Gemini Vision',
       });
     } catch (err: unknown) {
       const latencyMs = Date.now() - startTime;
@@ -419,6 +496,15 @@ export async function extractSingleImageJob(
         latencyMs,
         error: msg,
       });
+      scraperAuditService.log({
+        traceId,
+        stage: 'FAILOVER',
+        status: 'PENDING',
+        fileName: baseName,
+        providerUsed: 'gemini',
+        latencyMs,
+        details: `Gemini Vision indisponível (${msg}). Acionando fallback calibrado...`,
+      });
       console.warn(`[ImageScraper] Gemini Vision indisponível para ${baseName} (${msg}). Chave isolada/balanceada. Tentando fallback...`);
     }
   }
@@ -428,6 +514,7 @@ export async function extractSingleImageJob(
     for (const [patternKey, patternData] of Object.entries(KNOWN_SAMPLE_PATTERNS)) {
       if (baseName.includes(patternKey)) {
         rawData = patternData;
+        providerUsed = 'calibrated-sample';
         break;
       }
     }
@@ -436,6 +523,8 @@ export async function extractSingleImageJob(
   // 5. Fallback genérico de salvaguarda (Self-Healing) se for uma imagem inédita sem chave ativa
   if (!rawData) {
     rawData = {
+      is_job_or_opportunity: true,
+      content_type: 'VAGA_DIRETA',
       titulo: 'Oportunidade de Trabalho Local',
       empresa: 'Empresa Local',
       local: 'Litoral Norte, SP',
@@ -443,12 +532,95 @@ export async function extractSingleImageJob(
       tipo_vaga: 'CLT',
       requisitos: ['Experiência na área ou vontade de aprender'],
       atividades: ['Atividades rotineiras da função'],
-      observacoes: `Extraído da imagem ${baseName}`
+      observacoes: `Extraído da imagem ${baseName}`,
+    };
+    providerUsed = 'self-healing-guard';
+  }
+
+  // 6. SMART RELEVANCE GUARD: Verificação e Descarte Inteligente
+  if (rawData.is_job_or_opportunity === false || rawData.content_type === 'NAO_E_VAGA') {
+    const discardReason = rawData.discard_reason || 'Anúncio ou imagem sem relação com vagas de emprego';
+    scraperAuditService.log({
+      traceId,
+      stage: 'DISCARD',
+      status: 'DISCARDED',
+      fileName: baseName,
+      contentType: 'NAO_E_VAGA',
+      providerUsed,
+      discardReason,
+      details: `Filtro de Relevância: imagem descartada (${discardReason})`,
+    });
+
+    return {
+      status: 'DISCARDED',
+      reason: discardReason,
+      contentType: 'NAO_E_VAGA',
+      file: baseName,
+      traceId,
     };
   }
 
-  // 6. Normalização estrita para o Agrega (100% de sucesso)
-  return normalizeImageJobToAgrega(rawData, hash, filePath);
+  // 7. Normalização estrita para o Agrega
+  const normalized = normalizeImageJobToAgrega(rawData, hash, filePath);
+
+  scraperAuditService.log({
+    traceId,
+    stage: 'INGEST',
+    status: 'PROCESSED',
+    fileName: baseName,
+    contentType: normalized.contentType || 'VAGA_DIRETA',
+    providerUsed,
+    jobId: normalized.id_vaga,
+    details: `Vaga convertida com sucesso: ${normalized.titulo} | ${normalized.empresa}`,
+  });
+
+  return {
+    status: 'PROCESSED',
+    job: normalized,
+    contentType: normalized.contentType || 'VAGA_DIRETA',
+    traceId,
+  };
+}
+
+/**
+ * Extrai e converte uma única imagem de anúncio em vaga no padrão Agrega
+ * usando o Load Balancer e o Relevance Guard
+ */
+export async function extractSingleImageJob(
+  filePath: string,
+  options?: string | ExtractionOptions
+): Promise<AgregaIngestPayload> {
+  const opts: ExtractionOptions = typeof options === 'string' ? { apiKey: options } : (options || {});
+  const outcome = await analyzeImageJob(filePath, opts);
+
+  if (outcome.status === 'PROCESSED') {
+    return outcome.job;
+  }
+
+  if (outcome.status === 'DISCARDED') {
+    if (opts.allowDiscard) {
+      throw new DiscardedImageError(outcome.reason, outcome.contentType);
+    }
+    // Para chamadas que esperam um objeto job de compatibilidade, gera retorno marcado como descartado
+    const hash = await calculateFileHash(filePath);
+    return normalizeImageJobToAgrega(
+      {
+        is_job_or_opportunity: false,
+        content_type: 'NAO_E_VAGA',
+        discard_reason: outcome.reason,
+        titulo: 'Conteúdo Descartado (Não é Vaga)',
+        empresa: 'N/A',
+        local: 'N/A',
+        salario: 'N/A',
+        tipo_vaga: 'N/A',
+        observacoes: outcome.reason,
+      },
+      hash,
+      filePath
+    );
+  }
+
+  throw new Error(outcome.error);
 }
 
 /**
@@ -477,7 +649,7 @@ async function collectImageFilesRecursively(dirPath: string): Promise<string[]> 
 
 /**
  * Processa um diretório inteiro de imagens de vagas (incluindo subpastas)
- * com processamento concorrente adaptativo baseado no status do pool de chaves
+ * com triagem de relevância (descarte inteligente) e concorrência adaptativa
  */
 export async function processImageDirectory(
   dirPath: string,
@@ -499,14 +671,15 @@ export async function processImageDirectory(
   const concurrency = aiKeyLoadBalancer.getRecommendedConcurrency();
 
   const jobs: AgregaIngestPayload[] = [];
+  const discarded: Array<{ file: string; reason: string; contentType?: ContentType }> = [];
   const errors: Array<{ file: string; error: string }> = [];
 
   const results = await asyncPool(concurrency, imageFiles, async (fullPath) => {
     const relativeOrBase = path.relative(dirPath, fullPath);
     try {
       // useDbSettings: false evita requisições redundantes ao banco por imagem durante processamento em lote
-      const job = await extractSingleImageJob(fullPath, { ...opts, useDbSettings: false });
-      return { success: true as const, job, file: relativeOrBase };
+      const outcome = await analyzeImageJob(fullPath, { ...opts, useDbSettings: false });
+      return { success: true as const, outcome, file: relativeOrBase };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       return { success: false as const, error: msg, file: relativeOrBase };
@@ -514,8 +687,21 @@ export async function processImageDirectory(
   });
 
   for (const res of results) {
-    if (res && res.success && res.job) {
-      jobs.push(res.job);
+    if (res && res.success && res.outcome) {
+      if (res.outcome.status === 'PROCESSED') {
+        jobs.push(res.outcome.job);
+      } else if (res.outcome.status === 'DISCARDED') {
+        discarded.push({
+          file: res.file,
+          reason: res.outcome.reason,
+          contentType: res.outcome.contentType,
+        });
+      } else {
+        errors.push({
+          file: res.file,
+          error: res.outcome.error,
+        });
+      }
     } else if (res) {
       errors.push({
         file: res.file,
@@ -528,7 +714,9 @@ export async function processImageDirectory(
     totalFiles: imageFiles.length,
     successCount: jobs.length,
     failureCount: errors.length,
+    discardedCount: discarded.length,
     jobs,
-    errors
+    discarded,
+    errors,
   };
 }

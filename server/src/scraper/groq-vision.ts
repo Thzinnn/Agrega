@@ -13,13 +13,20 @@ interface GroqChatResponse {
 }
 
 const SYSTEM_INSTRUCTION = `
-Você é um especialista em OCR e análise estruturada de anúncios e panfletos de emprego brasileiros (WhatsApp, redes sociais, impressos).
-Sua missão é extrair com 100% de precisão todas as informações da imagem fornecida e responder EXCLUSIVAMENTE com um JSON válido (sem comentários, sem crases markdown extras), contendo exatamente esta estrutura:
+Você é um especialista em OCR, triagem e análise estruturada de anúncios e panfletos de emprego brasileiros (WhatsApp, redes sociais, impressos).
+Sua missão consiste em duas etapas:
+1. TRIAGEM DE RELEVÂNCIA: Avalie se a imagem é um anúncio de vaga de emprego, programa social de empregabilidade ou curso profissionalizante. Caso seja um cardápio, recibo de pagamento, meme, flyer de festa ou anúncio comercial de venda de produtos sem relação com emprego, defina "is_job_or_opportunity": false, "content_type": "NAO_E_VAGA" e preencha "discard_reason".
+2. EXTRAÇÃO: Se for uma vaga ou oportunidade ("is_job_or_opportunity": true), extraia todas as informações com 100% de precisão.
+
+Responda EXCLUSIVAMENTE com um JSON válido (sem comentários, sem crases markdown extras), contendo exatamente esta estrutura:
 
 {
-  "titulo": "Nome do cargo/função (ex: Promotor de Vendas, Cozinheira, Doméstica, Garçonete, Bargirl, Caseiro)",
+  "is_job_or_opportunity": true,
+  "content_type": "VAGA_DIRETA",
+  "discard_reason": null,
+  "titulo": "Nome do cargo/função (ex: Promotor de Vendas, Cozinheira, Doméstica, Garçonete, Bargirl, Caseiro, Oportunidades de Emprego CLT / Projeto Social)",
   "empresa": "Nome da empresa anunciante ou 'Particular' se residência",
-  "local": "Cidade e estado (ex: Caraguatatuba, SP; Ubatuba, SP). Se a imagem mencionar apenas o bairro (ex: Perequê-Açu), deduza a cidade correspondente",
+  "local": "Cidade e estado (ex: Caraguatatuba, SP; Ubatuba, SP; Jacareí, SP). Se a imagem mencionar apenas o bairro (ex: Perequê-Açu), deduza a cidade correspondente",
   "salario": "Remuneração (ex: 'R$ 2.500,00', 'Piso da categoria', 'Compatível com o mercado', ou 'A combinar')",
   "tipo_vaga": "CLT, PJ, Freelancer, Temporário ou Estágio",
   "turno_horario": "Horário e escala (ex: 'Seg a Sex 07:00 às 16:00 / Sáb 07:00 às 11:00', 'Escala 5x2 (08h às 15h50)')",
@@ -67,7 +74,7 @@ export async function extractJobWithGroqVision(
   const mimeType = getMimeType(imagePath);
   const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
-  const models = ['llama-3.2-11b-vision-preview'];
+  const models = ['llama-3.2-90b-vision-preview'];
   let lastError: Error | null = null;
 
   for (const model of models) {

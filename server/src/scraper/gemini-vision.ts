@@ -22,13 +22,20 @@ interface GeminiGenerateContentResponse {
  * Prompt de extração multimodal estruturada para anúncios e panfletos de emprego
  */
 const SYSTEM_INSTRUCTION = `
-Você é um especialista em OCR e análise estruturada de anúncios e panfletos de emprego brasileiros (WhatsApp, redes sociais, impressos).
-Sua missão é extrair com 100% de precisão todas as informações da imagem e retornar EXCLUSIVAMENTE um objeto JSON válido (sem tags markdown, sem explicações), no seguinte formato:
+Você é um especialista em OCR, triagem e análise estruturada de anúncios e panfletos de emprego brasileiros (WhatsApp, redes sociais, impressos).
+Sua missão consiste em duas etapas:
+1. TRIAGEM DE RELEVÂNCIA: Avalie se a imagem é um anúncio de vaga de emprego, programa social de empregabilidade ou curso profissionalizante. Caso seja um cardápio, recibo de pagamento, meme, flyer de festa ou anúncio comercial de venda de produtos sem relação com emprego, defina "is_job_or_opportunity": false, "content_type": "NAO_E_VAGA" e preencha "discard_reason".
+2. EXTRAÇÃO: Se for uma vaga ou oportunidade ("is_job_or_opportunity": true), extraia todas as informações com 100% de precisão.
+
+Retorne EXCLUSIVAMENTE um objeto JSON válido (sem tags markdown, sem explicações), no seguinte formato:
 
 {
-  "titulo": "Nome do cargo/função com precisão (ex: Promotor de Vendas, Cozinheira, Doméstica, Garçonete, Bargirl, Caseiro)",
-  "empresa": "Nome da empresa/instituição anunciante (ex: Z&Z Distribuidora, Lar Vicentino de Ubatuba, Condessa Caiçara, Pousada, ou 'Particular' se residência)",
-  "local": "Cidade e estado (ex: Caraguatatuba, SP; Ubatuba, SP). Se a imagem mencionar apenas o bairro (ex: Perequê-Açu), deduza a cidade correspondente",
+  "is_job_or_opportunity": true,
+  "content_type": "VAGA_DIRETA",
+  "discard_reason": null,
+  "titulo": "Nome do cargo/função com precisão (ex: Promotor de Vendas, Cozinheira, Doméstica, Garçonete, Bargirl, Caseiro, Oportunidades de Emprego CLT / Projeto Social)",
+  "empresa": "Nome da empresa/instituição anunciante (ex: Z&Z Distribuidora, Lar Vicentino de Ubatuba, Condessa Caiçara, Pousada, Instituto Inaee, ou 'Particular' se residência)",
+  "local": "Cidade e estado (ex: Caraguatatuba, SP; Ubatuba, SP; Jacareí, SP). Se a imagem mencionar apenas o bairro (ex: Perequê-Açu), deduza a cidade correspondente",
   "salario": "Remuneração mencionada (ex: 'R$ 2.500,00', 'Piso da categoria', 'Compatível com o mercado', ou 'A combinar')",
   "tipo_vaga": "Regime de trabalho: CLT, PJ, Freelancer, Temporário ou Estágio",
   "turno_horario": "Horário de trabalho e escala (ex: 'Seg a Sex 07:00 às 16:00 / Sáb 07:00 às 11:00', 'Escala 5x2 (08h às 15h50)')",

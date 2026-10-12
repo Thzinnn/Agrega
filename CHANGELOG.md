@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### [FACT] - 2026-10-12
+- **Descrição:** Implementação da API de Ingestão de Dados Brutos para Parceiros (`POST /api/v1/scraper/raw/analyze` e `POST /api/v1/scraper/raw/upload`) com suporte a Base64, URLs externas e uploads binários Multipart, autenticação via `x-api-key` e publicação direta opcional (`directPublish: true`) através do `JobService`. Implementação do Smart Relevance Guard com triagem e descarte inteligente em 4 categorias (`VAGA_DIRETA`, `PROGRAMA_EMPREGABILIDADE`, `CURSO_CAPACITACAO`, `NAO_E_VAGA`), preservando oportunidades sociais legítimas (como Instituto Inaee) e descartando lixo eletrônico (cardápios, recibos bancários e memes) com status `DISCARDED` e justificativa clara sem poluir o banco de dados. Implementação do serviço de Auditoria e Supervisão em tempo real (`ScraperAuditService`) com buffer circular de 500 eventos e endpoints dedicados (`GET /api/v1/scraper/raw/audit-logs` e `GET /api/v1/admin/scraper/audit-logs`) para inspeção de ciclo de vida por bots supervisores, humanos e agentes de IA.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/schemas/scraper-raw.schema.ts`, `server/src/services/scraper-audit.service.ts`, `server/src/controllers/scraper-raw.controller.ts`, `server/src/routes/scraper-raw.routes.ts`, `server/src/routes/admin.routes.ts`, `server/src/routes/index.ts`, `server/src/scraper/types.ts`, `server/src/scraper/image-extractor.ts`, `server/src/scraper/job-normalizer.ts`, `server/src/scraper/groq-vision.ts`, `server/src/scraper/gemini-vision.ts`
+
+### [TEST] - 2026-10-12
+- **Descrição:** Criação da suíte de testes automatizados `scraper-relevance-and-audit.test.ts` (8 testes com Vitest), cobrindo classificação de vaga direta (`Promotor de Vendas`), programa de empregabilidade social (`Instituto Inaee`), descarte semântico de não-vagas com erro tipado `DiscardedImageError`, registro de eventos de auditoria com cálculo de métricas consolidadas (latência, taxa de sucesso, contagens), busca estruturada por `traceId` para supervisores e fluxo completo do controller HTTP de ingestão de imagens em base64. Total de 27 testes unitários e de integração verdes no servidor.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/scraper-relevance-and-audit.test.ts`
+
+### [MODIFY] - 2026-10-12
+- **Descrição:** Adequação estrita à Constitution Artigo III com erradicação de tipos `any` em `server/src/utils/logger.ts`, substituídos por tipagem estrita `Record<string, unknown>` e `unknown`. Atualização dos modelos Groq Vision em `groq-vision.ts` para remoção de modelo descontinuado pelo provedor.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/utils/logger.ts`, `server/src/scraper/groq-vision.ts`
+
 ### [DOCS] - 2026-10-11
 - **Descrição:** Criação do guia completo de testes ponta a ponta (`TESTING_GUIDE.md`) documentando o fluxo total: configuração de chaves (variáveis de ambiente, painel administrativo e linha de comando), execução dos testes unitários/integração com Vitest, execução do scraper via CLI (`npm run scraper:images`), ingestão direta no banco e via API HTTP, monitoramento de métricas do `AiKeyLoadBalancer` (`GET /api/v1/admin/settings/ai-pool`) e conferência visual no frontend Next.js.
 - **Escopo:** `raiz`

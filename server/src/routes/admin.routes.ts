@@ -8,6 +8,8 @@ import bcrypt from 'bcryptjs';
 import { settingsService } from '../services/settings.service.js';
 import { upsertSettingSchema } from '../schemas/settings.schema.js';
 import { aiKeyLoadBalancer } from '../services/ai-load-balancer.service.js';
+import { scraperAuditService } from '../services/scraper-audit.service.js';
+import { auditLogQuerySchema } from '../schemas/scraper-raw.schema.js';
 
 interface AdminUserPayload {
   sub: string;
@@ -577,4 +579,25 @@ adminRoutes.get('/settings/ai-pool', async (c) => {
 
   const poolStatus = aiKeyLoadBalancer.getPoolStatus();
   return c.json({ success: true, data: poolStatus });
+});
+
+// ==========================================
+// SCRAPER AUDIT & SUPERVISION (SUPERVISOR BOT / IA / ADMIN)
+// ==========================================
+adminRoutes.get('/scraper/audit-logs', async (c) => {
+  const queryRaw = c.req.query();
+  const parsed = auditLogQuerySchema.parse(queryRaw);
+  const result = scraperAuditService.query(parsed);
+  return c.json(result, 200);
+});
+
+adminRoutes.get('/scraper/metrics', async (c) => {
+  const stats = scraperAuditService.query({ limit: 1 });
+  return c.json(
+    {
+      success: true,
+      data: stats.metrics,
+    },
+    200
+  );
 });
