@@ -81,6 +81,13 @@ Toda alteração de código, arquitetura ou documentação deve ser registrada s
 
 ```
 
+### VIII. Política Estrita de Git e Pull Requests (Branching Model) (OBRIGATÓRIO)
+
+Todos os Pull Requests (PRs) criados no repositório devem **OBRIGATORIAMENTE** ter como branch de destino (`base`) a branch **`development`**.
+* É expressamente proibido abrir ou direcionar PRs de novas funcionalidades (`feat/*`), correções (`fix/*`) ou melhorias diretamente para a `master` ou `main`.
+* A branch `master` é reservada exclusivamente para releases estáveis de produção.
+* Todo agente de IA ou desenvolvedor deve garantir o uso de `--base development` ao interagir via GitHub CLI (`gh pr create`, `gh pr edit`).
+
 ---
 
 ## Restrições da Stack
@@ -96,6 +103,9 @@ Toda alteração de código, arquitetura ou documentação deve ser registrada s
 ---
 
 ## Diretrizes Operacionais para Agentes de IA
+
+> [!IMPORTANT] Alvo Obrigatório de Pull Requests: `development`
+> Qualquer PR criado, editado ou reconfigurado por agentes de IA ou automações no GitHub deve **OBRIGATORIAMENTE** ter como base a branch **`development`** (`gh pr create --base development` ou `gh pr edit <N> --base development`). Nunca aponte PRs de trabalho diretamente para `master` ou `main`.
 
 > [!WARNING] Proibição Absoluta de `any`
 > Nunca utilize `any` para contornar erros de tipagem do TypeScript. Se o tipo de uma carga de dados for desconhecido, valide e faça o parse por meio de um schema Zod antes de atribuir a variáveis de domínio.

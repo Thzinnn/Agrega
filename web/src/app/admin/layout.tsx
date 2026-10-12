@@ -15,7 +15,8 @@ import {
   Menu,
   X,
   Database,
-  Webhook as WebhookIcon
+  Webhook as WebhookIcon,
+  Sliders
 } from 'lucide-react';
 
 interface User {
@@ -81,6 +82,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { name: 'Filtros', path: '/admin/filters', icon: <Filter className="w-5 h-5" /> },
     { name: 'Webhooks', path: '/admin/webhooks', icon: <WebhookIcon className="w-5 h-5" /> },
     { name: 'Usuários', path: '/admin/users', icon: <Users className="w-5 h-5" /> },
+    { name: 'Configurações & IA', path: '/admin/settings', icon: <Sliders className="w-5 h-5" /> },
   ];
 
   // Se for a tela de login, não renderiza o layout administrativo

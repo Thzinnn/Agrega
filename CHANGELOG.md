@@ -2,6 +2,21 @@
 
 ## [Unreleased]
 
+### [MODIFY] - 2026-10-12
+- **Descrição:** Atualização da `Constitution.md`: Criação do **Artigo VIII (Política Estrita de Git e Pull Requests - Branching Model)** e inclusão de diretriz operacional mandatória definindo a branch `development` como destino exclusivo de todos os Pull Requests (`--base development`). A branch `master` passa a ser reservada apenas para releases de produção.
+- **Escopo:** `raiz`
+- **Arquivos Afetados:** `Constitution.md`
+
+### [FACT] - 2026-10-12
+- **Descrição:** Implementação da interface visual do Load Balancer e Configurações no Painel Administrativo (`/admin/settings`). Apresenta o monitoramento em tempo real do pool de chaves de IA (`AiKeyLoadBalancer`), incluindo status de cada credencial (`HEALTHY`, `COOLDOWN`, `EXHAUSTED`), taxa de sucesso, latência média e contagem regressiva de cooldown. Apresenta o painel do Gateway Único de Tráfego (`TrafficLimiterService`) com métricas de concorrência em voo, proteção do pool de conexões do PostgreSQL/Neon e total de deduplicações salvas. Inclui formulário integrado para cadastro e persistência de novas chaves de API (`GROQ_API_KEY`, `GEMINI_API_KEY`) via `SystemSetting` e item de navegação no menu lateral do painel (`AdminLayout`).
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/app/admin/settings/page.tsx`, `web/src/app/admin/layout.tsx`
+
+### [TEST] - 2026-10-12
+- **Descrição:** Criação da suíte de testes automatizados `web/src/app/admin/settings/__tests__/page.test.tsx` (3 testes no Vitest), cobrindo o estado de carregamento, renderização de cards e tabelas de métricas do AI Load Balancer e Gateway Traffic, e fluxo de submissão do formulário de novas credenciais com toast de confirmação. Total de 29 testes passando verdes no frontend.
+- **Escopo:** `/web`
+- **Arquivos Afetados:** `web/src/app/admin/settings/__tests__/page.test.tsx`
+
 ### [FACT] - 2026-10-12
 - **Descrição:** Implementação do Gateway Único Universal de Ingestão e Balanceamento (`Universal Ingestion Gateway`) no endpoint unificado `POST /api/v1/gateway/ingest`. Aceita envelopes polimórficos discriminados via Zod por `kind: 'IMAGE' | 'TEXT_JOBS' | 'RAW_TEXT'`, centralizando 100% dos fluxos de scrapers externos (Indeed, Gupy, textos e fotos do WhatsApp) em um único ponto de contato. Implementação do `TrafficLimiterService` com proteção ativa contra exaustão de conexões do Neon PostgreSQL (máximo de requisições em voo concorrentes), backpressure inteligente com `HTTP 429` e cabeçalho `Retry-After: 3`, e cache circular em memória para deduplicação antecipada de payloads idênticos sem custo de I/O no banco. Implementação do `GatewayDispatcherService` com roteamento interno polimórfico e normalização automática. Disponibilização dos endpoints de telemetria e supervisão `GET /api/v1/gateway/metrics` e `GET /api/v1/gateway/traces`.
 - **Escopo:** `/server`
