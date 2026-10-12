@@ -339,10 +339,70 @@ Qualquer bot supervisor ou administrador pode inspecionar o fluxo de execução 
 
 ---
 
+---
+
+## 🌐 8. Gateway Único Universal de Ingestão e Balanceamento (`/api/v1/gateway`)
+
+O **Gateway Único** é o ponto de entrada centralizado para 100% dos fluxos de dados externos (Indeed, Gupy, textos e fotos do WhatsApp do Nicolas). Ele expõe um endpoint polimórfico autodocumentado com controle de vazão (concorrência máxima), backpressure (`HTTP 429 Retry-After`) e deduplicação antecipada.
+
+### Endpoint Principal: `POST /api/v1/gateway/ingest`
+- **Header:** `Content-Type: application/json`, `x-api-key: <GATEWAY_API_KEY>` (opcional em dev/test)
+
+#### 1. Ingestão de Imagem (WhatsApp Fotos / Panfletos):
+```bash
+curl -X POST http://localhost:3333/api/v1/gateway/ingest \
+  -H "Content-Type: application/json" \
+  -H "x-api-key: sua_chave_aqui" \
+  -d '{
+    "kind": "IMAGE",
+    "source": "WHATSAPP_NICOLAS",
+    "imageUrl": "https://exemplo.com/vaga.jpg",
+    "directPublish": true
+  }'
+```
+
+#### 2. Ingestão de Vagas Estruturadas em Lote (Indeed / Gupy):
+```bash
+curl -X POST http://localhost:3333/api/v1/gateway/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "kind": "TEXT_JOBS",
+    "source": "INDEED",
+    "jobs": [
+      {
+        "id_vaga": "ind-101",
+        "titulo": "Recepcionista",
+        "empresa": "Hotel Mar",
+        "local": "Caraguatatuba, SP",
+        "descricao": "Atendimento ao cliente."
+      }
+    ],
+    "directPublish": true
+  }'
+```
+
+#### 3. Ingestão de Texto Bruto (Mensagens de Grupos do WhatsApp):
+```bash
+curl -X POST http://localhost:3333/api/v1/gateway/ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "kind": "RAW_TEXT",
+    "source": "WHATSAPP_GRUPO",
+    "rawText": "Contrata-se urgente Auxiliar de Cozinha em Caraguá. Salário R$ 1.800. Fone: (12) 99123-4567",
+    "directPublish": true
+  }'
+```
+
+### Endpoints de Telemetria e Auditoria:
+- **`GET /api/v1/gateway/metrics`**: Retorna concorrência em voo, saturação do pool, latência média e contagem de deduplicações.
+- **`GET /api/v1/gateway/traces?limit=20`**: Retorna a trilha de execução com traceId e status de processamento/descarte.
+
+---
+
 ## 🛡️ Checklist de Conformidade com a Constitution
 
-- [x] **Artigo I (Isolamento de Camadas):** Rotas HTTP apenas delegam aos Controllers e Services (`JobService`, `ScraperAuditService`). Zero chamadas diretas ao Prisma a partir de controladores ou rotas.
-- [x] **Artigo III (Tipagem Estrita):** Zero uso de `any`, `@ts-ignore` ou coerções forçadas. Tipagem estrita completa e `npm run build` / `npx tsc --noEmit` passam sem nenhum erro.
-- [x] **Artigo V (TDD Red-Green):** 27 testes automatizados cobrindo balanceamento, resiliência, descarte inteligente, API de parceiro e trilha de auditoria.
+- [x] **Artigo I (Isolamento de Camadas):** Rotas HTTP apenas delegam aos Controllers e Services (`JobService`, `GatewayDispatcherService`, `TrafficLimiterService`, `ScraperAuditService`). Zero chamadas diretas ao Prisma a partir de controladores ou rotas.
+- [x] **Artigo III (Tipagem Estrita):** Zero uso de `any`, `@ts-ignore` ou coerções forçadas. Tipagem estrita completa e `npm run build` / `npx tsc --noEmit` passam com zero erros.
+- [x] **Artigo V (TDD Red-Green):** 47 testes automatizados cobrindo Gateway Único, balanceamento de tráfego, resiliência, descarte inteligente, API de parceiro e trilha de auditoria.
 - [x] **Artigo VI & VII (Changelog):** Todas as mudanças registradas sob `[Unreleased]` com as tags canônicas `[FACT]`, `[MODIFY]`, `[TEST]` e `[BUGFIX]`.
 - [x] **Infraestrutura Cloudflare Preservada:** Build do Cloudflare Pages e Workers 100% intactos.

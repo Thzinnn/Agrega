@@ -5,6 +5,7 @@ import { adminRoutes } from './admin.routes.js';
 import { filterRoutes } from './filter.routes.js';
 import { webhookRoutes } from './webhook.routes.js';
 import { scraperRawRoutes } from './scraper-raw.routes.js';
+import { gatewayRoutes } from './gateway.routes.js';
 
 export const routes = new Hono();
 
@@ -21,3 +22,4 @@ routes.route('/api/v1/filters', filterRoutes);
 routes.route('/api/v1/webhooks', webhookRoutes);
 routes.route('/api/v1/scraper/raw', scraperRawRoutes);
 routes.route('/api/v1/scraper', scraperRawRoutes);
+routes.route('/api/v1/gateway', gatewayRoutes);
