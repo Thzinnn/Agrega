@@ -7,6 +7,7 @@ import { logger } from '../utils/logger.js';
 import bcrypt from 'bcryptjs';
 import { settingsService } from '../services/settings.service.js';
 import { upsertSettingSchema } from '../schemas/settings.schema.js';
+import { aiKeyLoadBalancer } from '../services/ai-load-balancer.service.js';
 
 interface AdminUserPayload {
   sub: string;
@@ -566,4 +567,14 @@ adminRoutes.post('/settings', async (c) => {
   const data = upsertSettingSchema.parse(body);
   const updated = await settingsService.upsertSetting(prisma, data);
   return c.json({ success: true, data: { id: updated.id, key: updated.key } });
+});
+
+adminRoutes.get('/settings/ai-pool', async (c) => {
+  const prisma = c.get('prisma');
+  const { groqKeys, geminiKeys } = await settingsService.getAllAiKeys(prisma);
+  if (groqKeys.length > 0) aiKeyLoadBalancer.registerKeys('groq', groqKeys, 'Admin Groq Key');
+  if (geminiKeys.length > 0) aiKeyLoadBalancer.registerKeys('gemini', geminiKeys, 'Admin Gemini Key');
+
+  const poolStatus = aiKeyLoadBalancer.getPoolStatus();
+  return c.json({ success: true, data: poolStatus });
 });

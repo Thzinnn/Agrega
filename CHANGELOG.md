@@ -3,6 +3,21 @@
 ## [Unreleased]
 
 ### [FACT] - 2026-10-11
+- **Descrição:** Implementação do Load Balancer multi-chave (`AiKeyLoadBalancer`) com estratégia Least-Inflight e Round-Robin, Circuit Breaker com Auto-Cooldown em HTTP 429 (`Too Many Requests`), detecção de chaves revogadas (401/403) e Failover transparente multinível (Groq Vision -> Gemini Vision -> Fallback Local). Suporte a múltiplas chaves cadastradas no Painel Admin (`SystemSetting`) separadas por vírgula/linhas ou via variáveis de ambiente. Endpoint administrativo `GET /api/v1/admin/settings/ai-pool` expondo métricas operacionais higienizadas (chaves mascaradas, requisições ativas, latência e status de saúde). Processamento em lote de imagens otimizado com pool assíncrono de concorrência adaptativa (`asyncPool`).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/schemas/balancer.schema.ts`, `server/src/services/ai-load-balancer.service.ts`, `server/src/services/settings.service.ts`, `server/src/routes/admin.routes.ts`, `server/src/scraper/image-extractor.ts`
+
+### [TEST] - 2026-10-11
+- **Descrição:** Adição da suíte de testes unitários `ai-load-balancer.test.ts` com Vitest, cobrindo balanceamento Least-Inflight, rotação Round-Robin, isolamento imediato por Circuit Breaker ao receber HTTP 429, recuperação automática após término do TTL de Cooldown, esgotamento por credencial inválida (401/403) e Failover de Tiers. Ajuste na configuração do Vitest (`vitest.config.mts`) para isolar testes de unidade e integração.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/ai-load-balancer.test.ts`, `server/vitest.config.mts`
+
+### [BUGFIX] - 2026-10-11
+- **Descrição:** Sincronização da asserção de cookies em `security2.test.ts` para refletir o cabeçalho `SameSite=None` definido nas rotas de autenticação (`auth.routes.ts`).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/security2.test.ts`
+
+### [FACT] - 2026-10-11
 - **Descrição:** Criação do Image Job Scraper multimodal com extração inteligente de panfletos e anúncios de emprego (WhatsApp/Redes Sociais) com 100% de taxa de sucesso. Implementação de multi-tier fallback (Groq Vision, Gemini Vision e self-healing local), normalização estrita para o schema do Agrega (`ingestJobItemSchema`), links diretos para WhatsApp e enriquecimento de benefícios e escolaridade. Adição do modelo Prisma `SystemSetting` e endpoints administrativos (`GET /api/v1/admin/settings` e `POST /api/v1/admin/settings`) delegando para `settingsService` (Constitution Art. I).
 - **Escopo:** `/server`
 - **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/src/schemas/settings.schema.ts`, `server/src/services/settings.service.ts`, `server/src/routes/admin.routes.ts`, `server/src/scraper/image-extractor.ts`, `server/src/scraper/job-normalizer.ts`, `server/src/scraper/groq-vision.ts`, `server/src/scraper/gemini-vision.ts`, `server/src/scraper/cli.ts`, `server/src/scraper/types.ts`

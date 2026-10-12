@@ -5,6 +5,7 @@ import { ExtractedImageJobData, AgregaIngestPayload, ScraperExecutionResult } fr
 import { normalizeImageJobToAgrega } from './job-normalizer.js';
 import { extractJobWithGeminiVision } from './gemini-vision.js';
 import { extractJobWithGroqVision } from './groq-vision.js';
+import { aiKeyLoadBalancer } from '../services/ai-load-balancer.service.js';
 
 /**
  * Banco de extração forense pré-calibrado para imagens conhecidas do lote (WhatsApp)
@@ -201,10 +202,13 @@ const KNOWN_SAMPLE_PATTERNS: Record<string, ExtractedImageJobData> = {
 
 /**
  * Carrega chaves de API e configurações salvas no painel administrativo do Agrega (Prisma)
+ * e registra todas as chaves no Load Balancer.
  */
 export async function loadActiveSettingsFromDatabase(): Promise<{
   groqApiKey?: string;
   geminiApiKey?: string;
+  groqKeys?: string[];
+  geminiKeys?: string[];
   webhooks?: Array<{ id: string; name: string; secret: string }>;
 }> {
   try {
@@ -213,16 +217,26 @@ export async function loadActiveSettingsFromDatabase(): Promise<{
     const { webhookService } = await import('../services/webhook.service.js');
     const prisma = new PrismaClient();
 
-    const [aiKeys, webhooks] = await Promise.all([
-      settingsService.getAiKeys(prisma).catch(() => ({ groqApiKey: undefined, geminiApiKey: undefined })),
+    const [allAiKeys, webhooks] = await Promise.all([
+      settingsService.getAllAiKeys(prisma).catch(() => ({ groqKeys: [], geminiKeys: [] })),
       webhookService.listWebhooks(prisma).catch(() => [])
     ]);
 
     await prisma.$disconnect();
 
+    // Registra chaves recuperadas do banco de dados no Load Balancer
+    if (allAiKeys.groqKeys.length > 0) {
+      aiKeyLoadBalancer.registerKeys('groq', allAiKeys.groqKeys, 'DB Groq');
+    }
+    if (allAiKeys.geminiKeys.length > 0) {
+      aiKeyLoadBalancer.registerKeys('gemini', allAiKeys.geminiKeys, 'DB Gemini');
+    }
+
     return {
-      groqApiKey: aiKeys.groqApiKey,
-      geminiApiKey: aiKeys.geminiApiKey,
+      groqApiKey: allAiKeys.groqKeys[0],
+      geminiApiKey: allAiKeys.geminiKeys[0],
+      groqKeys: allAiKeys.groqKeys,
+      geminiKeys: allAiKeys.geminiKeys,
       webhooks: webhooks.filter((w) => w.isActive).map((w) => ({ id: w.id, name: w.name, secret: '' }))
     };
   } catch {
@@ -239,6 +253,100 @@ export interface ExtractionOptions {
 }
 
 /**
+ * Identifica o código de status HTTP a partir de erro de API desconhecido
+ */
+function parseStatusCodeFromError(err: unknown): number {
+  if (typeof err === 'object' && err !== null) {
+    if ('status' in err && typeof (err as { status: unknown }).status === 'number') {
+      return (err as { status: number }).status;
+    }
+    if ('statusCode' in err && typeof (err as { statusCode: unknown }).statusCode === 'number') {
+      return (err as { statusCode: number }).statusCode;
+    }
+  }
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  if (msg.includes('429') || msg.includes('rate limit') || msg.includes('resource_exhausted') || msg.includes('quota exceeded') || msg.includes('too many requests')) {
+    return 429;
+  }
+  if (msg.includes('401') || msg.includes('403') || msg.includes('unauthorized') || msg.includes('invalid api key') || msg.includes('permission denied')) {
+    return 401;
+  }
+  if (msg.includes('400') || msg.includes('bad request') || msg.includes('decommissioned')) {
+    return 400;
+  }
+  return 500;
+}
+
+/**
+ * Sincroniza variáveis de ambiente e opções pontuais no pool do Load Balancer
+ */
+function syncEnvironmentAndOptionsToBalancer(opts: ExtractionOptions): void {
+  // 1. Variáveis de ambiente Groq
+  if (process.env.GROQ_API_KEY) {
+    aiKeyLoadBalancer.registerKey('groq', process.env.GROQ_API_KEY, 'Env GROQ_API_KEY');
+  }
+  if (process.env.GROQ_API_KEYS) {
+    const keys = process.env.GROQ_API_KEYS.split(/[\n,;]+/).map((k) => k.trim()).filter(Boolean);
+    aiKeyLoadBalancer.registerKeys('groq', keys, 'Env GROQ_API_KEYS');
+  }
+
+  // 2. Variáveis de ambiente Gemini
+  if (process.env.GEMINI_API_KEY) {
+    aiKeyLoadBalancer.registerKey('gemini', process.env.GEMINI_API_KEY, 'Env GEMINI_API_KEY');
+  }
+  if (process.env.GOOGLE_API_KEY) {
+    aiKeyLoadBalancer.registerKey('gemini', process.env.GOOGLE_API_KEY, 'Env GOOGLE_API_KEY');
+  }
+  if (process.env.GEMINI_API_KEYS) {
+    const keys = process.env.GEMINI_API_KEYS.split(/[\n,;]+/).map((k) => k.trim()).filter(Boolean);
+    aiKeyLoadBalancer.registerKeys('gemini', keys, 'Env GEMINI_API_KEYS');
+  }
+
+  // 3. Opções explícitas de chamada
+  if (opts.groqApiKey) {
+    aiKeyLoadBalancer.registerKey('groq', opts.groqApiKey, 'Direct Option Groq');
+  }
+  if (opts.geminiApiKey) {
+    aiKeyLoadBalancer.registerKey('gemini', opts.geminiApiKey, 'Direct Option Gemini');
+  }
+  if (opts.apiKey) {
+    aiKeyLoadBalancer.registerKey('gemini', opts.apiKey, 'Direct Option Gemini');
+  }
+}
+
+/**
+ * Executa tarefas assíncronas com concorrência adaptativa limitada (Worker Pool)
+ */
+export async function asyncPool<T, R>(
+  concurrency: number,
+  items: T[],
+  iteratorFn: (item: T, index: number) => Promise<R>
+): Promise<R[]> {
+  const safeConcurrency = Math.max(1, concurrency);
+  const results: R[] = new Array(items.length);
+  const executing: Set<Promise<void>> = new Set();
+
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]!;
+    const currentIndex = i;
+    const p = Promise.resolve()
+      .then(() => iteratorFn(item, currentIndex))
+      .then((res) => {
+        results[currentIndex] = res;
+      });
+    executing.add(p);
+    const clean = () => executing.delete(p);
+    p.then(clean, clean);
+
+    if (executing.size >= safeConcurrency) {
+      await Promise.race(executing);
+    }
+  }
+  await Promise.all(executing);
+  return results;
+}
+
+/**
  * Calcula hash SHA-256 do arquivo para garantia de unicidade e idempotência
  */
 export async function calculateFileHash(filePath: string): Promise<string> {
@@ -248,6 +356,7 @@ export async function calculateFileHash(filePath: string): Promise<string> {
 
 /**
  * Extrai e converte uma única imagem de anúncio em vaga no padrão Agrega
+ * usando o Load Balancer com Circuit Breaker e Failover multinível
  */
 export async function extractSingleImageJob(
   filePath: string,
@@ -258,38 +367,59 @@ export async function extractSingleImageJob(
 
   const opts: ExtractionOptions = typeof options === 'string' ? { apiKey: options } : (options || {});
 
-  // 1. Carrega chaves cadastradas no painel administrativo do Agrega se habilitado
-  let dbGroqKey: string | undefined;
-  let dbGeminiKey: string | undefined;
-
+  // 1. Carrega chaves cadastradas no banco de dados e sincroniza no Load Balancer
   if (opts.useDbSettings !== false) {
-    const dbSettings = await loadActiveSettingsFromDatabase();
-    dbGroqKey = dbSettings.groqApiKey;
-    dbGeminiKey = dbSettings.geminiApiKey;
+    await loadActiveSettingsFromDatabase();
   }
-
-  const effectiveGroqKey = opts.groqApiKey || dbGroqKey || process.env.GROQ_API_KEY;
-  const effectiveGeminiKey = opts.geminiApiKey || opts.apiKey || dbGeminiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  syncEnvironmentAndOptionsToBalancer(opts);
 
   let rawData: ExtractedImageJobData | null = null;
 
-  // 2. Tenta extrair via Groq Vision (Llama 3.2 Vision)
-  if (effectiveGroqKey && !rawData) {
+  // 2. Tenta extrair via Groq Vision através do Load Balancer
+  const groqAcquired = aiKeyLoadBalancer.acquireKey('groq');
+  if (groqAcquired && !rawData) {
+    const startTime = Date.now();
     try {
-      rawData = await extractJobWithGroqVision(filePath, effectiveGroqKey);
+      rawData = await extractJobWithGroqVision(filePath, groqAcquired.secretKey);
+      aiKeyLoadBalancer.releaseKey(groqAcquired.id, {
+        success: true,
+        latencyMs: Date.now() - startTime,
+      });
     } catch (err: unknown) {
+      const latencyMs = Date.now() - startTime;
+      const code = parseStatusCodeFromError(err);
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[ImageScraper] Groq Vision indisponível para ${baseName} (${msg}). Tentando alternativas...`);
+      aiKeyLoadBalancer.releaseKey(groqAcquired.id, {
+        success: false,
+        statusCode: code,
+        latencyMs,
+        error: msg,
+      });
+      console.warn(`[ImageScraper] Groq Vision indisponível para ${baseName} (${msg}). Chave isolada/balanceada. Tentando alternativas...`);
     }
   }
 
-  // 3. Tenta extrair via Gemini Vision se houver chave
-  if (effectiveGeminiKey && !rawData) {
+  // 3. Tenta extrair via Gemini Vision através do Load Balancer
+  const geminiAcquired = aiKeyLoadBalancer.acquireKey('gemini');
+  if (geminiAcquired && !rawData) {
+    const startTime = Date.now();
     try {
-      rawData = await extractJobWithGeminiVision(filePath, effectiveGeminiKey);
+      rawData = await extractJobWithGeminiVision(filePath, geminiAcquired.secretKey);
+      aiKeyLoadBalancer.releaseKey(geminiAcquired.id, {
+        success: true,
+        latencyMs: Date.now() - startTime,
+      });
     } catch (err: unknown) {
+      const latencyMs = Date.now() - startTime;
+      const code = parseStatusCodeFromError(err);
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`[ImageScraper] Gemini Vision indisponível para ${baseName} (${msg}). Tentando fallback...`);
+      aiKeyLoadBalancer.releaseKey(geminiAcquired.id, {
+        success: false,
+        statusCode: code,
+        latencyMs,
+        error: msg,
+      });
+      console.warn(`[ImageScraper] Gemini Vision indisponível para ${baseName} (${msg}). Chave isolada/balanceada. Tentando fallback...`);
     }
   }
 
@@ -346,7 +476,8 @@ async function collectImageFilesRecursively(dirPath: string): Promise<string[]> 
 }
 
 /**
- * Processa um diretório inteiro de imagens de vagas (incluindo subpastas) com 100% de sucesso
+ * Processa um diretório inteiro de imagens de vagas (incluindo subpastas)
+ * com processamento concorrente adaptativo baseado no status do pool de chaves
  */
 export async function processImageDirectory(
   dirPath: string,
@@ -356,21 +487,39 @@ export async function processImageDirectory(
     throw new Error(`Diretório não encontrado: ${dirPath}`);
   }
 
+  const opts: ExtractionOptions = typeof options === 'string' ? { apiKey: options } : (options || {});
+
+  // Inicializa chaves no load balancer caso ainda não estejam populadas
+  if (opts.useDbSettings !== false) {
+    await loadActiveSettingsFromDatabase();
+  }
+  syncEnvironmentAndOptionsToBalancer(opts);
+
   const imageFiles = await collectImageFilesRecursively(dirPath);
+  const concurrency = aiKeyLoadBalancer.getRecommendedConcurrency();
 
   const jobs: AgregaIngestPayload[] = [];
   const errors: Array<{ file: string; error: string }> = [];
 
-  for (const fullPath of imageFiles) {
+  const results = await asyncPool(concurrency, imageFiles, async (fullPath) => {
     const relativeOrBase = path.relative(dirPath, fullPath);
     try {
-      const job = await extractSingleImageJob(fullPath, options);
-      jobs.push(job);
+      // useDbSettings: false evita requisições redundantes ao banco por imagem durante processamento em lote
+      const job = await extractSingleImageJob(fullPath, { ...opts, useDbSettings: false });
+      return { success: true as const, job, file: relativeOrBase };
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
+      return { success: false as const, error: msg, file: relativeOrBase };
+    }
+  });
+
+  for (const res of results) {
+    if (res && res.success && res.job) {
+      jobs.push(res.job);
+    } else if (res) {
       errors.push({
-        file: relativeOrBase,
-        error: msg
+        file: res.file,
+        error: res.error || 'Erro desconhecido',
       });
     }
   }

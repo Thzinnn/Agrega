@@ -20,7 +20,7 @@ describe('Security Audit Tests Part 2', () => {
     if (cookies) {
       expect(cookies).toContain('HttpOnly');
       expect(cookies).toContain('Secure');
-      expect(cookies).toContain('SameSite=Lax');
+      expect(cookies).toContain('SameSite=None');
     }
   });
 

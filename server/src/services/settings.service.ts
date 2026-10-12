@@ -46,28 +46,58 @@ export class SettingsService {
   }
 
   /**
-   * Obtém o valor real e não-mascarado de chaves específicas de IA para o motor
+   * Obtém todas as chaves cadastradas para cada provedor de IA (suporta múltiplas chaves)
+   */
+  async getAllAiKeys(prisma: PrismaClient): Promise<{
+    groqKeys: string[];
+    geminiKeys: string[];
+  }> {
+    const settings = await prisma.systemSetting.findMany({
+      where: {
+        OR: [
+          { key: { contains: 'GROQ' } },
+          { key: { contains: 'GEMINI' } },
+          { key: { contains: 'GOOGLE' } },
+        ],
+      },
+    });
+
+    const groqKeys: string[] = [];
+    const geminiKeys: string[] = [];
+
+    for (const s of settings) {
+      if (!s.value || s.value.trim().length === 0) continue;
+      // Permite múltiplas chaves separadas por vírgula, ponto e vírgula ou quebra de linha
+      const rawTokens = s.value.split(/[\n,;]+/).map((t) => t.trim()).filter(Boolean);
+
+      if (s.key.toUpperCase().includes('GROQ')) {
+        groqKeys.push(...rawTokens);
+      } else if (s.key.toUpperCase().includes('GEMINI') || s.key.toUpperCase().includes('GOOGLE')) {
+        geminiKeys.push(...rawTokens);
+      }
+    }
+
+    return {
+      groqKeys: Array.from(new Set(groqKeys)),
+      geminiKeys: Array.from(new Set(geminiKeys)),
+    };
+  }
+
+  /**
+   * Obtém a chave primária de IA (para compatibilidade retroativa)
    */
   async getAiKeys(prisma: PrismaClient): Promise<{
     groqApiKey?: string;
     geminiApiKey?: string;
   }> {
-    const settings = await prisma.systemSetting.findMany({
-      where: {
-        key: {
-          in: ['GROQ_API_KEY', 'GEMINI_API_KEY', 'GOOGLE_API_KEY'],
-        },
-      },
-    });
-
-    const groqSetting = settings.find((s) => s.key === 'GROQ_API_KEY')?.value;
-    const geminiSetting = settings.find((s) => s.key === 'GEMINI_API_KEY' || s.key === 'GOOGLE_API_KEY')?.value;
+    const { groqKeys, geminiKeys } = await this.getAllAiKeys(prisma);
 
     return {
-      groqApiKey: groqSetting || undefined,
-      geminiApiKey: geminiSetting || undefined,
+      groqApiKey: groqKeys[0],
+      geminiApiKey: geminiKeys[0],
     };
   }
 }
 
 export const settingsService = new SettingsService();
+
