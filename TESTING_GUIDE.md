@@ -343,7 +343,7 @@ Qualquer bot supervisor ou administrador pode inspecionar o fluxo de execução 
 
 ## 🌐 8. Gateway Único Universal de Ingestão e Balanceamento (`/api/v1/gateway`)
 
-O **Gateway Único** é o ponto de entrada centralizado para 100% dos fluxos de dados externos (Indeed, Gupy, textos e fotos do WhatsApp do Nicolas). Ele expõe um endpoint polimórfico autodocumentado com controle de vazão (concorrência máxima), backpressure (`HTTP 429 Retry-After`) e deduplicação antecipada.
+O **Gateway Único** é o ponto de entrada centralizado para 100% dos fluxos de dados externos (Indeed, Gupy, textos e fotos do WhatsApp). Ele expõe um endpoint polimórfico autodocumentado com controle de vazão (concorrência máxima), backpressure (`HTTP 429 Retry-After`) e deduplicação antecipada.
 
 ### Endpoint Principal: `POST /api/v1/gateway/ingest`
 - **Header:** `Content-Type: application/json`, `x-api-key: <GATEWAY_API_KEY>` (opcional em dev/test)
@@ -355,7 +355,7 @@ curl -X POST http://localhost:3333/api/v1/gateway/ingest \
   -H "x-api-key: sua_chave_aqui" \
   -d '{
     "kind": "IMAGE",
-    "source": "WHATSAPP_NICOLAS",
+    "source": "WHATSAPP_MEDIA",
     "imageUrl": "https://exemplo.com/vaga.jpg",
     "directPublish": true
   }'

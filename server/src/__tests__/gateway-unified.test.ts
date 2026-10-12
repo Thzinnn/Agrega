@@ -44,7 +44,7 @@ describe('Gateway Único Universal de Ingestão e Balanceamento (Agrega Gateway 
     it('deve validar payload kind: "IMAGE" com imagem em base64', () => {
       const validImagePayload = {
         kind: 'IMAGE',
-        source: 'WHATSAPP_NICOLAS',
+        source: 'WHATSAPP_MEDIA',
         imageBase64: 'data:image/jpeg;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==',
         fileName: 'panfleto_padaria.jpg',
         directPublish: true,
@@ -60,7 +60,7 @@ describe('Gateway Único Universal de Ingestão e Balanceamento (Agrega Gateway 
     it('deve rejeitar payload kind: "IMAGE" sem imageUrl e sem imageBase64', () => {
       const invalidImage = {
         kind: 'IMAGE',
-        source: 'WHATSAPP_NICOLAS',
+        source: 'WHATSAPP_MEDIA',
         fileName: 'sem_imagem.jpg',
       };
 
@@ -262,7 +262,7 @@ describe('Gateway Único Universal de Ingestão e Balanceamento (Agrega Gateway 
 
       const payload = {
         kind: 'IMAGE' as const,
-        source: 'WHATSAPP_MEDIA_NICOLAS',
+        source: 'WHATSAPP_MEDIA',
         imageBase64: `data:image/jpeg;base64,${base64Data}`,
         fileName: 'WhatsApp Image 2026-10-07 at 13.39.58.jpeg',
         directPublish: false,

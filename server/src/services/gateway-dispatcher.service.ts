@@ -195,7 +195,7 @@ export class GatewayDispatcherService {
   }
 
   /**
-   * 3. Processador de Mensagens de Texto Bruto (WhatsApp Nicolas)
+   * 3. Processador de Mensagens de Texto Bruto (WhatsApp Grupos / Comunidades)
    */
   private async handleRawText(
     prisma: PrismaClient,
