@@ -74,7 +74,7 @@ export async function extractJobWithGroqVision(
   const mimeType = getMimeType(imagePath);
   const dataUrl = `data:${mimeType};base64,${base64Data}`;
 
-  const models = ['llama-3.2-90b-vision-preview'];
+  const models = ['qwen/qwen3.8-27b'];
   let lastError: Error | null = null;
 
   for (const model of models) {
@@ -85,9 +85,10 @@ export async function extractJobWithGroqVision(
           'Authorization': `Bearer ${key}`,
           'Content-Type': 'application/json',
         },
-        signal: AbortSignal.timeout(2500),
+        signal: AbortSignal.timeout(4000),
         body: JSON.stringify({
           model,
+          max_tokens: 1000,
           messages: [
             {
               role: 'user',

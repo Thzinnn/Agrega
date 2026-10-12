@@ -1,12 +1,23 @@
 import { z } from 'zod';
 import { ingestJobItemSchema } from '../schemas/job.schema.js';
 
-export const contentTypeEnum = z.enum([
+export const contentTypeEnum = z.preprocess((val) => {
+  if (typeof val === 'string') {
+    const upper = val.toUpperCase().trim();
+    if (upper === 'PROGRAMA_SOCIAL' || upper === 'PROJETO_SOCIAL') {
+      return 'PROGRAMA_EMPREGABILIDADE';
+    }
+    if (upper === 'CURSO' || upper === 'CAPACITACAO') {
+      return 'CURSO_CAPACITACAO';
+    }
+  }
+  return val;
+}, z.enum([
   'VAGA_DIRETA',
   'PROGRAMA_EMPREGABILIDADE',
   'CURSO_CAPACITACAO',
   'NAO_E_VAGA',
-]);
+]));
 
 export type ContentType = z.infer<typeof contentTypeEnum>;
 
