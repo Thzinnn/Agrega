@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### [DOCS] - 2026-10-11
+- **Descrição:** Criação do guia completo de testes ponta a ponta (`TESTING_GUIDE.md`) documentando o fluxo total: configuração de chaves (variáveis de ambiente, painel administrativo e linha de comando), execução dos testes unitários/integração com Vitest, execução do scraper via CLI (`npm run scraper:images`), ingestão direta no banco e via API HTTP, monitoramento de métricas do `AiKeyLoadBalancer` (`GET /api/v1/admin/settings/ai-pool`) e conferência visual no frontend Next.js.
+- **Escopo:** `raiz`
+- **Arquivos Afetados:** `TESTING_GUIDE.md`, `README.md`
+
 ### [FACT] - 2026-10-11
 - **Descrição:** Implementação do Load Balancer multi-chave (`AiKeyLoadBalancer`) com estratégia Least-Inflight e Round-Robin, Circuit Breaker com Auto-Cooldown em HTTP 429 (`Too Many Requests`), detecção de chaves revogadas (401/403) e Failover transparente multinível (Groq Vision -> Gemini Vision -> Fallback Local). Suporte a múltiplas chaves cadastradas no Painel Admin (`SystemSetting`) separadas por vírgula/linhas ou via variáveis de ambiente. Endpoint administrativo `GET /api/v1/admin/settings/ai-pool` expondo métricas operacionais higienizadas (chaves mascaradas, requisições ativas, latência e status de saúde). Processamento em lote de imagens otimizado com pool assíncrono de concorrência adaptativa (`asyncPool`).
 - **Escopo:** `/server`

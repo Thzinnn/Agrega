@@ -25,7 +25,7 @@ function parseArgs(): CliArgs {
   let directDb = false;
   let apiKey: string | undefined = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   let groqKey: string | undefined = process.env.GROQ_API_KEY;
-  let apiUrl = process.env.API_URL || 'http://localhost:3333/api/jobs/ingest';
+  let apiUrl = process.env.API_URL || 'http://localhost:3333/api/v1/jobs/ingest';
   let scraperKey = process.env.SCRAPER_API_KEY || 'your-secret-api-key-here';
 
   for (let i = 0; i < args.length; i++) {
