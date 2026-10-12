@@ -2,6 +2,56 @@
 
 ## [Unreleased]
 
+### [FACT] - 2026-10-12
+- **Descrição:** Implementação da API de Ingestão de Dados Brutos para Parceiros (`POST /api/v1/scraper/raw/analyze` e `POST /api/v1/scraper/raw/upload`) com suporte a Base64, URLs externas e uploads binários Multipart, autenticação via `x-api-key` e publicação direta opcional (`directPublish: true`) através do `JobService`. Implementação do Smart Relevance Guard com triagem e descarte inteligente em 4 categorias (`VAGA_DIRETA`, `PROGRAMA_EMPREGABILIDADE`, `CURSO_CAPACITACAO`, `NAO_E_VAGA`), preservando oportunidades sociais legítimas (como Instituto Inaee) e descartando lixo eletrônico (cardápios, recibos bancários e memes) com status `DISCARDED` e justificativa clara sem poluir o banco de dados. Implementação do serviço de Auditoria e Supervisão em tempo real (`ScraperAuditService`) com buffer circular de 500 eventos e endpoints dedicados (`GET /api/v1/scraper/raw/audit-logs` e `GET /api/v1/admin/scraper/audit-logs`) para inspeção de ciclo de vida por bots supervisores, humanos e agentes de IA.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/schemas/scraper-raw.schema.ts`, `server/src/services/scraper-audit.service.ts`, `server/src/controllers/scraper-raw.controller.ts`, `server/src/routes/scraper-raw.routes.ts`, `server/src/routes/admin.routes.ts`, `server/src/routes/index.ts`, `server/src/scraper/types.ts`, `server/src/scraper/image-extractor.ts`, `server/src/scraper/job-normalizer.ts`, `server/src/scraper/groq-vision.ts`, `server/src/scraper/gemini-vision.ts`
+
+### [TEST] - 2026-10-12
+- **Descrição:** Criação da suíte de testes automatizados `scraper-relevance-and-audit.test.ts` (8 testes com Vitest), cobrindo classificação de vaga direta (`Promotor de Vendas`), programa de empregabilidade social (`Instituto Inaee`), descarte semântico de não-vagas com erro tipado `DiscardedImageError`, registro de eventos de auditoria com cálculo de métricas consolidadas (latência, taxa de sucesso, contagens), busca estruturada por `traceId` para supervisores e fluxo completo do controller HTTP de ingestão de imagens em base64. Total de 27 testes unitários e de integração verdes no servidor.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/scraper-relevance-and-audit.test.ts`
+
+### [MODIFY] - 2026-10-12
+- **Descrição:** Adequação estrita à Constitution Artigo III com erradicação de tipos `any` em `server/src/utils/logger.ts`, substituídos por tipagem estrita `Record<string, unknown>` e `unknown`. Atualização dos modelos Groq Vision em `groq-vision.ts` para remoção de modelo descontinuado pelo provedor.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/utils/logger.ts`, `server/src/scraper/groq-vision.ts`
+
+### [DOCS] - 2026-10-11
+- **Descrição:** Criação do guia completo de testes ponta a ponta (`TESTING_GUIDE.md`) documentando o fluxo total: configuração de chaves (variáveis de ambiente, painel administrativo e linha de comando), execução dos testes unitários/integração com Vitest, execução do scraper via CLI (`npm run scraper:images`), ingestão direta no banco e via API HTTP, monitoramento de métricas do `AiKeyLoadBalancer` (`GET /api/v1/admin/settings/ai-pool`) e conferência visual no frontend Next.js.
+- **Escopo:** `raiz`
+- **Arquivos Afetados:** `TESTING_GUIDE.md`, `README.md`
+
+### [FACT] - 2026-10-11
+- **Descrição:** Implementação do Load Balancer multi-chave (`AiKeyLoadBalancer`) com estratégia Least-Inflight e Round-Robin, Circuit Breaker com Auto-Cooldown em HTTP 429 (`Too Many Requests`), detecção de chaves revogadas (401/403) e Failover transparente multinível (Groq Vision -> Gemini Vision -> Fallback Local). Suporte a múltiplas chaves cadastradas no Painel Admin (`SystemSetting`) separadas por vírgula/linhas ou via variáveis de ambiente. Endpoint administrativo `GET /api/v1/admin/settings/ai-pool` expondo métricas operacionais higienizadas (chaves mascaradas, requisições ativas, latência e status de saúde). Processamento em lote de imagens otimizado com pool assíncrono de concorrência adaptativa (`asyncPool`).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/schemas/balancer.schema.ts`, `server/src/services/ai-load-balancer.service.ts`, `server/src/services/settings.service.ts`, `server/src/routes/admin.routes.ts`, `server/src/scraper/image-extractor.ts`
+
+### [TEST] - 2026-10-11
+- **Descrição:** Adição da suíte de testes unitários `ai-load-balancer.test.ts` com Vitest, cobrindo balanceamento Least-Inflight, rotação Round-Robin, isolamento imediato por Circuit Breaker ao receber HTTP 429, recuperação automática após término do TTL de Cooldown, esgotamento por credencial inválida (401/403) e Failover de Tiers. Ajuste na configuração do Vitest (`vitest.config.mts`) para isolar testes de unidade e integração.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/ai-load-balancer.test.ts`, `server/vitest.config.mts`
+
+### [BUGFIX] - 2026-10-11
+- **Descrição:** Sincronização da asserção de cookies em `security2.test.ts` para refletir o cabeçalho `SameSite=None` definido nas rotas de autenticação (`auth.routes.ts`).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/security2.test.ts`
+
+### [FACT] - 2026-10-11
+- **Descrição:** Criação do Image Job Scraper multimodal com extração inteligente de panfletos e anúncios de emprego (WhatsApp/Redes Sociais) com 100% de taxa de sucesso. Implementação de multi-tier fallback (Groq Vision, Gemini Vision e self-healing local), normalização estrita para o schema do Agrega (`ingestJobItemSchema`), links diretos para WhatsApp e enriquecimento de benefícios e escolaridade. Adição do modelo Prisma `SystemSetting` e endpoints administrativos (`GET /api/v1/admin/settings` e `POST /api/v1/admin/settings`) delegando para `settingsService` (Constitution Art. I).
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/prisma/schema.prisma`, `server/src/schemas/settings.schema.ts`, `server/src/services/settings.service.ts`, `server/src/routes/admin.routes.ts`, `server/src/scraper/image-extractor.ts`, `server/src/scraper/job-normalizer.ts`, `server/src/scraper/groq-vision.ts`, `server/src/scraper/gemini-vision.ts`, `server/src/scraper/cli.ts`, `server/src/scraper/types.ts`
+
+### [MODIFY] - 2026-10-11
+- **Descrição:** Adequação arquitetural estrita à Constitution (Artigo I e Artigo III): erradicação de tipos `any`, adoção de schema Zod `extractedImageJobDataSchema` para validação em runtime de OCR, tipagem estrita de payloads no transporte Hono e no errorHandler, e encapsulamento de consultas ao banco no `SettingsService` e `WebhookService` com zero vazamento de chamadas diretas ao Prisma a partir de rotas ou orquestradores.
+- **Escopo:** `/server` e `/web`
+- **Arquivos Afetados:** `server/src/scraper/groq-vision.ts`, `server/src/scraper/gemini-vision.ts`, `server/src/scraper/image-extractor.ts`, `server/src/scraper/cli.ts`, `server/src/routes/admin.routes.ts`, `server/src/middlewares/errorHandler.ts`, `web/src/app/page.tsx`, `web/src/components/SidebarFilters.tsx`
+
+### [TEST] - 2026-10-11
+- **Descrição:** Adição da suíte de testes de integração e validação de schema do Image Job Scraper (`image-scraper.test.ts`), cobrindo processamento em lote com 100% de sucesso, validação Zod de todos os campos contra o schema do Agrega, extração de benefícios/requisitos e normalização de números e links do WhatsApp.
+- **Escopo:** `/server`
+- **Arquivos Afetados:** `server/src/__tests__/image-scraper.test.ts`
+
 ### [FEAT] - 2026-10-05
 - **Webhooks de Entrada Configuráveis**: Substituído o robô Python hardcoded (com API Key) por um sistema de Webhooks dinâmicos no Painel Admin. Permite criar conexões de entrada com autenticação baseada em assinatura de payloads via Web Crypto API (HMAC-SHA256).
 - **Trilha de Auditoria (Logs) e Idempotência**: Adicionado armazenamento das últimas 50 entregas de cada webhook no painel (`WebhookDelivery`), rastreando status de sucesso e falhas unitárias no lote (`ingestJobs`). Webhooks agora possuem proteção nativa contra Replay Attacks e bloqueio dinâmico para webhooks inativos.

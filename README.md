@@ -68,8 +68,11 @@ O painel (`/admin`) suporta operações retroativas assíncronas (via `ctx.waitU
 
 O Agrega obedece um fluxo contínuo de **Red-Green-Refactor**. O deploy na main é atrelado ao sucesso de três frentes de testes (Vitest):
 1. **Regras de Negócio e Parser (`verify.ts`):** Garante a pureza e precisão dos parsers (ex: busca com filtragem multi-variáveis ou rejeição de URLs inválidas de candidaturas).
-2. **Segurança Ofensiva (`security.test.ts`):** Tenta invadir ativamente a API (Mass assignment, bypasses de upload, injeções `javascript:`) para confirmar que os middlewares barram o tráfego.
+2. **Segurança Ofensiva (`security.test.ts` & `security2.test.ts`):** Tenta invadir ativamente a API (Mass assignment, bypasses de upload, injeções `javascript:`) para confirmar que os middlewares barram o tráfego.
 3. **Frontend (Componentes e UI):** Afere a renderização fiel do Tailwind e do Radix sem comprometer interatividade.
+4. **Image Scraper & AI Load Balancer (`image-scraper.test.ts` & `ai-load-balancer.test.ts`):** Validação ponta a ponta de extração de panfletos com 100% de sucesso, Circuit Breaker, Least-Inflight e failover.
+
+> 📖 **Para o guia passo a passo de teste ponta a ponta, consulte o [TESTING_GUIDE.md](./TESTING_GUIDE.md).**
 
 ---
 

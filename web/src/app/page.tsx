@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import axios from 'axios';
 import { api } from '@/lib/api';
 import { Job } from '@/types/job';
 import { HeroSearch } from '@/components/HeroSearch';
@@ -91,9 +92,12 @@ function JobsContent() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchJobs = async () => {
       setLoading(true);
+      setErrorMessage(null);
       try {
         const queryString = searchParams.toString();
         const response = await api.get(`/jobs?${queryString}`);
@@ -106,8 +110,15 @@ function JobsContent() {
           setTotalPages(1);
           setTotalJobs(0);
         }
-      } catch (error) {
-        console.error('Failed to fetch jobs', error);
+      } catch (error: unknown) {
+        let msg = 'Não foi possível conectar ao servidor ou banco de dados.';
+        if (axios.isAxiosError(error) && error.response?.data) {
+          const data = error.response.data as { message?: string };
+          if (data.message) {
+            msg = data.message;
+          }
+        }
+        setErrorMessage(msg);
         setJobs([]);
       } finally {
         setLoading(false);
@@ -155,6 +166,14 @@ function JobsContent() {
                     onClick={() => setSelectedJob(job)} 
                   />
                 ))
+              ) : errorMessage ? (
+                <div className="p-8 sm:p-10 text-center bg-amber-500/10 rounded-2xl border border-amber-500/30 text-amber-200 shadow-sm flex flex-col items-center justify-center gap-3 mt-4">
+                  <div className="text-4xl mb-1">🔌</div>
+                  <h3 className="text-lg sm:text-xl font-bold text-amber-300">{errorMessage}</h3>
+                  <p className="max-w-md text-xs sm:text-sm text-neutral-300">
+                    O banco de dados PostgreSQL ainda não está conectado. Configure a variável <code className="bg-black/30 px-2 py-0.5 rounded text-amber-300 font-mono text-xs">DATABASE_URL</code> no arquivo <code className="bg-black/30 px-2 py-0.5 rounded text-amber-300 font-mono text-xs">server/.env</code> para carregar as vagas.
+                  </p>
+                </div>
               ) : (
                 <div className="p-8 sm:p-12 text-center bg-brand-30 rounded-2xl border border-brand-30/50 text-brand-muted shadow-sm flex flex-col items-center justify-center gap-3 mt-4">
                   <div className="text-5xl mb-2 opacity-80">🕵️</div>

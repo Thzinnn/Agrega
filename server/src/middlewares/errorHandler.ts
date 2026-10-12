@@ -36,13 +36,21 @@ export const errorHandler = (
 
   // Cloudflare Workers (Edge) não exportam as classes de Erro na raiz do Prisma.
   // Usamos verificação estrutural (duck typing) via `.name` para compatibilidade.
-  if (error.name === 'PrismaClientInitializationError') {
+  const errorObj = typeof error === 'object' && error !== null ? (error as { code?: string; message?: string }) : {};
+  const isDbConnectionError = 
+    error.name === 'PrismaClientInitializationError' ||
+    errorObj.code === 'ECONNREFUSED' ||
+    Boolean(errorObj.message?.includes('ECONNREFUSED')) ||
+    Boolean(errorObj.message?.includes('Connection terminated')) ||
+    Boolean(errorObj.message?.includes('failed to connect to server'));
+
+  if (isDbConnectionError) {
     return c.json({
       success: false,
       message: 'Não foi possível conectar ao banco de dados PostgreSQL.',
       errors: [
         'O servidor do PostgreSQL não está rodando ou a variável DATABASE_URL no server/.env está inacessível.',
-        'Verifique se o PostgreSQL está em execução na porta 5432 ou configure uma URL de banco na nuvem (ex: Supabase ou Neon).',
+        'Verifique se o PostgreSQL está em execução na porta 5432 ou configure uma URL de banco na nuvem gratuita (ex: Neon.tech ou Supabase).',
       ],
     }, 503);
   }
